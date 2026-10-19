@@ -1,0 +1,116 @@
+/* ─────────────── Header: full bar at the top, springs into a round button on scroll ─────────────── */
+.site-header {
+  /* Anchored top-right: the bar spans the content width, then collapses towards the corner. */
+  /* The bar's inner padding (1rem) lines its logo and button up with the page content (max-w-7xl, px-8 = 1216px). */
+  --bar-w: min(1248px, calc(100vw - 2 * max(16px, env(safe-area-inset-left, 0px))));
+  /* A soft settle with only a hint of overshoot. */
+  --spring: cubic-bezier(0.3, 1.15, 0.5, 1);
+  right: max(16px, env(safe-area-inset-right, 0px), calc((100vw - 1248px) / 2));
+}
+.site-header-shell {
+  position: relative;
+  width: var(--bar-w);
+  height: 56px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: saturate(1.4) blur(14px);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  border: 1px solid transparent;
+  overflow: hidden;
+  transition:
+    width 620ms var(--spring),
+    height 520ms var(--spring),
+    border-radius 520ms var(--ease-out-soft),
+    box-shadow 400ms ease,
+    border-color 400ms ease;
+}
+.site-header-bar {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 1rem;
+  width: var(--bar-w);
+  transition:
+    opacity 220ms ease,
+    transform 420ms var(--ease-out-soft);
+}
+.site-header-orb {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  opacity: 0;
+  transform: scale(0.6) rotate(-30deg);
+  pointer-events: none;
+  transition:
+    opacity 240ms ease,
+    transform 560ms var(--spring);
+}
+.site-header[data-folded="true"] .site-header-shell {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border-color: var(--hairline);
+  box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.35);
+}
+.site-header[data-folded="true"] .site-header-bar {
+  opacity: 0;
+  transform: translateX(-24px);
+  pointer-events: none;
+}
+.site-header[data-folded="true"] .site-header-orb {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  transition-delay: 120ms;
+}
+.site-header-orb:active {
+  transform: scale(0.92);
+}
+.site-header-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(300px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  border-radius: 20px;
+  border: 1px solid var(--hairline);
+  background: var(--bg);
+  box-shadow: 0 24px 60px -20px rgb(0 0 0 / 0.4);
+  transform-origin: top right;
+  animation: menu-pop 380ms var(--spring);
+}
+@keyframes menu-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(-6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-header-shell,
+  .site-header-bar,
+  .site-header-orb,
+  .site-header-menu {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Folded orb sits right at the screen edge rather than at the content edge. */
+.site-header {
+  transition: right 620ms var(--spring);
+}
+.site-header[data-folded="true"] {
+  right: max(12px, env(safe-area-inset-right, 0px));
+}
+
+/* The shell clips its overflow, so the orb's focus ring is drawn inside its edge. */
+.site-header-orb:focus-visible {
+  outline-offset: -4px;
+}
