@@ -1,0 +1,428 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --bg: #ffffff;
+  --surface: #f7f7f8;
+  --surface-2: #efeff1;
+  --text: #111111;
+  --muted: #5f6068;
+  --hairline: #e6e6ea;
+  /* Graphite: the brand accent. White on it = 9:1. In dark themes it flips to a light grey with dark ink. */
+  --accent: #48484a;
+  --accent-ink: #ffffff;
+  --accent-soft: #f0f0f2;
+  /* Accent used as text/strokes on dark grounds. */
+  --accent-bright: #c7c7cc;
+  --focus: #1f5cff;
+  --shadow-soft: 0 1px 2px rgb(17 17 17 / 0.04), 0 8px 24px rgb(17 17 17 / 0.06);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f0f11;
+    --surface: #18181b;
+    --surface-2: #222226;
+    --text: #f2f2f3;
+    --muted: #a3a3ab;
+    --hairline: #2c2c31;
+    --accent: #e5e5ea;
+    --accent-ink: #111111;
+    --accent-soft: #2a2a2e;
+    --focus: #7aa2ff;
+    --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f0f11;
+  --surface: #18181b;
+  --surface-2: #222226;
+  --text: #f2f2f3;
+  --muted: #a3a3ab;
+  --hairline: #2c2c31;
+  --accent: #e5e5ea;
+  --accent-ink: #111111;
+  --accent-soft: #2a2a2e;
+  --focus: #7aa2ff;
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-hairline: var(--hairline);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-bright: var(--accent-bright);
+  --font-sans: var(--font-anuphan), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument), "Times New Roman", serif;
+  --radius-card: 1.25rem;
+  --shadow-soft: var(--shadow-soft);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Layered so utilities (rounded-full etc.) keep their shape when focused. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--text);
+  }
+}
+
+.editorial-italic {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Scroll reveal */
+/* Only hide when JS is running to reveal it again. */
+html.js .reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 600ms var(--ease-out-soft),
+    transform 600ms var(--ease-out-soft);
+}
+html.js .reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Playful headline word */
+@keyframes wiggle-peel {
+  0%,
+  100% {
+    transform: rotate(-3deg) translateY(0);
+  }
+  50% {
+    transform: rotate(2deg) translateY(-2px);
+  }
+}
+.peel-word {
+  display: inline-block;
+  animation: wiggle-peel 3.2s var(--ease-out-soft) infinite;
+  transform-origin: 20% 80%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peel-word {
+    animation: none;
+  }
+  html.js .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Light sweeping across a lid illustration on hover */
+/* Travels along the logo's gloss axis (vars set per lid in LidArt), so the band and the logo's
+   reflection edge share one angle. */
+.lid-sweep {
+  transform: translate(var(--sweep-from-x), var(--sweep-from-y));
+}
+.group:hover .lid-sweep {
+  transform: translate(var(--sweep-to-x), var(--sweep-to-y));
+  transition: transform 1300ms var(--ease-out-soft);
+}
+@media (prefers-reduced-motion: reduce) {
+  .group:hover .lid-sweep {
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Hero entrance: lines rise in, underline draws, supporting content fades up */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.45em);
+    filter: blur(6px);
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+/* Each piece has its own offset (--d); --hero-wait holds everything back while the intro plays. */
+.hero-line {
+  --d: 0ms;
+  display: inline-block;
+  animation: rise-in 700ms var(--ease-out-soft) calc(var(--hero-wait, 0ms) + var(--d)) both;
+}
+.hero-line:nth-child(2) {
+  --d: 80ms;
+}
+.hero-line:nth-child(3) {
+  --d: 160ms;
+}
+.hero-line:nth-child(4) {
+  --d: 240ms;
+  animation:
+    rise-in 700ms var(--ease-out-soft) calc(var(--hero-wait, 0ms) + var(--d)) both,
+    wiggle-peel 3.2s var(--ease-out-soft) calc(var(--hero-wait, 0ms) + 1200ms) infinite;
+}
+.hero-underline path {
+  stroke-dasharray: 1;
+  animation: draw 700ms var(--ease-out-soft) calc(var(--hero-wait, 0ms) + 650ms) both;
+}
+.hero-fade {
+  --d: 400ms;
+  animation: fade-up 700ms var(--ease-out-soft) calc(var(--hero-wait, 0ms) + var(--d)) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-line,
+  .hero-line:nth-child(4),
+  .hero-underline path,
+  .hero-fade {
+    animation: none;
+  }
+}
+
+/* Thai: Instrument Serif has no Thai glyphs, and stacked vowels/tone marks need taller lines. */
+:lang(th) .editorial-italic {
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+:lang(th) :is(h1, h2) {
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+}
+
+/* Editor micro-motion: dialogs ease in, toasts rise, controls give press feedback */
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+}
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+dialog[open] {
+  animation: dialog-in 300ms var(--ease-out-soft);
+}
+dialog[open]::backdrop {
+  animation: backdrop-in 300ms ease-out;
+}
+.toast-in {
+  animation: fade-up 320ms var(--ease-out-soft);
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog[open],
+  dialog[open]::backdrop,
+  .toast-in {
+    animation: none;
+  }
+}
+
+/* ─────────────── Opening sequence: the page is a sticker that peels away ─────────────── */
+/* --peel is the fold position along the bottom-right → top-left diagonal: 2 = untouched, 0 = gone.
+   Registered so it can be animated and drive both clip-paths in lockstep. */
+@property --peel {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 2;
+}
+.intro {
+  --intro-total: 2100ms;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  cursor: pointer;
+  animation:
+    intro-peel 900ms cubic-bezier(0.65, 0, 0.35, 1) 1150ms both,
+    intro-gone 1ms linear var(--intro-total) both;
+}
+.intro-sheet {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(120% 90% at 20% 10%, rgb(255 255 255 / 0.18), transparent 55%), linear-gradient(160deg, #7c7c81, #48484a 45%, #262628);
+  /* Visible part: everything on the near side of the fold line x/W + y/H = peel. */
+  clip-path: polygon(
+    0 0,
+    calc(min(var(--peel), 1) * 100%) 0,
+    calc(min(var(--peel), 1) * 100%) calc(max(var(--peel) - 1, 0) * 100%),
+    calc(max(var(--peel) - 1, 0) * 100%) calc(min(var(--peel), 1) * 100%),
+    0 calc(min(var(--peel), 1) * 100%)
+  );
+}
+.intro-flap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* The peeled corner reflected across the fold: the backing paper, shaded towards the crease. */
+  background: linear-gradient(315deg, #d9d3c8 0%, #f6f2ea 38%, #ffffff 60%, #e9e3d8 100%);
+  clip-path: polygon(
+    calc(min(var(--peel), 1) * 100%) calc(max(var(--peel) - 1, 0) * 100%),
+    calc(max(var(--peel) - 1, 0) * 100%) calc(min(var(--peel), 1) * 100%),
+    calc((var(--peel) - 1) * 100%) calc((var(--peel) - 1) * 100%)
+  );
+  filter: drop-shadow(-12px -12px 24px rgb(0 0 0 / 0.35));
+}
+.intro-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  color: #fff;
+  animation: intro-lift 700ms var(--ease-out-soft) 1100ms both;
+}
+.intro-mark {
+  width: clamp(72px, 12vw, 120px);
+  filter: drop-shadow(0 14px 22px rgb(0 0 0 / 0.4));
+  animation: intro-slap 620ms cubic-bezier(0.34, 1.56, 0.64, 1) 80ms both;
+}
+/* The ruler ticks on the P draw in after the slap. */
+.intro-mark g path {
+  stroke-dasharray: 3;
+  animation: intro-ticks 500ms var(--ease-out-soft) 560ms both;
+}
+.intro-name {
+  display: flex;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: clamp(2.4rem, 7vw, 4.4rem);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.intro-name span {
+  display: inline-block;
+  animation: intro-letter 520ms var(--ease-out-soft) both;
+}
+.intro-ruler {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: clamp(160px, 26vw, 260px);
+}
+.intro-ruler-line {
+  height: 10px;
+  width: 100%;
+  /* Millimetre ticks drawn left to right. */
+  background:
+    repeating-linear-gradient(90deg, #fff 0 1.5px, transparent 1.5px 10%) bottom / 100% 10px no-repeat,
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.7) 0 1px, transparent 1px 2%) bottom / 100% 5px no-repeat,
+    linear-gradient(#fff, #fff) bottom / 100% 1.5px no-repeat;
+  clip-path: inset(0 100% 0 0);
+  animation: intro-draw 520ms var(--ease-out-soft) 720ms both;
+}
+.intro-ruler-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: fade-up 400ms var(--ease-out-soft) 900ms both;
+}
+
+@keyframes intro-slap {
+  from {
+    transform: scale(1.9) rotate(-14deg);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+}
+@keyframes intro-ticks {
+  from {
+    stroke-dashoffset: 3;
+  }
+}
+@keyframes intro-letter {
+  from {
+    transform: translateY(0.6em) rotate(8deg);
+    opacity: 0;
+  }
+}
+@keyframes intro-draw {
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes intro-lift {
+  to {
+    transform: translate(-6vw, -6vh) rotate(-4deg);
+    opacity: 0;
+  }
+}
+@keyframes intro-peel {
+  to {
+    --peel: 0;
+  }
+}
+@keyframes intro-gone {
+  to {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+/* Skip: jump straight to the peel. */
+.intro-skip,
+.intro-skip * {
+  animation-delay: 0ms !important;
+  animation-duration: 350ms !important;
+}
+.intro-skip {
+  --intro-total: 360ms;
+}
+
+/* The hero waits for the peel, so its entrance plays as the page is revealed. */
+.has-intro {
+  --hero-wait: 1450ms;
+}
+.has-intro.intro-skipped {
+  --hero-wait: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    display: none;
+  }
+  .has-intro {
+    --hero-wait: 0ms;
+  }
+}
