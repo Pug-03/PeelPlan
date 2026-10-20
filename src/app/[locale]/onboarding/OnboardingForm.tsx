@@ -95,6 +95,15 @@ export function OnboardingForm({ defaultName, next, preview = false }: { default
           shop: data.shop ?? undefined,
           onboardedAt: new Date().toISOString(),
         });
+        // Test mode has no database trigger: create the (pending) shop in the device store too.
+        // Loaded lazily so the marketplace code stays out of the onboarding bundle.
+        const { shop } = data;
+        if (shop && session.status === "signed-in") {
+          const userId = session.session.user.id;
+          void import("@/features/market/store").then(({ localStore }) =>
+            localStore.saveMyShop(userId, { name: shop.name, about: shop.description, productTypes: shop.productTypes }),
+          );
+        }
       }}
       noValidate
       className="mt-8 flex flex-col gap-6 rounded-[var(--radius-card)] border border-hairline bg-bg p-6 shadow-soft sm:p-8"

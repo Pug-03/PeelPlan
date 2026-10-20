@@ -55,6 +55,7 @@ function relativeTime(iso: string, locale: string) {
 export function CollectionView({ session }: { session: Session }) {
   const t = useTranslations("collection");
   const ta = useTranslations("auth");
+  const ts = useTranslations("seller");
   const locale = useLocale();
   const router = useRouter();
   // Rendered only after the sign-in gate (client side), so localStorage is available here.
@@ -103,12 +104,9 @@ export function CollectionView({ session }: { session: Session }) {
             {shop && (
               <p className="flex flex-wrap items-center gap-x-2 text-sm">
                 <Store className="size-3.5" strokeWidth={2} aria-hidden="true" />
-                {t("shopPending", { name: shop.name })}
-                <Link
-                  href={`/shops/preview?${new URLSearchParams({ name: shop.name, about: shop.description, types: shop.productTypes.join(",") })}`}
-                  className="text-muted underline underline-offset-4 hover:text-ink"
-                >
-                  {t("viewShop")}
+                {ts("collectionShop", { name: shop.name })}
+                <Link href="/seller" className="font-medium underline underline-offset-4 hover:text-muted">
+                  {ts("manageShop")}
                 </Link>
               </p>
             )}
