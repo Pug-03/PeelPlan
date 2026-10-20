@@ -516,3 +516,83 @@ dialog[open]::backdrop {
     --hero-wait: 0ms;
   }
 }
+
+/* ─────────────── Language switch: the old page blurs out, the new language wipes in ─────────────── */
+html[data-lang-swap]::view-transition-old(root) {
+  animation: lang-out 420ms cubic-bezier(0.6, 0, 0.4, 1) both;
+}
+html[data-lang-swap]::view-transition-new(root) {
+  animation: lang-in 640ms cubic-bezier(0.7, 0, 0.2, 1) both;
+}
+/* The lime bar riding the wipe's edge; it exists only in the new snapshot. */
+.lang-wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  view-transition-name: lang-wipe;
+  background: linear-gradient(100deg, transparent 0 46%, #d7ff3a 47.5% 52.5%, transparent 54%);
+  opacity: 0;
+}
+html[data-lang-swap]::view-transition-new(lang-wipe) {
+  animation: lang-bar 640ms cubic-bezier(0.7, 0, 0.2, 1) both;
+}
+html[data-lang-swap="th"]::view-transition-new(root) {
+  animation-name: lang-in-rtl;
+}
+html[data-lang-swap="th"]::view-transition-new(lang-wipe) {
+  animation-name: lang-bar-rtl;
+}
+@keyframes lang-out {
+  to {
+    opacity: 0;
+    filter: blur(8px);
+    transform: scale(0.985);
+  }
+}
+@keyframes lang-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+    filter: blur(6px);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    filter: blur(0);
+  }
+}
+@keyframes lang-in-rtl {
+  from {
+    clip-path: inset(0 0 0 100%);
+    filter: blur(6px);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    filter: blur(0);
+  }
+}
+@keyframes lang-bar {
+  0% {
+    transform: translateX(-52%);
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(52%);
+    opacity: 0;
+  }
+}
+@keyframes lang-bar-rtl {
+  0% {
+    transform: translateX(52%);
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-52%);
+    opacity: 0;
+  }
+}

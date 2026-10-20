@@ -4,7 +4,7 @@ import { Moon, Sun, Menu } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Link, usePathname } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { RulerMark, Wordmark } from "./Wordmark";
 import "./site-header.css";
 
@@ -39,20 +39,85 @@ const noSubscribe = () => () => {};
 // Cart / messages counts read this device's storage and the session: client-only, so the server HTML never disagrees.
 const HeaderMarket = dynamic(() => import("./HeaderMarket"), { ssr: false });
 
-export function LocaleSwitch({ className = "" }: { className?: string }) {
+/**
+ * Set just before a language switch so the remounted header can pick up where it was (menu open, folded).
+ * Only read on the client-side navigation that follows, never during hydration.
+ */
+const KEEP_KEY = "peelplan.langswap";
+function consumeLangSwap(): { menu: boolean } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(KEEP_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(KEEP_KEY);
+    const v = JSON.parse(raw) as { menu: boolean; at: number };
+    return Date.now() - v.at < 5000 ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+export function LocaleSwitch({ className = "", inMenu = false }: { className?: string; inMenu?: boolean }) {
   const t = useTranslations("nav");
   const locale = useLocale();
+  const next = locale === "th" ? "en" : "th";
   const pathname = usePathname();
+  const router = useRouter();
   // Keep the query (e.g. a seller's /shops/preview?name=…) when switching; empty on the server.
   const search = useSyncExternalStore(
     noSubscribe,
     () => window.location.search,
     () => "",
   );
+  const href = `${pathname}${search}`;
+
+  const onClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    e.preventDefault();
+    try {
+      sessionStorage.setItem(KEEP_KEY, JSON.stringify({ menu: inMenu, at: Date.now() }));
+    } catch {
+      /* storage unavailable: the menu just closes */
+    }
+    // Stay where you are on the page; only the language changes.
+    const go = () => router.push(href, { locale: next, scroll: false });
+    const root = document.documentElement;
+    if (!("startViewTransition" in document) || matchMedia("(prefers-reduced-motion: reduce)").matches) return go();
+    // The old page blurs away while the new language wipes in behind a lime bar (see .lang-wipe in globals.css).
+    root.dataset.langSwap = next;
+    const vt = document.startViewTransition(
+      () =>
+        new Promise<void>((resolve) => {
+          let settled = false;
+          const done = () => {
+            if (settled) return;
+            settled = true;
+            obs.disconnect();
+            const bar = document.createElement("div");
+            bar.className = "lang-wipe";
+            bar.setAttribute("aria-hidden", "true");
+            document.body.append(bar);
+            resolve();
+          };
+          // The new page is in once <html lang> flips; wait one more frame so it has painted.
+          const obs = new MutationObserver(() => root.lang === next && requestAnimationFrame(() => requestAnimationFrame(done)));
+          obs.observe(root, { attributes: true, attributeFilter: ["lang"] });
+          setTimeout(done, 2000);
+          go();
+        }),
+    );
+    void vt.finished.finally(() => {
+      delete root.dataset.langSwap;
+      document.querySelectorAll(".lang-wipe").forEach((n) => n.remove());
+    });
+  };
+
   return (
     <Link
-      href={`${pathname}${search}`}
-      locale={locale === "th" ? "en" : "th"}
+      href={href}
+      locale={next}
+      scroll={false}
+      onClick={onClick}
       aria-label={t("languageLabel")}
       className={`rounded-full px-2 py-2 text-sm whitespace-nowrap text-muted transition-colors hover:bg-surface hover:text-ink sm:px-3 ${className}`}
     >
@@ -72,8 +137,10 @@ const UNFOLD_AT = 60;
  */
 export function SiteHeader() {
   const t = useTranslations("nav");
-  const [folded, setFolded] = useState(false);
-  const [open, setOpen] = useState(false);
+  // After a language switch the header remounts: come back folded / with the menu open, as it was.
+  const [resume] = useState(consumeLangSwap);
+  const [folded, setFolded] = useState(() => !!resume && window.scrollY > FOLD_AT);
+  const [open, setOpen] = useState(() => !!resume?.menu);
   const panel = useRef<HTMLDivElement>(null);
 
   // Two invisible markers from the top of the page down to FOLD_AT and UNFOLD_AT; watching them leave and
@@ -188,7 +255,7 @@ export function SiteHeader() {
               <HeaderMarket variant="menu" onNavigate={() => setOpen(false)} />
             </div>
             <div className="my-1 flex items-center justify-between border-t border-hairline pt-2">
-              <LocaleSwitch />
+              <LocaleSwitch inMenu />
               <ThemeToggle />
             </div>
             <Link href="/editor" className="grid h-11 place-items-center rounded-full bg-ink text-sm font-medium text-bg" onClick={() => setOpen(false)}>
