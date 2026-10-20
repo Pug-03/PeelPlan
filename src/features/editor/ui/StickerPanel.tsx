@@ -1,12 +1,13 @@
 "use client";
 
-import { ImagePlus, Store, Trash2 } from "lucide-react";
+import { ImagePlus, Search, SearchX, Store, Trash2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRef, useState } from "react";
+import { memo, useDeferredValue, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { svgToPngDataUrl } from "@/lib/image/browser";
 import type { StickerAsset } from "@/lib/layout";
 import { ART_VERSION, VISIBLE_LIBRARY, stickerThumb, svgDataUrl, type LibrarySticker, type StickerCategory } from "@/stickers/library";
+import { GROUP_LABELS, STICKER_GROUPS, buildIndex, groupCounts, searchStickers, type GroupFilter } from "@/stickers/search";
 import { getCurrentId, isAssetUsedElsewhere } from "../collection";
 import { deleteAsset, saveAsset } from "../persist";
 import { useEditor } from "../store";
@@ -36,10 +37,64 @@ export async function ensureLibraryAsset(def: LibrarySticker): Promise<StickerAs
   return asset;
 }
 
+/** Built once: the library is static for the session. */
+const INDEX = buildIndex(VISIBLE_LIBRARY);
+const COUNTS = groupCounts(INDEX);
+const CHIP_GROUPS = STICKER_GROUPS.filter((g) => COUNTS[g] > 0);
+
+/** Thumbnails are data URLs of the SVG; encode each once rather than on every filter change. */
+const thumbs = new Map<string, string>();
+const thumbOf = (s: LibrarySticker) => thumbs.get(s.id) ?? (thumbs.set(s.id, stickerThumb(s)), thumbs.get(s.id)!);
+
+const LibraryTile = memo(function LibraryTile({ sticker: s, locale }: { sticker: LibrarySticker; locale: "th" | "en" }) {
+  const t = useTranslations("editor");
+  const addItem = useEditor((st) => st.addItem);
+  return (
+    <li>
+      <button
+        type="button"
+        aria-label={t("add", { name: s.name[locale] })}
+        onClick={async () => addItem(await ensureLibraryAsset(s), s.name[locale])}
+        className="group flex w-full flex-col items-center gap-1.5 rounded-xl bg-surface p-3 transition-colors hover:bg-surface-2"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={thumbOf(s)}
+          alt=""
+          decoding="async"
+          className="aspect-square w-full object-contain drop-shadow-sm transition-transform duration-300 group-hover:-rotate-3"
+        />
+        <span className="w-full truncate text-center text-xs">{s.name[locale]}</span>
+        <span className="text-[0.7rem] tabular-nums text-muted">{s.widthMm} mm</span>
+      </button>
+    </li>
+  );
+});
+
+function LibraryGrid({ stickers, locale }: { stickers: LibrarySticker[]; locale: "th" | "en" }) {
+  return (
+    <ul className="grid grid-cols-3 gap-2 lg:grid-cols-2">
+      {stickers.map((s) => (
+        <LibraryTile key={s.id} sticker={s} locale={locale} />
+      ))}
+    </ul>
+  );
+}
+
 export function StickerPanel({ onUpload }: { onUpload: (f: File) => void }) {
   const t = useTranslations("editor");
   const locale = useLocale() as "th" | "en";
   const [tab, setTab] = useState<"mine" | "library" | "shop">("library");
+  const [query, setQuery] = useState("");
+  const [group, setGroup] = useState<GroupFilter>("all");
+  // Typing stays snappy while the grid catches up.
+  const deferredQuery = useDeferredValue(query);
+  const results = useMemo(() => searchStickers(INDEX, deferredQuery, group), [deferredQuery, group]);
+  const filtering = group !== "all" || deferredQuery.trim() !== "";
+  const resetFilters = () => {
+    setQuery("");
+    setGroup("all");
+  };
   const { assets, addItem, removeAsset } = useEditor(useShallow((s) => ({ assets: s.assets, addItem: s.addItem, removeAsset: s.removeAsset })));
   const fileRef = useRef<HTMLInputElement>(null);
   const uploads = Object.values(assets).filter((a) => a.source === "upload");
@@ -57,40 +112,88 @@ export function StickerPanel({ onUpload }: { onUpload: (f: File) => void }) {
             { value: "shop", label: t("tabs.shop") },
           ]}
         />
+        {tab === "library" && (
+          <div className="mt-3 flex flex-col gap-2">
+            <label className="flex h-10 items-center gap-2 rounded-lg border border-hairline bg-bg px-3 focus-within:border-ink">
+              <Search className="size-4 shrink-0 text-muted" strokeWidth={1.75} aria-hidden="true" />
+              <span className="sr-only">{t("search")}</span>
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Escape" && query && (e.preventDefault(), setQuery(""))}
+                placeholder={t("searchPlaceholder")}
+                enterKeyHint="search"
+                autoComplete="off"
+                spellCheck={false}
+                className="w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  aria-label={t("clearSearch")}
+                  className="-mr-1 grid size-7 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-ink"
+                >
+                  <X className="size-3.5" strokeWidth={2} />
+                </button>
+              )}
+            </label>
+            {/* Narrow panel: chips scroll sideways rather than wrap. */}
+            <div
+              role="group"
+              aria-label={t("groups")}
+              className="-mx-3 flex gap-1.5 overflow-x-auto overscroll-x-contain px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {(["all", ...CHIP_GROUPS] as GroupFilter[]).map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  aria-pressed={group === g}
+                  onClick={(e) => {
+                    setGroup(g);
+                    e.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest" });
+                  }}
+                  className="h-8 shrink-0 rounded-full border border-hairline px-3 text-xs whitespace-nowrap text-muted transition-colors hover:border-ink hover:text-ink aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-bg"
+                >
+                  {g === "all" ? t("groupAll") : GROUP_LABELS[g][locale]}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
         {tab === "library" && (
-          <div className="flex flex-col gap-5">
-            {(["fun", "coding", "character"] as StickerCategory[]).map((cat) => {
-              const group = VISIBLE_LIBRARY.filter((s) => (s.category ?? "fun") === cat);
-              if (!group.length) return null;
-              return (
-                <section key={cat} aria-label={t(`categories.${cat}`)}>
-                  <h3 className="mb-2 px-1 text-xs text-muted">{t(`categories.${cat}`)}</h3>
-                  <ul className="grid grid-cols-3 gap-2 lg:grid-cols-2">
-                    {group.map((s) => (
-                      <li key={s.id}>
-                        <button
-                          type="button"
-                          aria-label={t("add", { name: s.name[locale] })}
-                          onClick={async () => addItem(await ensureLibraryAsset(s), s.name[locale])}
-                          className="group flex w-full flex-col items-center gap-1.5 rounded-xl bg-surface p-3 transition-colors hover:bg-surface-2"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={stickerThumb(s)}
-                            alt=""
-                            className="aspect-square w-full object-contain drop-shadow-sm transition-transform duration-300 group-hover:-rotate-3"
-                          />
-                          <span className="w-full truncate text-center text-xs">{s.name[locale]}</span>
-                          <span className="text-[0.7rem] tabular-nums text-muted">{s.widthMm} mm</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              );
-            })}
+          <div className="flex flex-col gap-3">
+            <p aria-live="polite" className="px-1 text-xs text-muted">
+              {t("resultCount", { count: results.length })}
+            </p>
+            {results.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 rounded-xl bg-surface px-4 py-8 text-center">
+                <SearchX className="size-6 text-muted" strokeWidth={1.5} aria-hidden="true" />
+                <p className="text-sm font-medium">{t("noResults", { query: deferredQuery.trim() })}</p>
+                <p className="text-xs leading-relaxed text-muted">{t("noResultsHint")}</p>
+                <button type="button" onClick={resetFilters} className="mt-1 rounded-full bg-ink px-3.5 py-1.5 text-xs font-medium text-bg hover:opacity-90">
+                  {t("showAll")}
+                </button>
+              </div>
+            ) : filtering ? (
+              <LibraryGrid stickers={results} locale={locale} />
+            ) : (
+              <div className="flex flex-col gap-5">
+                {(["fun", "coding", "character"] as StickerCategory[]).map((cat) => {
+                  const list = VISIBLE_LIBRARY.filter((s) => (s.category ?? "fun") === cat);
+                  if (!list.length) return null;
+                  return (
+                    <section key={cat} aria-label={t(`categories.${cat}`)}>
+                      <h3 className="mb-2 px-1 text-xs text-muted">{t(`categories.${cat}`)}</h3>
+                      <LibraryGrid stickers={list} locale={locale} />
+                    </section>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

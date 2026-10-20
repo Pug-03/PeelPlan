@@ -2105,4 +2105,7 @@ const shapes: LibrarySticker[] = [
   ),
 ];
 
-export const PACK_2: LibrarySticker[] = [...food, ...culture, ...animals, ...nature, ...space, ...retro, ...words, ...shapes];
+/** The pack's themed sections, in order; the editor's category chips are derived from them. */
+export const PACK_2_SECTIONS = { food, culture, animals, nature, space, retro, words, shapes };
+
+export const PACK_2: LibrarySticker[] = Object.values(PACK_2_SECTIONS).flat();
