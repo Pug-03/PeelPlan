@@ -288,7 +288,11 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
 
       {/* Controls */}
       <div className="flex flex-col gap-2.5 px-1 sm:px-4">
-        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t("playModels")}>
+        <div
+          className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible"
+          role="group"
+          aria-label={t("playModels")}
+        >
           {LAPTOP_MODELS.map((m) => (
             <button
               key={m.id}
@@ -326,7 +330,7 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
             {t("playShuffle")}
           </button>
         </div>
-        <p className="text-xs text-muted">{t("playHint")}</p>
+        <p className="hidden text-xs text-muted sm:block">{t("playHint")}</p>
       </div>
     </div>
   );

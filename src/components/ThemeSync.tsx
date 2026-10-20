@@ -28,13 +28,7 @@ const themeScript = `(function(){var d=document.documentElement;d.classList.add(
  * which also keeps React from warning about a client-rendered <script>.
  */
 export function ThemeScript() {
-  return (
-    <script
-      suppressHydrationWarning
-      type={typeof window === "undefined" ? undefined : "text/plain"}
-      dangerouslySetInnerHTML={{ __html: themeScript }}
-    />
-  );
+  return <script suppressHydrationWarning type={typeof window === "undefined" ? undefined : "text/plain"} dangerouslySetInnerHTML={{ __html: themeScript }} />;
 }
 
 /**

@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { LidArt, type ArtSticker } from "@/components/LidArt";
@@ -17,12 +17,22 @@ import { VISIBLE_LIBRARY, stickerSrc } from "@/stickers/library";
 const MODEL = getLaptopModel("macbook-pro-14-m5");
 const LID = lidGeometry(MODEL);
 const HERO = { id: "code-coder", x: 152, y: 172, w: 64 };
+/** In-house vector stickers (crisp at any size), roughly square-ish so they read big. One is picked per visit. */
+const HERO_POOL = VISIBLE_LIBRARY.filter((s) => {
+  const a = s.viewBox[1] / s.viewBox[0];
+  return s.svg && !s.demo && !s.id.startsWith("lang-") && a > 0.45 && a < 1.6;
+});
 const AROUND: ArtSticker[] = [
   { id: "peel-star", x: 58, y: 52, r: -8 },
   { id: "lightning", x: 250, y: 52, r: 8 },
   { id: "boba", x: 62, y: 165, r: 6 },
   { id: "code-key-copy", x: 256, y: 168, w: 32, r: -6 },
 ];
+
+let picked: string | undefined;
+/** One random pick per page load, stable across re-renders. */
+const visitHero = () => (picked ??= HERO_POOL.length ? HERO_POOL[Math.floor(Math.random() * HERO_POOL.length)].id : HERO.id);
+const noSubscribe = () => () => {};
 
 /** What a click slaps onto the page. */
 const SLAP_POOL = [
@@ -67,7 +77,9 @@ export function BreakFrame({
       { key: n, src: stickerSrc(def), x: e.clientX - r.left, y: e.clientY - r.top, r: ((n * 37) % 40) - 20, w: 90 + ((n * 53) % 60) },
     ]);
   };
-  const hero = useMemo(() => VISIBLE_LIBRARY.find((s) => s.id === HERO.id) ?? VISIBLE_LIBRARY[0], []);
+  // The server renders the default; the visit's random pick swaps in on the client (no hydration mismatch).
+  const heroId = useSyncExternalStore(noSubscribe, visitHero, () => HERO.id);
+  const hero = useMemo(() => VISIBLE_LIBRARY.find((s) => s.id === heroId) ?? VISIBLE_LIBRARY[0], [heroId]);
   const aspect = hero.viewBox[1] / hero.viewBox[0];
 
   useEffect(() => {
@@ -75,7 +87,7 @@ export function BreakFrame({
     if (!el) return;
     gsap.registerPlugin(ScrollTrigger);
     const mm = gsap.matchMedia();
-    mm.add({ motion: "(prefers-reduced-motion: no-preference)", still: "(prefers-reduced-motion: reduce)" }, (ctx) => {
+    mm.add({ motion: "(prefers-reduced-motion: no-preference)", still: "(prefers-reduced-motion: reduce)", small: "(max-width: 767px)" }, (ctx) => {
       const q = gsap.utils.selector(el);
       const lid = q("[data-lid]")[0] as HTMLElement;
       const big = q("[data-big]")[0] as HTMLElement;
@@ -97,7 +109,7 @@ export function BreakFrame({
         return { w, x: b.x + (b.w * HERO.x) / LID.widthMm - w / 2, y: b.y + (b.h * HERO.y) / LID.heightMm - (w * aspect) / 2 };
       };
       // Laid out at its final (largest) size and scaled down at the start, so it stays sharp when big.
-      const finalW = () => Math.min(stage.offsetWidth * 0.82, stage.offsetHeight * 1.5, 1050);
+      const finalW = () => Math.min(stage.offsetWidth * 0.5, (stage.offsetHeight * 0.5) / aspect, 720);
       const size = () => (big.style.width = `${finalW()}px`);
       size();
       // Positions are for the element's top-left; scaling happens around its centre.
@@ -114,7 +126,16 @@ export function BreakFrame({
       }
       const tl = gsap.timeline({
         defaults: { ease: "power2.inOut" },
-        scrollTrigger: { trigger: el, start: "top top", end: "+=150%", pin: true, scrub: 0.9, invalidateOnRefresh: true, onRefreshInit: size },
+        scrollTrigger: {
+          trigger: el,
+          start: "top top",
+          // Phones still hold the finished scene, over about half the scroll.
+          end: ctx.conditions?.small ? "+=180%" : "+=360%",
+          pin: true,
+          scrub: 0.9,
+          invalidateOnRefresh: true,
+          onRefreshInit: size,
+        },
       });
       tl.fromTo(
         big,
@@ -125,7 +146,9 @@ export function BreakFrame({
         .fromTo(q("[data-lidwrap]"), { scale: 1, opacity: 1 }, { scale: 0.7, opacity: 0, duration: 0.8 }, 0.15)
         .fromTo(q("[data-type]"), { scale: 0.9, opacity: 0.25 }, { scale: 1, opacity: 1, duration: 0.8 }, 0.2)
         .fromTo(q("[data-mark]"), { backgroundSize: "0% 100%" }, { backgroundSize: "100% 100%", duration: 0.3 }, 0.8)
-        .fromTo(q("[data-cta]"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35 }, 1);
+        .fromTo(q("[data-cta]"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.35 }, 1)
+        // Hold the finished scene for a long scroll before the footer can come up.
+        .to({}, { duration: 1.6 });
     });
     return () => mm.revert();
   }, [aspect]);
@@ -160,6 +183,7 @@ export function BreakFrame({
                 color="#CACBCE"
                 stickers={AROUND}
                 className="h-auto w-full rounded-xl"
+                lazy
               />
             </div>
           </div>
@@ -168,7 +192,16 @@ export function BreakFrame({
         {/* The sticker that breaks out */}
         <div data-big className="pointer-events-none absolute top-0 left-0 will-change-transform">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={stickerSrc(hero)} alt="" draggable={false} className="block h-auto w-full drop-shadow-[0_14px_24px_rgb(0_0_0/0.3)]" />
+          <img
+            src={stickerSrc(hero)}
+            alt=""
+            width={hero.viewBox[0]}
+            height={hero.viewBox[1]}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            className="block h-auto w-full drop-shadow-[0_14px_24px_rgb(0_0_0/0.3)]"
+          />
         </div>
 
         {/* Stickers slapped on by clicking */}

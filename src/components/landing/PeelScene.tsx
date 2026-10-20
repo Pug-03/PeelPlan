@@ -38,12 +38,17 @@ export function PeelScene({ title, titleB, body, peelLabel }: { title: string; t
     const el = root.current;
     if (!el) return;
     gsap.registerPlugin(ScrollTrigger);
+    // The ring and sparks are endless CSS animations; hold them while the scene is off screen.
+    const io = new IntersectionObserver(([e]) => el.toggleAttribute("data-offscreen", !e.isIntersecting));
+    io.observe(el);
     const mm = gsap.matchMedia();
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
+    mm.add({ motion: "(prefers-reduced-motion: no-preference)", small: "(max-width: 767px)" }, (ctx) => {
+      if (!ctx.conditions?.motion) return;
       const q = gsap.utils.selector(el);
       const tl = gsap.timeline({
         defaults: { ease: "power2.inOut" },
-        scrollTrigger: { trigger: el, start: "top top", end: "+=160%", pin: true, scrub: 0.9 },
+        // Phones get a shorter pin: the page is already very tall there.
+        scrollTrigger: { trigger: el, start: "top top", end: ctx.conditions.small ? "+=85%" : "+=160%", pin: true, scrub: 0.9 },
       });
       tl.fromTo(q("[data-card]"), { rotationY: -200, rotationX: 18, scale: 0.7 }, { rotationY: 0, rotationX: 0, scale: 1, duration: 1.2 }, 0)
         .fromTo(q("[data-ring]"), { scale: 0.6, opacity: 0.2 }, { scale: 1, opacity: 1, duration: 1.2 }, 0)
@@ -56,7 +61,10 @@ export function PeelScene({ title, titleB, body, peelLabel }: { title: string; t
         .fromTo(q("[data-dim-label]"), { opacity: 0 }, { opacity: 1, duration: 0.3, stagger: 0.15 }, 2)
         .fromTo(q("[data-body]"), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4 }, 2.1);
     });
-    return () => mm.revert();
+    return () => {
+      io.disconnect();
+      mm.revert();
+    };
   }, []);
 
   return (
@@ -76,7 +84,7 @@ export function PeelScene({ title, titleB, body, peelLabel }: { title: string; t
 
       <div data-title className="absolute top-[9vh] left-0 w-full px-6 text-center sm:top-[11vh]">
         <h2 className="text-[clamp(2.6rem,7vw,6rem)] leading-[0.95] font-extrabold tracking-[-0.045em]">
-          {title} <span className="editorial-italic font-normal text-[#2E9BD6]">{titleB}</span>
+          {title} <span className="editorial-italic block font-normal text-[#2E9BD6] sm:inline">{titleB}</span>
         </h2>
       </div>
 
@@ -86,7 +94,16 @@ export function PeelScene({ title, titleB, body, peelLabel }: { title: string; t
           <div data-card className="relative w-[min(34vh,300px)] [transform-style:preserve-3d]">
             <div className="relative [backface-visibility:hidden]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={stickerSrc(def)} alt="" draggable={false} className="block h-auto w-full drop-shadow-[0_18px_30px_rgb(0_0_0/0.18)]" />
+              <img
+                src={stickerSrc(def)}
+                alt=""
+                width={def.viewBox[0]}
+                height={def.viewBox[1]}
+                loading="lazy"
+                decoding="async"
+                draggable={false}
+                className="block h-auto w-full drop-shadow-[0_18px_30px_rgb(0_0_0/0.18)]"
+              />
               <div
                 data-glow
                 aria-hidden="true"

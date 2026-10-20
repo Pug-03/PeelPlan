@@ -31,10 +31,12 @@ export function ScrollFx() {
         const track = el.querySelector<HTMLElement>("[data-fx-track]");
         if (!track) return;
         const distance = () => Math.max(0, track.scrollWidth - el.clientWidth);
+        // Phones move the row about twice as far per scroll, so the pin doesn't eat several screens.
+        const pinLength = () => distance() * (matchMedia("(max-width: 767px)").matches ? 0.55 : 1);
         gsap.to(track, {
           x: () => -distance(),
           ease: "none",
-          scrollTrigger: { trigger: el, start: "top top", end: () => `+=${distance()}`, pin: true, scrub: 0.8, invalidateOnRefresh: true },
+          scrollTrigger: { trigger: el, start: "top top", end: () => `+=${pinLength()}`, pin: true, scrub: 0.8, invalidateOnRefresh: true },
         });
       });
 
@@ -97,14 +99,15 @@ export function ScrollFx() {
         );
       });
 
-      // Endless rows: always running, and a scroll pushes them faster for a moment.
+      // Endless rows: running while on screen, and a scroll pushes them faster for a moment.
       all('[data-fx="loop"]').forEach((el) => {
         const dir = Number(el.dataset.dir ?? 1);
-        const run = gsap.fromTo(el, { xPercent: dir > 0 ? 0 : -50 }, { xPercent: dir > 0 ? -50 : 0, duration: 45, ease: "none", repeat: -1 });
+        const run = gsap.fromTo(el, { xPercent: dir > 0 ? 0 : -50 }, { xPercent: dir > 0 ? -50 : 0, duration: 45, ease: "none", repeat: -1, paused: true });
         ScrollTrigger.create({
           trigger: el,
           start: "top bottom",
           end: "bottom top",
+          onToggle: (self) => (self.isActive ? run.resume() : run.pause()),
           onUpdate: (self) => {
             const boost = 1 + Math.min(14, Math.abs(self.getVelocity()) / 120);
             gsap.to(run, { timeScale: boost, duration: 0.2, overwrite: true, onComplete: () => void gsap.to(run, { timeScale: 1, duration: 1.2 }) });

@@ -37,7 +37,7 @@ export function StickerStorm({ lineA, lineB, mark, caption, side }: { lineA: str
     () =>
       PIECES.flatMap((p) => {
         const def = p.ids.map((id) => byId.get(id)).find(Boolean);
-        return def ? [{ ...p, src: stickerSrc(def), aspect: def.viewBox[1] / def.viewBox[0] }] : [];
+        return def ? [{ ...p, src: stickerSrc(def), vb: def.viewBox, aspect: def.viewBox[1] / def.viewBox[0] }] : [];
       }),
     [],
   );
@@ -47,7 +47,7 @@ export function StickerStorm({ lineA, lineB, mark, caption, side }: { lineA: str
     if (!el) return;
     gsap.registerPlugin(ScrollTrigger);
     const mm = gsap.matchMedia();
-    mm.add({ motion: "(prefers-reduced-motion: no-preference)", still: "(prefers-reduced-motion: reduce)" }, (ctx) => {
+    mm.add({ motion: "(prefers-reduced-motion: no-preference)", still: "(prefers-reduced-motion: reduce)", small: "(max-width: 767px)" }, (ctx) => {
       const q = gsap.utils.selector(el);
       const stage = q("[data-stage]")[0] as HTMLElement;
       const lid = q("[data-lid]")[0] as HTMLElement;
@@ -76,7 +76,8 @@ export function StickerStorm({ lineA, lineB, mark, caption, side }: { lineA: str
         scrollTrigger: {
           trigger: el,
           start: "top top",
-          end: "+=170%",
+          // Phones get a shorter pin: the page is already very tall there.
+          end: ctx.conditions?.small ? "+=90%" : "+=170%",
           pin: true,
           scrub: 0.9,
           invalidateOnRefresh: true,
@@ -107,12 +108,16 @@ export function StickerStorm({ lineA, lineB, mark, caption, side }: { lineA: str
 
       // Gentle idle drift on an inner layer so it never fights the scrubbed transform; it fades out as stickers land.
       const floats = q("[data-float]").map((f, i) =>
-        gsap.to(f, { y: i % 2 ? 10 : -10, rotation: i % 2 ? 3 : -3, duration: 2.2 + (i % 4) * 0.4, ease: "sine.inOut", yoyo: true, repeat: -1 }),
+        gsap.to(f, { y: i % 2 ? 10 : -10, rotation: i % 2 ? 3 : -3, duration: 2.2 + (i % 4) * 0.4, ease: "sine.inOut", yoyo: true, repeat: -1, paused: true }),
       );
       tl.eventCallback("onUpdate", () => {
         const k = 1 - Math.min(1, tl.progress() / 0.6);
         floats.forEach((f) => f.timeScale(Math.max(0.0001, k)));
       });
+      // No idle drift while the scene is off screen.
+      const io = new IntersectionObserver(([e]) => floats.forEach((f) => (e.isIntersecting ? f.resume() : f.pause())));
+      io.observe(el);
+      return () => io.disconnect();
     });
     return () => mm.revert();
   }, [pieces]);
@@ -166,7 +171,16 @@ export function StickerStorm({ lineA, lineB, mark, caption, side }: { lineA: str
             <div key={i} data-piece className="absolute top-0 left-0 will-change-transform [transform-style:preserve-3d]">
               <div data-float>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.src} alt="" className="block h-auto w-full drop-shadow-[0_6px_10px_rgb(0_0_0/0.22)]" draggable={false} />
+                <img
+                  src={p.src}
+                  alt=""
+                  width={p.vb[0]}
+                  height={p.vb[1]}
+                  loading="lazy"
+                  decoding="async"
+                  className="block h-auto w-full drop-shadow-[0_6px_10px_rgb(0_0_0/0.22)]"
+                  draggable={false}
+                />
               </div>
             </div>
           ))}

@@ -1,6 +1,7 @@
 import { ArrowRight, Check, Globe, GraduationCap, Home, Plus, Printer, Scissors, Star, Store } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { LidArt, type ArtSticker } from "@/components/LidArt";
+import { PACKED_DEV_LID } from "./packedLid";
 import { LAPTOP_MODELS, getLaptopModel, lidGeometry } from "@/config/laptops";
 import { Link } from "@/i18n/navigation";
 import { stickerSrcById } from "@/stickers/library";
@@ -32,6 +33,7 @@ function Lid({ modelId, color, stickers }: { modelId: string; color: string; sti
       color={color}
       stickers={stickers}
       className="h-auto w-full rounded-lg"
+      lazy
     />
   );
 }
@@ -43,12 +45,7 @@ const USE_CASES: { key: "dev" | "student" | "collector" | "brand"; modelId: stri
     key: "dev",
     modelId: "macbook-pro-14-m5",
     color: "#2B2B2D",
-    stickers: [
-      { id: "code-coder", x: 80, y: 55, w: 70, r: -6 },
-      { id: "code-rubber-duck", x: 240, y: 58, w: 46, r: 8 },
-      { id: "code-sym-braces", x: 70, y: 165, w: 38, r: 6 },
-      { id: "code-term-tests", x: 245, y: 165, w: 64, r: -4 },
-    ],
+    stickers: PACKED_DEV_LID,
   },
   {
     key: "student",
@@ -219,26 +216,31 @@ function SizeOutlines() {
   const maxH = Math.max(...LAPTOP_MODELS.map((m) => m.lid.heightMm.value));
   // Largest first so smaller lids sit on top.
   const models = [...LAPTOP_MODELS].sort((a, b) => b.lid.widthMm.value - a.lid.widthMm.value);
+  // Light translucent tints build up where the lids overlap, and a slow colour wave runs through them.
   return (
     <svg data-fx="draw" viewBox={`0 0 ${maxW + pad * 2} ${maxH + pad * 2}`} className="mt-10 h-auto w-full max-w-md" aria-hidden="true">
-      {models.map((m) => {
+      {models.map((m, i) => {
         const w = m.lid.widthMm.value;
         const h = m.lid.heightMm.value;
         return (
-          <rect
-            key={m.id}
-            data-fx-path
-            data-o={m.id}
-            className="size-outline"
-            x={pad}
-            y={pad + maxH - h}
-            width={w}
-            height={h}
-            rx={m.lid.cornerRadiusMm.value}
-            fill="none"
-            stroke={MODEL_TINT[m.id]}
-            strokeWidth="1.8"
-          />
+          <g key={m.id}>
+            {/* Page-coloured backing so each smaller lid's tint sits on its own, not on the ones below. */}
+            <rect x={pad} y={pad + maxH - h} width={w} height={h} rx={m.lid.cornerRadiusMm.value} className="fill-bg" />
+            <rect
+              data-fx-path
+              data-o={m.id}
+              className="size-outline"
+              style={{ animationDelay: `${i * 0.5}s` }}
+              x={pad}
+              y={pad + maxH - h}
+              width={w}
+              height={h}
+              rx={m.lid.cornerRadiusMm.value}
+              fill={MODEL_TINT[m.id]}
+              stroke={MODEL_TINT[m.id]}
+              strokeWidth="1.8"
+            />
+          </g>
         );
       })}
     </svg>
@@ -269,7 +271,7 @@ export async function SizeTable() {
           <SizeOutlines />
         </div>
         <div className="reveal overflow-x-auto">
-          <table className="w-full min-w-[560px] border-collapse text-left tabular-nums">
+          <table className="w-full border-collapse text-left tabular-nums sm:min-w-[560px]">
             <thead>
               <tr className="border-b border-ink text-sm text-muted">
                 <th scope="col" className="py-3 pr-4 font-medium">
@@ -281,10 +283,10 @@ export async function SizeTable() {
                 <th scope="col" className="py-3 pr-4 font-medium">
                   {t("sizesDepth")}
                 </th>
-                <th scope="col" className="py-3 pr-4 font-medium">
+                <th scope="col" className="hidden py-3 pr-4 font-medium sm:table-cell">
                   {t("sizesCorner")}
                 </th>
-                <th scope="col" className="py-3 font-medium">
+                <th scope="col" className="hidden py-3 font-medium sm:table-cell">
                   {t("sizesLogo")}
                 </th>
               </tr>
@@ -307,8 +309,8 @@ export async function SizeTable() {
                     </th>
                     <td className="py-4 pr-4">{cell(m.lid.widthMm)}</td>
                     <td className="py-4 pr-4">{cell(m.lid.heightMm)}</td>
-                    <td className="py-4 pr-4">{cell(m.lid.cornerRadiusMm)}</td>
-                    <td className="py-4">{cell(m.logo.heightMm)}</td>
+                    <td className="hidden py-4 pr-4 sm:table-cell">{cell(m.lid.cornerRadiusMm)}</td>
+                    <td className="hidden py-4 sm:table-cell">{cell(m.logo.heightMm)}</td>
                   </tr>
                 );
               })}
@@ -369,7 +371,7 @@ export async function ForSellers() {
                     className="grid aspect-square place-items-center p-1 drop-shadow-[0_10px_14px_rgb(0_0_0/0.12)]"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt="" className="max-h-full max-w-full" />
+                    <img src={src} alt="" loading="lazy" decoding="async" className="max-h-full max-w-full" />
                   </div>
                 ))}
             </div>

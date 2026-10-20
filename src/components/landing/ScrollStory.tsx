@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { getLaptopModel, lidGeometry } from "@/config/laptops";
 import { ID1_CARD_MM } from "@/lib/scale";
+import { LazySvgLayer } from "@/components/LazySvgLayer";
 import { LidSurface, LogoMark } from "@/components/LidArt";
 import { VISIBLE_LIBRARY, stickerSrc } from "@/stickers/library";
 
@@ -21,8 +22,8 @@ const STICKERS = [
   { id: "boba", x: 64, y: 156, r: -6 },
   { id: "lightning", x: 150, y: 172, w: 26, r: 18 },
 ];
-/** Inactive steps stay readable (≥ 4.5:1 in both themes). */
-const DIM = 0.62;
+/** Step opacity by distance from the active step; the nearest neighbour stays readable. */
+const STEP_LEVELS = [1, 0.62, 0.4, 0.26];
 
 const byId = new Map(VISIBLE_LIBRARY.map((s) => [s.id, s]));
 
@@ -49,15 +50,13 @@ export function ScrollStory({ title, steps, svgLabel }: { title: React.ReactNode
         .set(outline!, { strokeDasharray: "none" }) // fully drawn: plain solid stroke, no dash join at all
         .to(q("[data-lid-fill]"), { opacity: 1, duration: 0.5 }, "<0.6")
         .from(q("[data-dim]"), { opacity: 0, y: 4, stagger: 0.1, duration: 0.4 }, "<")
-        .to(q("[data-step='0']"), { opacity: DIM, duration: 0.3 }, "+=0.4")
         // 2 — card calibrates.
-        .to(q("[data-step='1']"), { opacity: 1, duration: 0.3 }, "<")
+        .addLabel("s1", "+=0.4")
         .fromTo(q("[data-card]"), { opacity: 0, x: -60, rotate: -8 }, { opacity: 1, x: 0, rotate: 0, duration: 0.8 }, "<")
         .to(q("[data-card-check]"), { opacity: 1, duration: 0.3 })
         .to(q("[data-card]"), { opacity: 0, y: -30, duration: 0.5 }, "+=0.4")
-        .to(q("[data-step='1']"), { opacity: DIM, duration: 0.3 }, "<")
         // 3 — stickers drop in at real size.
-        .to(q("[data-step='2']"), { opacity: 1, duration: 0.3 }, "<")
+        .addLabel("s2", "<")
         // Animate the transform *attribute*: each sticker group's own 0,0 is its centre, so the drop lands
         // exactly on its outline. (CSS/GSAP origins resolve against the bbox or the whole SVG and drift.)
         .fromTo(
@@ -66,11 +65,29 @@ export function ScrollStory({ title, steps, svgLabel }: { title: React.ReactNode
           { opacity: 1, attr: { transform: "translate(0 0) scale(1)" }, stagger: 0.28, duration: 0.5, ease: "back.out(1.6)" },
           "<",
         )
-        .to(q("[data-step='2']"), { opacity: DIM, duration: 0.3 }, "+=0.3")
         // 4 — the print guide overlays.
-        .to(q("[data-step='3']"), { opacity: 1, duration: 0.3 }, "<")
-        .fromTo(q("[data-guide]"), { opacity: 0 }, { opacity: 1, stagger: 0.08, duration: 0.4 }, "<")
-        .to(q("[data-paper]"), { opacity: 1, duration: 0.6 }, "<");
+        .addLabel("s3", "+=0.3")
+        // Anchor to the label: "<" would point back at the sticker drop, ending the timeline before step 4.
+        .fromTo(q("[data-guide]"), { opacity: 0 }, { opacity: 1, stagger: 0.08, duration: 0.4 }, "s3")
+        .to(q("[data-paper]"), { opacity: 1, duration: 0.6 }, "s3")
+        // A short hold so step 4 stays lit before the section scrolls away.
+        .to({}, { duration: 0.4 });
+
+      // Steps fade by distance from the active one, so the list reads as a gradient rather than on/off.
+      const items = q("[data-step]") as HTMLElement[];
+      let shown = -1;
+      const focus = (k: number) => {
+        if (k === shown) return;
+        shown = k;
+        items.forEach((li, i) => {
+          li.dataset.active = String(i === k);
+          li.style.opacity = String(STEP_LEVELS[Math.min(Math.abs(i - k), STEP_LEVELS.length - 1)]);
+        });
+      };
+      tl.eventCallback("onUpdate", () => {
+        const t = tl.time();
+        focus(t >= tl.labels.s3 ? 3 : t >= tl.labels.s2 ? 2 : t >= tl.labels.s1 ? 1 : 0);
+      });
 
       if (reduce) {
         tl.progress(1);
@@ -86,7 +103,7 @@ export function ScrollStory({ title, steps, svgLabel }: { title: React.ReactNode
   }, []);
 
   return (
-    <section ref={root} className="relative h-[420vh] motion-reduce:h-auto" aria-labelledby="story-title">
+    <section ref={root} className="relative h-[240vh] motion-reduce:h-auto md:h-[420vh]" aria-labelledby="story-title">
       <div className="sticky top-0 flex min-h-dvh items-center motion-reduce:static motion-reduce:py-24">
         <div className="mx-auto grid w-full max-w-7xl items-center gap-6 px-5 sm:gap-10 sm:px-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
           <div>
@@ -95,8 +112,14 @@ export function ScrollStory({ title, steps, svgLabel }: { title: React.ReactNode
             </h2>
             <ol className="mt-6 space-y-3 sm:mt-10 sm:space-y-5">
               {steps.map((s, i) => (
-                <li key={i} data-step={i} className="flex gap-4 leading-relaxed sm:text-[1.05rem]" style={{ opacity: i === 0 ? 1 : DIM }}>
-                  <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border border-hairline text-xs tabular-nums text-muted">
+                <li
+                  key={i}
+                  data-step={i}
+                  data-active={i === 0}
+                  className="story-step flex gap-4 leading-relaxed sm:text-[1.05rem]"
+                  style={{ opacity: STEP_LEVELS[Math.min(i, STEP_LEVELS.length - 1)] }}
+                >
+                  <span className="story-badge mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border border-hairline text-xs tabular-nums text-muted">
                     {i + 1}
                   </span>
                   <span className="max-w-[38ch]">{s}</span>
@@ -118,12 +141,17 @@ export function ScrollStory({ title, steps, svgLabel }: { title: React.ReactNode
               </defs>
               <rect data-paper x="4" y="4" width={VB_W - 8} height={VB_H - 8} rx="3" fill="url(#story-grid)" opacity="0" />
               <g transform={`translate(${PAD} ${PAD})`}>
-                <g data-lid-fill opacity="0">
-                  <LidSurface widthMm={lid.widthMm} heightMm={lid.heightMm} radiusMm={lid.cornerRadiusMm} color="#2B2B2D" />
-                </g>
-                <g data-lid-fill opacity="0">
-                  <LogoMark logo={lid.logo} lidColor="#2B2B2D" finish={model.logoFinish} />
-                </g>
+                {/* Space black on the light page, silver in dark mode so the lid stands off the dark background. */}
+                {(["#2B2B2D", "#D9DADC"] as const).map((c, k) => (
+                  <g key={c} className={k ? "hidden dark:inline" : "dark:hidden"}>
+                    <g data-lid-fill opacity="0">
+                      <LidSurface widthMm={lid.widthMm} heightMm={lid.heightMm} radiusMm={lid.cornerRadiusMm} color={c} />
+                    </g>
+                    <g data-lid-fill opacity="0">
+                      <LogoMark logo={lid.logo} lidColor={c} finish={model.logoFinish} />
+                    </g>
+                  </g>
+                ))}
                 <rect data-outline width={lid.widthMm} height={lid.heightMm} rx={lid.cornerRadiusMm} fill="none" stroke="var(--text)" strokeWidth="0.8" />
                 <g data-dim fill="var(--muted)" fontSize="6.5" fontFamily="var(--font-sans)">
                   <path d={`M0 -8H${lid.widthMm}M0 -11V-5M${lid.widthMm} -11V-5`} stroke="var(--muted)" strokeWidth="0.4" />
@@ -145,7 +173,9 @@ export function ScrollStory({ title, steps, svgLabel }: { title: React.ReactNode
                   return (
                     <g key={i} transform={`translate(${s.x} ${s.y}) rotate(${s.r})`}>
                       <g data-sticker style={{ opacity: 0 }} transform="translate(0 0) scale(1)" filter="url(#story-shadow)">
-                        <image href={stickerSrc(def)} x={-w / 2} y={-h / 2} width={w} height={h} />
+                        <LazySvgLayer>
+                          <image href={stickerSrc(def)} x={-w / 2} y={-h / 2} width={w} height={h} />
+                        </LazySvgLayer>
                       </g>
                       <g data-guide style={{ opacity: 0 }}>
                         <rect

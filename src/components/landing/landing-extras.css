@@ -157,9 +157,17 @@
 
 /* Size outlines: hovering a table row highlights that lid. */
 .size-outline {
+  fill-opacity: 0.14;
+  animation: tint-wave 5s ease-in-out infinite;
   transition:
     opacity 300ms var(--ease-out-soft),
-    stroke-width 300ms var(--ease-out-soft);
+    stroke-width 300ms var(--ease-out-soft),
+    fill-opacity 300ms var(--ease-out-soft);
+}
+@keyframes tint-wave {
+  50% {
+    fill-opacity: 0.3;
+  }
 }
 .sizes-fx:has(tr[data-m]:hover) .size-outline {
   opacity: 0.18;
@@ -171,9 +179,14 @@
 .sizes-fx:has(tr[data-m="macbook-pro-16-m5"]:hover) [data-o="macbook-pro-16-m5"] {
   opacity: 1;
   stroke-width: 3.2;
+  fill-opacity: 0.35;
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .size-outline {
+    animation: none;
+  }
   .review-track {
     animation: none;
   }
@@ -193,6 +206,10 @@
   opacity: 0.2;
   box-shadow: 0 0 6px #9be7ff;
   animation: peel-twinkle 3s ease-in-out infinite;
+}
+/* Set by PeelScene while the scene is off screen. */
+.peel-scene[data-offscreen] :is(.peel-ring, .peel-spark) {
+  animation-play-state: paused;
 }
 @keyframes peel-spin {
   to {
@@ -317,4 +334,44 @@
   .lid-float {
     animation: none;
   }
+}
+
+/* Stat callouts: serif italic figures in both languages (Thai letters fall back to Anuphan, slanted). */
+.stat-figure {
+  font-family: var(--font-instrument), var(--font-anuphan), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Figures in the kinetic band: serif italic, normal tracking, a touch larger to match the caps. */
+.kinetic-figure {
+  font-family: var(--font-instrument), var(--font-anuphan), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 1.12em;
+}
+
+/* Scroll story steps: smooth fade between levels; the active step's number fills in and nudges right. */
+.story-step {
+  transition:
+    opacity 450ms var(--ease-out-soft),
+    translate 450ms var(--ease-out-soft);
+}
+.story-step[data-active="true"] {
+  translate: 6px 0;
+}
+.story-badge {
+  transition:
+    background-color 300ms var(--ease-out-soft),
+    color 300ms var(--ease-out-soft),
+    border-color 300ms var(--ease-out-soft);
+}
+.story-step[data-active="true"] .story-badge {
+  background: #d7ff3a;
+  border-color: #1b1b1f;
+  color: #1b1b1f;
+  font-weight: 600;
 }

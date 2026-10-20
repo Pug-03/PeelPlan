@@ -33,6 +33,7 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
   setRequestLocale(locale);
   const t = await getTranslations("landing");
   const tm = await getTranslations("more");
+  const tl = await getTranslations("legal");
   const faq = t.raw("faq") as { q: string; a: string }[];
   const pro14 = lidGeometry(getLaptopModel("macbook-pro-14-m5"));
   // Hero shows the Studio Kluay example (Pro 14", silver, coding stickers).
@@ -137,7 +138,7 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
                 style={{ transitionDelay: `${i * 80}ms` }}
               >
                 <dt className="order-2 max-w-[28ch] text-muted">{l}</dt>
-                <dd className="editorial-italic order-1 text-[clamp(3rem,6vw,4.75rem)] leading-none tabular-nums">
+                <dd className="stat-figure order-1 text-[clamp(3rem,6vw,4.75rem)] leading-none tabular-nums">
                   {i === 2 ? (
                     <span data-fx="countup" data-to={v}>
                       {v}
@@ -148,7 +149,7 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
                       <svg
                         viewBox="0 0 10 13"
                         aria-hidden="true"
-                        className="mr-[0.08em] inline-block h-[0.66em] w-auto align-baseline"
+                        className="pm-glyph mr-[0.08em] inline-block h-[0.66em] w-auto align-baseline"
                         style={{ transform: "skewX(-12deg)" }}
                       >
                         <path d="M5 0.6V8.2M1.2 4.4H8.8M1.2 12.2H8.8" stroke="currentColor" strokeWidth="0.95" strokeLinecap="round" fill="none" />
@@ -207,6 +208,7 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
                     { id: "smile-blob", x: 75, y: 165, r: 8 },
                   ]}
                   className="h-auto w-full rounded-xl"
+                  lazy
                 />
               </div>
               <div className="absolute -bottom-6 -left-2 rounded-2xl border border-hairline bg-bg px-4 py-3 shadow-soft sm:-left-8">
@@ -256,11 +258,24 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
         />
       </main>
 
-      <footer className="mx-auto flex max-w-7xl flex-col gap-4 px-5 pt-6 pb-12 text-sm text-muted sm:px-8 md:flex-row md:items-start md:justify-between">
-        <Wordmark className="text-ink" />
-        <div className="max-w-[60ch] space-y-1 md:text-right">
-          <p>{t("footerLegal")}</p>
-          <p>{t("placeholderNote")}</p>
+      <footer className="mx-auto flex max-w-7xl flex-col gap-8 px-5 pt-6 pb-12 text-sm text-muted sm:px-8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <Wordmark className="text-ink" />
+          <div className="max-w-[60ch] space-y-1 md:text-right">
+            <p>{t("footerLegal")}</p>
+            <p>{t("placeholderNote")}</p>
+          </div>
+        </div>
+        {/* PDPA documents */}
+        <div className="flex flex-col gap-3 border-t border-hairline pt-6 md:flex-row md:items-center md:justify-between">
+          <nav aria-label={tl("navLabel")} className="flex flex-wrap gap-x-5 gap-y-2">
+            {(["privacy", "cookies", "terms", "rights", "sellers"] as const).map((d) => (
+              <Link key={d} href={`/legal/${d}`} className="underline-offset-4 transition-colors hover:text-ink hover:underline">
+                {tl(`footer.${d}`)}
+              </Link>
+            ))}
+          </nav>
+          <p className="text-xs">{tl("footer.pdpa")} · © 2026 PeelPlan</p>
         </div>
       </footer>
     </>

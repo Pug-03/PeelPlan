@@ -163,7 +163,7 @@ export function DragMarquee({ children, pauseLabel, playLabel, label }: { childr
         aria-label={label}
         aria-roledescription="carousel"
         onDragStart={(e) => e.preventDefault()}
-        className={`touch-pan-y overflow-hidden py-6 outline-offset-4 select-none [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)] ${grabbing ? "cursor-grabbing" : "cursor-grab"}`}
+        className={`touch-pan-y overflow-hidden py-6 outline-offset-4 select-none ${grabbing ? "cursor-grabbing" : "cursor-grab"}`}
       >
         <div ref={track} className="flex w-max gap-5 will-change-transform">
           {children}

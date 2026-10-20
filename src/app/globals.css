@@ -264,22 +264,31 @@ dialog[open]::backdrop {
   inherits: true;
   initial-value: 2;
 }
+@property --mm {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
+}
 .intro {
-  --intro-total: 2100ms;
+  --intro-total: 2350ms;
   position: fixed;
   inset: 0;
   z-index: 100;
   cursor: pointer;
+  overflow: hidden;
   animation:
-    intro-peel 900ms cubic-bezier(0.65, 0, 0.35, 1) 1150ms both,
+    intro-peel 850ms cubic-bezier(0.7, 0, 0.3, 1) 1450ms both,
     intro-gone 1ms linear var(--intro-total) both;
 }
 .intro-sheet {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  background: radial-gradient(120% 90% at 20% 10%, rgb(255 255 255 / 0.18), transparent 55%), linear-gradient(160deg, #7c7c81, #48484a 45%, #262628);
+  overflow: hidden;
+  color: #1b1b1f;
+  /* Lime vinyl: a soft sheen from the top-left, darker towards the peeling corner. */
+  background:
+    radial-gradient(110% 80% at 18% 8%, rgb(255 255 255 / 0.55), transparent 55%),
+    linear-gradient(150deg, #e4ff6e, #d7ff3a 45%, #bde42a);
   /* Visible part: everything on the near side of the fold line x/W + y/H = peel. */
   clip-path: polygon(
     0 0,
@@ -300,82 +309,155 @@ dialog[open]::backdrop {
     calc(max(var(--peel) - 1, 0) * 100%) calc(min(var(--peel), 1) * 100%),
     calc((var(--peel) - 1) * 100%) calc((var(--peel) - 1) * 100%)
   );
-  filter: drop-shadow(-12px -12px 24px rgb(0 0 0 / 0.35));
+  filter: drop-shadow(-14px -14px 28px rgb(0 0 0 / 0.3));
+}
+.intro-cut {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: rgb(27 27 31 / 0.45);
+  stroke-width: 1.5;
+  stroke-dasharray: 0.006 0.004;
+  animation: intro-cut 700ms var(--ease-out-soft) 40ms both;
+}
+.intro-spec {
+  position: absolute;
+  top: max(4.5%, 28px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  animation: fade-up 400ms var(--ease-out-soft) 200ms both;
+}
+.intro-spec-l {
+  left: max(5%, 24px);
+}
+.intro-spec-r {
+  right: max(5%, 24px);
 }
 .intro-content {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.1rem;
-  color: #fff;
-  animation: intro-lift 700ms var(--ease-out-soft) 1100ms both;
+  justify-content: center;
+  gap: 0.6rem;
+  padding-bottom: 6vh;
+}
+.intro-badge {
+  display: grid;
+  place-items: center;
+  width: clamp(76px, 10vw, 112px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 0 2px #1b1b1f,
+    0 16px 28px rgb(0 0 0 / 0.22);
+  animation: intro-stamp 560ms cubic-bezier(0.34, 1.56, 0.64, 1) 60ms both;
 }
 .intro-mark {
-  width: clamp(72px, 12vw, 120px);
-  filter: drop-shadow(0 14px 22px rgb(0 0 0 / 0.4));
-  animation: intro-slap 620ms cubic-bezier(0.34, 1.56, 0.64, 1) 80ms both;
-}
-/* The ruler ticks on the P draw in after the slap. */
-.intro-mark g path {
-  stroke-dasharray: 3;
-  animation: intro-ticks 500ms var(--ease-out-soft) 560ms both;
+  width: 74%;
 }
 .intro-name {
   display: flex;
-  font-family: var(--font-sans);
-  font-weight: 700;
-  font-size: clamp(2.4rem, 7vw, 4.4rem);
-  letter-spacing: -0.04em;
-  line-height: 1;
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+  font-weight: 800;
+  font-size: clamp(3.6rem, 15vw, 12rem);
+  letter-spacing: -0.06em;
+  line-height: 0.9;
 }
 .intro-name span {
   display: inline-block;
-  animation: intro-letter 520ms var(--ease-out-soft) both;
+  animation: intro-letter 620ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.intro-tagline {
+  font-size: clamp(0.95rem, 1.6vw, 1.2rem);
+  font-weight: 600;
+  animation: fade-up 450ms var(--ease-out-soft) 640ms both;
+}
+.intro-slap {
+  position: absolute;
+  height: auto;
+  translate: -50% -50%;
+  rotate: var(--r);
+  filter: drop-shadow(0 10px 14px rgb(0 0 0 / 0.22));
+  animation: intro-slap 420ms cubic-bezier(0.3, 1.5, 0.6, 1) both;
 }
 .intro-ruler {
+  position: absolute;
+  left: max(6%, 20px);
+  right: max(6%, 20px);
+  bottom: max(7%, 36px);
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  width: clamp(160px, 26vw, 260px);
+  align-items: flex-end;
+  gap: 1.2rem;
 }
 .intro-ruler-line {
-  height: 10px;
-  width: 100%;
-  /* Millimetre ticks drawn left to right. */
+  flex: 1;
+  height: 16px;
+  /* Centimetre and millimetre ticks, drawn left to right as the count runs. */
   background:
-    repeating-linear-gradient(90deg, #fff 0 1.5px, transparent 1.5px 10%) bottom / 100% 10px no-repeat,
-    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.7) 0 1px, transparent 1px 2%) bottom / 100% 5px no-repeat,
-    linear-gradient(#fff, #fff) bottom / 100% 1.5px no-repeat;
+    repeating-linear-gradient(90deg, #1b1b1f 0 2px, transparent 2px 5%) bottom / 100% 16px no-repeat,
+    repeating-linear-gradient(90deg, rgb(27 27 31 / 0.55) 0 1px, transparent 1px 1%) bottom / 100% 7px no-repeat,
+    linear-gradient(#1b1b1f, #1b1b1f) bottom / 100% 2px no-repeat;
   clip-path: inset(0 100% 0 0);
-  animation: intro-draw 520ms var(--ease-out-soft) 720ms both;
+  animation: intro-draw 1000ms cubic-bezier(0.25, 0.8, 0.3, 1) 280ms both;
 }
-.intro-ruler-label {
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0;
-  animation: fade-up 400ms var(--ease-out-soft) 900ms both;
+.intro-count {
+  font-family: var(--font-instrument), serif;
+  font-style: italic;
+  font-size: clamp(2rem, 4.4vw, 3.6rem);
+  line-height: 0.8;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  animation: fade-up 300ms var(--ease-out-soft) 240ms both;
+}
+.intro-count small {
+  font-size: 0.45em;
+  font-style: normal;
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+.intro-count-n {
+  counter-reset: mm var(--mm);
+  animation: intro-count 1000ms cubic-bezier(0.25, 0.8, 0.3, 1) 280ms both;
+}
+.intro-count-n::before {
+  content: counter(mm);
 }
 
-@keyframes intro-slap {
+@keyframes intro-cut {
   from {
-    transform: scale(1.9) rotate(-14deg);
+    stroke-dashoffset: 1;
     opacity: 0;
   }
-  60% {
-    opacity: 1;
-  }
 }
-@keyframes intro-ticks {
+@keyframes intro-stamp {
   from {
-    stroke-dashoffset: 3;
+    transform: scale(2.4) rotate(-30deg);
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
   }
 }
 @keyframes intro-letter {
   from {
-    transform: translateY(0.6em) rotate(8deg);
+    transform: translateY(0.7em) rotate(10deg) scale(0.6);
     opacity: 0;
+  }
+}
+@keyframes intro-slap {
+  from {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
   }
 }
 @keyframes intro-draw {
@@ -383,10 +465,9 @@ dialog[open]::backdrop {
     clip-path: inset(0 0 0 0);
   }
 }
-@keyframes intro-lift {
+@keyframes intro-count {
   to {
-    transform: translate(-6vw, -6vh) rotate(-4deg);
-    opacity: 0;
+    --mm: 312;
   }
 }
 @keyframes intro-peel {
@@ -409,10 +490,19 @@ dialog[open]::backdrop {
 .intro-skip {
   --intro-total: 360ms;
 }
+@media (max-width: 640px) {
+  /* Phones: fewer, smaller stickers so the name keeps the stage. */
+  .intro-slap:nth-of-type(n + 6) {
+    display: none;
+  }
+  .intro-spec-r {
+    display: none;
+  }
+}
 
 /* The hero waits for the peel, so its entrance plays as the page is revealed. */
 .has-intro {
-  --hero-wait: 1450ms;
+  --hero-wait: 1700ms;
 }
 .has-intro.intro-skipped {
   --hero-wait: 200ms;
