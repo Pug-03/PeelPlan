@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { LazySvgLayer } from "@/components/LazySvgLayer";
 import { DEMO_ASSETS, LOGO_PATH, logoTransform } from "@/config/demo";
 import type { LogoFinish } from "@/config/laptops";
 import { GLOSS_DIR, lidLighting, type Linear, type Radial } from "@/lib/lighting";
@@ -105,6 +106,7 @@ const byId = new Map(VISIBLE_LIBRARY.map((s) => [s.id, s]));
 /**
  * A laptop lid drawn in true proportions: the SVG viewBox is in millimetres, so stickers and
  * lid share one physical scale no matter how large the illustration renders.
+ * `lazy` holds back the sticker images until the lid is near the viewport (the lid itself still renders).
  */
 export function LidArt({
   widthMm,
@@ -116,7 +118,9 @@ export function LidArt({
   title,
   logo,
   logoFinish = "gloss-black",
+  lazy = false,
 }: {
+  lazy?: boolean;
   logo?: LogoBox;
   logoFinish?: LogoFinish;
   widthMm: number;
@@ -128,6 +132,17 @@ export function LidArt({
   title?: string;
 }) {
   const uid = useSvgId();
+  const layer = stickers.map((s, i) => {
+    const def = byId.get(s.id);
+    if (!def) return null;
+    const w = s.w ?? def.widthMm;
+    const h = (w * def.viewBox[1]) / def.viewBox[0];
+    return (
+      <g key={i} transform={`translate(${s.x} ${s.y}) rotate(${s.r ?? 0})`}>
+        <image href={stickerSrc(def)} x={-w / 2} y={-h / 2} width={w} height={h} />
+      </g>
+    );
+  });
   return (
     <svg
       viewBox={`0 0 ${widthMm} ${heightMm}`}
@@ -144,19 +159,7 @@ export function LidArt({
       <LidSurface widthMm={widthMm} heightMm={heightMm} radiusMm={radiusMm} color={color} />
       {logo && <LogoMark logo={logo} lidColor={color} finish={logoFinish} />}
       {/* One shadow filter for the whole sticker layer instead of one per sticker. */}
-      <g filter={`url(#shadow${uid})`}>
-        {stickers.map((s, i) => {
-          const def = byId.get(s.id);
-          if (!def) return null;
-          const w = s.w ?? def.widthMm;
-          const h = (w * def.viewBox[1]) / def.viewBox[0];
-          return (
-            <g key={i} transform={`translate(${s.x} ${s.y}) rotate(${s.r ?? 0})`}>
-              <image href={stickerSrc(def)} x={-w / 2} y={-h / 2} width={w} height={h} />
-            </g>
-          );
-        })}
-      </g>
+      <g filter={`url(#shadow${uid})`}>{lazy ? <LazySvgLayer>{layer}</LazySvgLayer> : layer}</g>
     </svg>
   );
 }
