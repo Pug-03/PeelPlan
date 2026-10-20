@@ -1,7 +1,109 @@
 {
+  "chat": {
+    "title": "Messages",
+    "metaTitle": "Messages - PeelPlan",
+    "signInTitle": "Sign in to see your messages",
+    "signInBody": "Chats with shops are tied to your account.",
+    "signIn": "Sign in",
+    "tabs": {
+      "label": "Show conversations",
+      "buying": "Buying",
+      "shop": "My shop"
+    },
+    "empty": {
+      "title": "No messages yet",
+      "body": "Open any shop page and tap Chat to ask about sizes, finishes or shipping. Your conversations will show up here.",
+      "browse": "Browse shops",
+      "shop": "No buyer has messaged your shop yet. Their questions will appear here."
+    },
+    "pick": {
+      "title": "Choose a conversation",
+      "body": "Pick a chat on the left to read and reply."
+    },
+    "you": "You: {text}",
+    "photo": "Photo",
+    "orderAttached": "Order",
+    "unread": "{count} unread",
+    "testBanner": "Test mode: chats stay on this device. Open two browser tabs to try both sides.",
+    "back": "All messages",
+    "viewShop": "View shop",
+    "buyer": "Buyer",
+    "exampleShop": "Example shop, replies automatically",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "start": "Say hello. Ask about sizes, finishes or shipping times.",
+    "system": "PeelPlan",
+    "composer": {
+      "label": "Message",
+      "placeholder": "Write a message…",
+      "send": "Send",
+      "attachImage": "Attach a photo",
+      "attachOrder": "Attach an order",
+      "removeImage": "Remove photo",
+      "count": "{count}/{max}",
+      "hint": "Enter to send, Shift+Enter for a new line",
+      "failed": "Couldn't send. Please try again.",
+      "full": "This device is out of storage for test chats. Try a smaller photo.",
+      "badImage": "That file couldn't be read as an image."
+    },
+    "safety": "Never pay outside the PromptPay QR shown on your order. PeelPlan staff will never ask for your password.",
+    "orders": {
+      "title": "Attach an order",
+      "body": "Share an order so you both look at the same thing.",
+      "empty": "No orders between you yet.",
+      "cancel": "Cancel",
+      "items": "{count, plural, one {# item} other {# items}}"
+    },
+    "order": {
+      "label": "Order {code}",
+      "total": "Total ฿{total}",
+      "open": "View order",
+      "missing": "Order not available"
+    },
+    "status": {
+      "awaiting_payment": "Awaiting payment",
+      "slip_submitted": "Slip submitted",
+      "paid": "Paid",
+      "shipped": "Shipped",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "lightbox": {
+      "close": "Close photo",
+      "alt": "Photo sent in chat"
+    },
+    "report": {
+      "button": "Report",
+      "title": "Report this conversation",
+      "intro": "Tell us what went wrong. The other person won't be told who reported them.",
+      "reasonLabel": "Reason",
+      "reasons": {
+        "scam": "Asked me to pay outside PeelPlan or looks like a scam",
+        "spam": "Spam or advertising",
+        "harassment": "Harassment or threats",
+        "inappropriate": "Inappropriate photos or content",
+        "other": "Something else"
+      },
+      "noteLabel": "Details (optional)",
+      "notePlaceholder": "What happened?",
+      "submit": "Send report",
+      "cancel": "Cancel",
+      "doneTitle": "Thanks, we got your report",
+      "doneBody": "We'll review this conversation. If you were asked to pay outside your order's PromptPay QR, don't pay.",
+      "testNote": "Test mode: the report is saved on this device only.",
+      "close": "Close"
+    },
+    "notFound": {
+      "title": "Conversation not found",
+      "body": "It may belong to another account, or the link is wrong.",
+      "back": "Back to messages"
+    }
+  },
   "meta": {
     "title": "PeelPlan - See it at actual size before you stick",
-    "description": "Plan MacBook sticker layouts at true 1:1 scale, then print a placement guide accurate to ±1 mm."
+    "description": "Plan MacBook sticker layouts at true 1:1 scale, then print a placement guide accurate to ±1 mm.",
+    "ogHeadline": "See it at actual size before you stick.",
+    "ogSub": "MacBook sticker layouts at true 1:1 scale, with a print guide accurate to ±1 mm."
   },
   "notFound": {
     "title": "This page peeled off",
@@ -319,7 +421,21 @@
     "dismiss": "Dismiss",
     "storageFull": "Couldn't save the image on this device (storage full or private mode). It stays until you close the tab.",
     "myCollection": "My collection",
-    "autosaved": "Saved automatically"
+    "autosaved": "Saved automatically",
+    "search": "Search stickers",
+    "searchPlaceholder": "Search: cat, coffee, python…",
+    "clearSearch": "Clear search",
+    "groups": "Sticker categories",
+    "groupAll": "All",
+    "resultCount": "{count, plural, one {# sticker} other {# stickers}}",
+    "noResults": "Nothing matches “{query}”",
+    "noResultsHint": "Try another word in Thai or English, or pick a different category.",
+    "showAll": "Show all stickers",
+    "saveImage": "Save as image",
+    "saveImageBody": "Your lid and its stickers on a share card, ready to post.",
+    "savingImage": "Saving…",
+    "saveImageFailed": "Couldn't create the image. Try again.",
+    "lidOnlyPng": "Lid only (PNG)"
   },
   "calibrate": {
     "title": "Calibrate your screen",
@@ -526,5 +642,683 @@
     "testAccount": "Test account (simulated Google sign-in)",
     "layoutsCount": "{count, plural, one {# layout} other {# layouts}}",
     "nameLabel": "Layout name"
+  },
+  "legal": {
+    "navLabel": "Legal documents",
+    "updated": "Last updated 20 October 2026",
+    "draftNote": "Draft: this describes how PeelPlan works today and should be reviewed by a lawyer before public launch.",
+    "contact": "Privacy contact (email to be added)",
+    "footer": {
+      "privacy": "Privacy policy",
+      "cookies": "Cookie policy",
+      "terms": "Terms of use",
+      "rights": "Your data rights",
+      "sellers": "Seller terms",
+      "pdpa": "Complies with Thailand's Personal Data Protection Act B.E. 2562 (PDPA)"
+    },
+    "privacy": {
+      "title": "Privacy policy",
+      "intro": "This policy explains what personal data PeelPlan collects, why, how long we keep it, and your rights under Thailand's Personal Data Protection Act B.E. 2562 (PDPA).",
+      "sections": [
+        {
+          "h": "What we collect",
+          "p": [
+            "When you sign in with Google: the name, email and profile picture Google shares with us.",
+            "During first-time setup: your display name, birth date and, if you open a shop, the shop name, owner name, product types and description.",
+            "Your sticker layouts, uploaded sticker images and screen calibration are currently stored only in your browser, not on our servers.",
+            "When you buy from a shop: your shipping address and phone number, the items, totals and order status, any note you write, and the image of the PromptPay transfer slip you upload.",
+            "When you chat with a shop: the messages and images you send, and any report you file about a conversation.",
+            "If you run a shop: your storefront details, products, PromptPay number and account name, and your shop's links to other platforms."
+          ]
+        },
+        {
+          "h": "Why we use it",
+          "p": [
+            "To verify you and run your account.",
+            "To save and reopen your layouts.",
+            "To check minimum age: users must be 13 or older; shop owners 20 or older under the Thai Civil and Commercial Code.",
+            "To create a shop page if you sign up as a shop.",
+            "To pass your order to the shop you bought from so it can confirm your payment and ship to you, and to let you and the shop talk about it.",
+            "To look into reports of fraud, abuse or infringing listings, and to keep a record in case of a dispute."
+          ]
+        },
+        {
+          "h": "Legal basis",
+          "p": [
+            "Performance of our service contract (Section 24(3)) for your account and layouts.",
+            "Your consent (Section 19) for anything not needed to provide the service; you can withdraw it at any time.",
+            "Where the law requires it, minors under 20 need a guardian's consent."
+          ]
+        },
+        {
+          "h": "Sharing and processors",
+          "p": [
+            "We do not sell your data.",
+            "We use Google for sign-in and Supabase to store accounts once the service goes live. They may store data on servers outside Thailand; we ensure adequate safeguards under Sections 28 and 29."
+          ]
+        },
+        {
+          "h": "Orders: what the shop sees",
+          "p": [
+            "Your shipping address, phone number and payment slip are shared only with the shop you order from, so it can check your payment and send your order. Other shops and other users cannot see them.",
+            "The shop receives that information as an independent business and must use it only to fulfil your order. Shops never see your email address or birth date.",
+            "PeelPlan does not receive your payment. Your bank or e-wallet processes the PromptPay transfer under its own privacy policy."
+          ]
+        },
+        {
+          "h": "How long we keep it",
+          "p": [
+            "Account data is kept while you use the service and deleted within 30 days of a deletion request, unless the law requires longer.",
+            "Data in your browser can be removed by you at any time from your collection or browser settings.",
+            "Orders, including the shipping address and payment slip, are kept for 1 year after the order is completed or cancelled, so either side can raise a dispute, and then deleted. Unpaid orders are cancelled automatically after a few days.",
+            "Chat messages and images are kept until you or the shop delete the account. Reports are kept as long as needed to deal with them."
+          ]
+        },
+        {
+          "h": "Security",
+          "p": ["Data travels over encrypted connections (HTTPS), access is limited to what is needed, and the database uses row-level security."]
+        },
+        {
+          "h": "Your rights",
+          "p": [
+            "You can ask to access, copy, correct, delete or move your data, object, restrict its use, or withdraw consent. See Your data rights.",
+            "You can complain to Thailand's Personal Data Protection Committee (PDPC) if you believe we have broken the law."
+          ]
+        },
+        {
+          "h": "Changes",
+          "p": ["We will post significant changes on the site before they take effect."]
+        }
+      ]
+    },
+    "cookies": {
+      "title": "Cookie policy",
+      "intro": "PeelPlan keeps browser storage to a minimum and only uses what the site needs to work. We use no advertising or third-party tracking cookies.",
+      "sections": [
+        {
+          "h": "What we store in your browser",
+          "p": [
+            "Sign-in: authentication cookies that keep you logged in.",
+            "Your theme (light or dark) and language.",
+            "Layouts, uploaded sticker images and calibration, in your browser's localStorage and IndexedDB."
+          ]
+        },
+        {
+          "h": "Why there is no consent banner",
+          "p": [
+            "Everything above is strictly necessary for the service you asked for, so it doesn't need separate consent. If we ever add analytics or marketing cookies, we will ask first and you can say no."
+          ]
+        },
+        {
+          "h": "Removing it",
+          "p": ["You can clear this data in your browser settings, but the site may forget your sign-in or layouts."]
+        }
+      ]
+    },
+    "terms": {
+      "title": "Terms of use",
+      "intro": "By using PeelPlan you agree to these terms.",
+      "sections": [
+        {
+          "h": "The service",
+          "p": [
+            "PeelPlan helps you plan stickers on a MacBook lid at real size and creates a 1:1 PDF to print. Some lid measurements are estimates; check against your real device before sticking."
+          ]
+        },
+        {
+          "h": "Accounts",
+          "p": ["You must be 13 or older, and 20 or older to run a shop. You are responsible for activity under your account."]
+        },
+        {
+          "h": "Content you upload",
+          "p": [
+            "You must have the rights to images you upload. Do not upload content that infringes others' copyright or trademarks. We may remove content reported as infringing."
+          ]
+        },
+        {
+          "h": "Trademarks",
+          "p": ["MacBook is a trademark of Apple Inc. PeelPlan is not affiliated with Apple. Shops marked as examples are placeholders and do not sell anything."]
+        },
+        {
+          "h": "The marketplace",
+          "p": [
+            "PeelPlan is a venue where independent shops list stickers. When you buy, the contract of sale is between you and the shop. PeelPlan is not a party to it, is not the seller, and does not guarantee a shop's products, delivery or conduct.",
+            "Sizes shown in millimetres come from the shop. Check them before you order."
+          ]
+        },
+        {
+          "h": "Payment and refunds",
+          "p": [
+            "You pay the shop directly by PromptPay to the account the shop provides, then upload your transfer slip. PeelPlan never receives or holds your money, so it cannot issue refunds, reverse transfers or release payments.",
+            "Before paying, check that the account name in your banking app matches the name shown on the order. Never pay to a different account sent to you in chat.",
+            "Refunds, returns and missing or damaged parcels are settled between you and the shop. If you cannot agree, you may contact your bank or the Office of the Consumer Protection Board (OCPB)."
+          ]
+        },
+        {
+          "h": "Disputes and enforcement",
+          "p": [
+            "Report a shop or a conversation if something goes wrong. We may look at the order record and chat to help, but we do not decide disputes between buyers and shops.",
+            "We may hide listings, suspend or close shops and accounts that break these terms, receive repeated complaints, or appear to be fraudulent."
+          ]
+        },
+        {
+          "h": "What may not be sold",
+          "p": [
+            "Counterfeit stickers, or designs that copy other people's characters, logos, artwork or trademarks without permission. Shops must own the rights to what they sell or hold a licence.",
+            "Anything illegal in Thailand, hateful, sexually explicit, or that encourages violence; personal data of other people; and anything that is not a sticker or a closely related accessory."
+          ]
+        },
+        {
+          "h": "Chat",
+          "p": [
+            "Use chat for questions and orders. No harassment, threats, spam, or attempts to move payment to unrelated accounts or links. Do not share other people's personal data.",
+            "Messages are visible to you and the shop. We may review a conversation when it is reported."
+          ]
+        },
+        {
+          "h": "Other platforms",
+          "p": [
+            "Shops can link to their pages on TikTok Shop, Shopee, Lazada, Instagram, Facebook or LINE. Purchases made there are governed by that platform's own terms and protections, not by PeelPlan."
+          ]
+        },
+        {
+          "h": "Limitation of liability",
+          "p": [
+            "We aim for ±1 mm accuracy, but results depend on your printer and settings. We are not liable for damage from applying stickers to your device."
+          ]
+        },
+        {
+          "h": "Governing law",
+          "p": ["These terms are governed by the laws of Thailand."]
+        }
+      ]
+    },
+    "rights": {
+      "title": "Your data rights",
+      "intro": "Under the PDPA you have rights over your personal data and can use them free of charge. We reply within 30 days.",
+      "sections": [
+        {
+          "h": "Your rights",
+          "p": [
+            "Access and get a copy (Section 30)",
+            "Receive or transfer your data (Section 31)",
+            "Object to collection or use (Section 32)",
+            "Erasure or anonymisation (Section 33)",
+            "Restrict use (Section 34)",
+            "Correction (Section 35)",
+            "Withdraw consent at any time (Section 19)"
+          ]
+        },
+        {
+          "h": "How to use them",
+          "p": [
+            "For data in your browser, delete layouts yourself on your collection page and sign out at any time.",
+            "For account data, contact us below with the email you sign in with. We may verify your identity first."
+          ]
+        },
+        {
+          "h": "Contact",
+          "p": ["Privacy contact: (email to be added)", "Complaints: Personal Data Protection Committee, www.pdpc.or.th"]
+        }
+      ]
+    },
+    "sellers": {
+      "title": "Seller terms",
+      "intro": "These terms apply on top of the Terms of use when you open a shop on PeelPlan. By listing products you agree to them.",
+      "sections": [
+        {
+          "h": "Who can sell",
+          "p": [
+            "You must be 20 or older and give your real full name when you apply. Shops are reviewed before they go public, and changing your shop's name or description sends it back for review.",
+            "You sell as an independent business. You are the seller in every sale and are responsible for your own taxes, permits and consumer obligations."
+          ]
+        },
+        {
+          "h": "Listings",
+          "p": [
+            "Give accurate sizes in millimetres, finish and photos. Buyers plan their layouts from your measurements, so a sticker should match its listed size to within about 1 mm.",
+            "Keep stock honest. Set a quantity if you have limited stock, or leave it empty only for made-to-order items you can really produce."
+          ]
+        },
+        {
+          "h": "Payment",
+          "p": [
+            "Buyers pay you directly by PromptPay to the number and account name you set. Make sure both are correct and belong to you or your business.",
+            "Confirm a slip only after you see the money in your account, and reject it honestly if you don't. Never ask buyers to pay outside the order or to a different account.",
+            "PeelPlan does not collect, hold or pass on payments and charges no commission at this stage."
+          ]
+        },
+        {
+          "h": "Shipping, refunds and cancellations",
+          "p": [
+            "Ship within the time you state in your shop, add a tracking number when you can, and keep proof of postage.",
+            "If you cannot fulfil an order, cancel it and refund the buyer in full yourself. Refunds, returns and damaged parcels are handled directly between you and the buyer.",
+            "Use buyers' addresses, phone numbers and slips only to fulfil their orders. Do not keep them longer than you need, share them, or use them for marketing."
+          ]
+        },
+        {
+          "h": "Intellectual property",
+          "p": [
+            "You confirm you own or are licensed to sell every design you list. No counterfeits, fan art of protected characters, or copied logos, artwork or trademarks.",
+            "We remove listings reported as infringing and may close shops after repeated reports."
+          ]
+        },
+        {
+          "h": "Enforcement",
+          "p": [
+            "We may hide listings, delist products, or suspend or close a shop that breaks these terms, receives repeated complaints, or appears fraudulent. Where possible we will tell you why.",
+            "You can close your shop at any time. Open orders must still be fulfilled or refunded."
+          ]
+        }
+      ]
+    }
+  },
+  "seller": {
+    "title": "Seller dashboard",
+    "loading": "Loading your shop",
+    "testMode": "Test mode: your shop, products and orders are saved on this device only. Nobody else can see them, and clearing this browser's data removes them.",
+    "manageShop": "Manage shop",
+    "collectionShop": "Shop: {name}",
+    "create": {
+      "title": "Set up your shop",
+      "body": "Sell your stickers on PeelPlan. Buyers try them on their MacBook at real size, then pay you directly by PromptPay.",
+      "fromApplication": "Set up my shop",
+      "submit": "Create shop",
+      "review": "New shops are reviewed by our team before they appear publicly, usually within a day. You can add products meanwhile."
+    },
+    "banner": {
+      "approved": "Your shop is live.",
+      "viewShop": "View my shop",
+      "rejected": "Your shop wasn't approved, so buyers can't see it. Contact the PeelPlan team if you think this is a mistake.",
+      "pendingTitle": "Waiting for approval.",
+      "pendingBody": "Our team checks new shops before buyers can see them, usually within a day. Add products and set up PromptPay meanwhile.",
+      "approveForTesting": "Approve for testing"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "products": "Products",
+      "orders": "Orders",
+      "settings": "Shop settings"
+    },
+    "overview": {
+      "needsAction": "Needs your action",
+      "toCheck": "Slips to check",
+      "toShip": "Paid, ready to ship",
+      "summary": "Summary",
+      "revenue": "Revenue this month",
+      "revenueHint": "Orders you confirmed as paid, shipped or completed",
+      "products": "Products · {active} on sale",
+      "messages": "Unread messages",
+      "noPromptPay": "Add your PromptPay in Shop settings so buyers can pay you. Without it, orders can't be paid."
+    },
+    "orders": {
+      "filter": "Filter orders",
+      "filters": {
+        "all": "All",
+        "check": "Check slip",
+        "ship": "To ship",
+        "shipped": "Shipped",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "emptyAll": "No orders yet",
+      "emptyAllBody": "When someone orders, it shows up here. Check their slip, then ship.",
+      "empty": "No orders with this status",
+      "items": "{count, plural, one {# item} other {# items}}"
+    },
+    "status": {
+      "awaiting_payment": "Awaiting payment",
+      "slip_submitted": "Check slip",
+      "paid": "Paid · to ship",
+      "shipped": "Shipped",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "products": {
+      "count": "{count, plural, one {# product} other {# products}}",
+      "add": "Add product",
+      "emptyTitle": "No products yet",
+      "emptyBody": "Add your first sticker with its real size in mm, so buyers can try it on their MacBook before they buy.",
+      "hidden": "Hidden",
+      "size": "{w} × {h} mm",
+      "madeToOrderShort": "Made to order",
+      "inStock": "{count} in stock",
+      "confirmDelete": "Delete this product?",
+      "keep": "Keep",
+      "delete": "Delete",
+      "edit": "Edit",
+      "addTitle": "Add product",
+      "editTitle": "Edit product",
+      "close": "Close",
+      "artwork": "Sticker image",
+      "sourceUpload": "Upload image",
+      "sourceLibrary": "From the PeelPlan library",
+      "previewAlt": "Sticker preview",
+      "upload": "Image file",
+      "uploadHint": "PNG with a transparent background works best: it sits on the lid exactly like the real die-cut sticker.",
+      "searchLibrary": "Search stickers",
+      "libraryHint": "Picking one also fills in its size. Check it matches what you print.",
+      "noResults": "No stickers match.",
+      "name": "Product name",
+      "sizeTitle": "Real size",
+      "sizeHint": "Measure the real sticker with a ruler, edge to edge. Buyers place it on their lid at exactly this size.",
+      "width": "Width (mm)",
+      "height": "Height (mm)",
+      "trueScale": "Real size: {w} × {h} mm (about {wcm} × {hcm} cm)",
+      "sizeRange": "5–400 mm, up to one decimal place",
+      "price": "Price (THB)",
+      "priceHint": "1–100,000 baht, per piece",
+      "stock": "Stock",
+      "madeToOrder": "Made to order (no stock limit)",
+      "finish": "Finish",
+      "finishes": {
+        "glossy": "Glossy",
+        "matte": "Matte",
+        "clear": "Clear",
+        "holo": "Holographic"
+      },
+      "active": "On sale",
+      "activeHint": "Turn off to hide it from your shop without deleting it.",
+      "cancel": "Cancel",
+      "save": "Save product",
+      "saving": "Saving…"
+    },
+    "settings": {
+      "identity": "Shop details",
+      "name": "Shop name",
+      "renameNote": "Renaming a live shop sends it back for a quick review.",
+      "renameWarning": "Saving a new name sends your shop back to review. It is hidden from buyers until approved again.",
+      "about": "About the shop",
+      "aboutHint": "What you make and what makes it yours. Up to 1,000 characters.",
+      "city": "City",
+      "cityHint": "Where you ship from, e.g. Bangkok",
+      "productTypes": "What you make",
+      "look": "Look",
+      "tint": "Accent colour",
+      "tints": {
+        "lime": "Lime",
+        "pink": "Pink",
+        "sky": "Sky blue",
+        "butter": "Butter yellow",
+        "lavender": "Lavender",
+        "mint": "Mint",
+        "grey": "Grey"
+      },
+      "logo": "Logo",
+      "logoHint": "Square, at least 400 px",
+      "cover": "Cover image",
+      "coverHint": "Wide, about 3:1",
+      "removeImage": "Remove image",
+      "shipping": "Shipping",
+      "shippingFee": "Shipping fee per order (THB)",
+      "shippingFeeHint": "0 for free shipping on every order",
+      "freeFrom": "Free shipping from (THB)",
+      "freeFromHint": "Optional. Leave empty if there's no free shipping.",
+      "promptpay": "PromptPay",
+      "promptpayBody": "Buyers pay you directly by scanning a PromptPay QR and upload their transfer slip. PeelPlan never holds the money.",
+      "promptpayId": "PromptPay number",
+      "promptpayIdHint": "Mobile number (10 digits) or national / tax ID (13 digits)",
+      "promptpayName": "Account name",
+      "promptpayNameHint": "Exactly as the bank shows it, so buyers can check before paying",
+      "qrLabel": "Your PromptPay QR",
+      "qrEmpty": "Enter a PromptPay number to preview your QR",
+      "qrCheck": "Scan with your own banking app to check the name before going live.",
+      "links": "Other places you sell",
+      "linksBody": "Optional. Links appear on your shop page. Full links starting with https://",
+      "linkKinds": {
+        "tiktok": "TikTok Shop",
+        "shopee": "Shopee",
+        "lazada": "Lazada",
+        "instagram": "Instagram",
+        "facebook": "Facebook",
+        "line": "LINE"
+      },
+      "linkPlaceholders": {
+        "tiktok": "https://www.tiktok.com/@yourshop",
+        "shopee": "https://shopee.co.th/yourshop",
+        "lazada": "https://www.lazada.co.th/shop/yourshop",
+        "instagram": "https://www.instagram.com/yourshop",
+        "facebook": "https://www.facebook.com/yourshop",
+        "line": "https://line.me/R/ti/p/@yourshop"
+      },
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saved": "Saved"
+    },
+    "errors": {
+      "shopName": "Shop name must be 2–80 characters.",
+      "productTypes": "Pick at least one.",
+      "about": "Up to 1,000 characters.",
+      "city": "Up to 80 characters.",
+      "productName": "Enter a name (up to 80 characters).",
+      "image": "Add an image or pick a sticker.",
+      "badImage": "That file couldn't be read as an image. Try a PNG or JPG.",
+      "mm": "5–400 mm, up to one decimal place.",
+      "price": "Whole baht, 1–100,000.",
+      "stock": "Enter a whole number, or choose made to order.",
+      "shipping": "Whole baht, 0–1,000.",
+      "freeShipping": "Whole baht, 1–100,000, or leave empty.",
+      "promptpayId": "Enter a 10-digit mobile number or a 13-digit ID.",
+      "promptpayName": "Enter the account name (2–120 characters).",
+      "link": "Enter a full https:// link.",
+      "save": "Couldn't save. Try again.",
+      "storageFull": "This device's storage is full. Use smaller images or remove some.",
+      "fixFields": "Check the highlighted fields."
+    }
+  },
+  "market": {
+    "exampleBadge": "Example shop",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "total": "Total",
+    "free": "Free",
+    "testMode": {
+      "title": "Test mode",
+      "body": "Shops, orders and chats are stored only in this browser. No real money or parcels are involved."
+    },
+    "status": {
+      "awaiting_payment": "Awaiting payment",
+      "slip_submitted": "Slip sent",
+      "paid": "Paid",
+      "shipped": "Shipped",
+      "completed": "Received",
+      "cancelled": "Cancelled"
+    },
+    "header": {
+      "cart": "Cart",
+      "cartCount": "Cart, {count, plural, one {# item} other {# items}}",
+      "orders": "My orders",
+      "messages": "Messages",
+      "messagesUnread": "Messages, {count} unread"
+    },
+    "shopPage": {
+      "add": "Add to cart",
+      "addAria": "Add {name} to cart",
+      "added": "Added {name} to your cart",
+      "viewCart": "View cart",
+      "soldOut": "Sold out",
+      "left": "Only {n} left",
+      "noProducts": "This shop hasn't listed anything yet. Check back soon.",
+      "elsewhere": "Buy from this shop on other platforms",
+      "newTab": "(opens in a new tab)",
+      "shippingFlat": "Shipping {fee} per order",
+      "shippingFree": "Shipping {fee} per order, free from {from}",
+      "paymentTitle": "Payment",
+      "paymentBody": "Pay the shop directly by PromptPay, then attach the slip on the order page. PeelPlan never holds the money.",
+      "notFoundTitle": "Shop not found",
+      "notFoundBody": "It may have closed, still be waiting for review, or the link may be wrong.",
+      "browseShops": "See all shops"
+    },
+    "cart": {
+      "title": "Cart",
+      "emptyTitle": "Your cart is empty",
+      "emptyBody": "Pick stickers from any shop. Try them on your lid first, then add them here.",
+      "browse": "Browse sticker shops",
+      "separateNote": "Each shop is paid separately, by PromptPay straight to the shop's account. Check out one shop at a time.",
+      "shopGone": "This shop is no longer selling",
+      "shopClosed": "This shop isn't taking orders right now. You can remove these items.",
+      "itemGone": "This item is no longer available",
+      "unavailable": "No longer available. Remove it to check out.",
+      "onlyLeft": "Only {n} left. Lower the quantity to check out.",
+      "qtyLabel": "Quantity of {name}",
+      "decrease": "Decrease quantity",
+      "increase": "Increase quantity",
+      "remove": "Remove",
+      "removeAria": "Remove {name} from cart",
+      "freeFrom": "Add {amount} more for free shipping",
+      "checkout": "Check out this shop",
+      "fixFirst": "Fix the items above before checking out."
+    },
+    "checkout": {
+      "title": "Checkout",
+      "from": "From {shop}",
+      "backToCart": "Back to cart",
+      "nothingTitle": "Nothing from this shop in your cart",
+      "nothingBody": "You may have ordered already, or removed the items.",
+      "addressTitle": "Shipping address",
+      "fields": {
+        "name": "Recipient name",
+        "phone": "Phone",
+        "line1": "Address",
+        "district": "District",
+        "province": "Province",
+        "postcode": "Postcode"
+      },
+      "placeholders": {
+        "line1": "House no., soi, road, subdistrict",
+        "phone": "08x xxx xxxx",
+        "postcode": "10xxx"
+      },
+      "note": "Note to the shop",
+      "optional": "optional",
+      "notePlaceholder": "e.g. waterproof packing, or a good time to deliver",
+      "pdpaTitle": "Your personal data",
+      "pdpaBody": "Your name, phone and address go to {shop} only to ship this order. Details are in our <link>privacy policy</link>.",
+      "agree": "I agree to share my shipping details with {shop} to ship this order",
+      "summary": "Order summary",
+      "payNext": "Next: scan the shop's PromptPay QR to pay, then attach the slip on the order page.",
+      "place": "Place order · {total}",
+      "placing": "Placing order…",
+      "errors": {
+        "required": "Please fill this in",
+        "phone": "Use 9–10 digits starting with 0",
+        "postcode": "Postcode must be 5 digits",
+        "agree": "Please agree before placing the order"
+      },
+      "submitErrors": {
+        "out-of-stock": "Some items don't have enough stock any more. Adjust your cart and try again.",
+        "product-unavailable": "Some items are no longer sold. Remove them from your cart and try again.",
+        "shop-unavailable": "This shop isn't taking orders right now.",
+        "storage-full": "This device's storage is full. Remove old orders or chats with images first.",
+        "generic": "Couldn't place the order. Please try again."
+      }
+    },
+    "orders": {
+      "title": "My orders",
+      "subtitle": "Track payment and delivery for each order.",
+      "items": "{count, plural, one {# item} other {# items}}",
+      "emptyTitle": "No orders yet",
+      "emptyBody": "Orders show up here once you buy stickers.",
+      "browse": "Browse sticker shops",
+      "sellerHint": "Orders customers placed with {shop} are in the seller dashboard.",
+      "sellerLink": "Go to seller dashboard"
+    },
+    "order": {
+      "title": "Order",
+      "progress": "Order progress",
+      "notFoundTitle": "Order not found",
+      "notFoundBody": "It may not exist, or this account isn't the buyer or the shop for it.",
+      "toOrders": "My orders",
+      "toSeller": "Seller dashboard",
+      "chatShop": "Chat with shop",
+      "chatBuyer": "Chat with buyer",
+      "viewAs": "View as",
+      "roles": {
+        "buyer": "Buyer",
+        "shop": "Shop"
+      },
+      "testBody": "Everything is stored only on this device. When testing with your own shop, the same account is both buyer and shop: switch views below.",
+      "itemsTitle": "Items ({count})",
+      "addressTitle": "Shipping address",
+      "addressUse": "Use these details only to ship this order.",
+      "noteTitle": "Note from the buyer",
+      "cancelledAt": "Cancelled on {when}",
+      "reason": "Reason: {reason}",
+      "pay": {
+        "title": "Pay the shop by PromptPay",
+        "qrLabel": "PromptPay QR for {amount} to {name}",
+        "exampleQr": "Example shop: no payable QR",
+        "exampleNote": "This is an example shop. Do not transfer real money. Attach any image as a slip to see the next steps.",
+        "noQr": "The shop hasn't set up PromptPay",
+        "noQrHint": "The shop hasn't added PromptPay details yet. Chat with them to ask how to pay.",
+        "amount": "Amount to pay",
+        "accountName": "Account name",
+        "code": "Order code",
+        "step1": "Scan the QR with your banking app; the amount fills in automatically.",
+        "step2": "Check the receiving account name is \"{name}\" before you confirm.",
+        "step2Generic": "Check the receiving account name matches the shop before you confirm.",
+        "step3": "Attach the slip below. The shop checks it and confirms your payment."
+      },
+      "uploadSlip": "Attach transfer slip",
+      "slipPreview": "Selected slip",
+      "sendSlip": "Send slip to shop",
+      "chooseAnother": "Choose another image",
+      "slipEnlarge": "View slip full size",
+      "slipTitle": "Transfer slip",
+      "close": "Close",
+      "received": "I received it",
+      "buyer": {
+        "slipTitle": "Slip sent, waiting for the shop",
+        "slipBody": "The shop will check the amount and confirm. If the slip doesn't match, the order comes back here for a new one.",
+        "paidTitle": "The shop confirmed your payment",
+        "paidBody": "They're getting it ready to ship. The tracking number shows here once it's sent.",
+        "shippedTitle": "On its way",
+        "shippedBody": "Track it with the number below. Once it arrives, please confirm for the shop.",
+        "doneTitle": "Order complete",
+        "doneBody": "Thanks for supporting this shop. Enjoy your stickers."
+      },
+      "seller": {
+        "waitingTitle": "Waiting for the buyer to pay",
+        "waitingBody": "The buyer pays {amount} to your PromptPay and attaches the slip here.",
+        "checkTitle": "Check the transfer slip",
+        "checkBody": "Make sure {amount} actually arrived in your banking app before confirming (order {code}).",
+        "confirm": "Confirm payment received",
+        "reject": "Slip doesn't match",
+        "rejectHint": "\"Slip doesn't match\" sends the order back to awaiting payment so the buyer can attach a new slip.",
+        "shipTitle": "Ready to ship",
+        "shipBody": "Pack the order, then add the carrier and tracking number. The buyer sees it right away.",
+        "carrier": "Carrier",
+        "trackingNo": "Tracking number",
+        "trackingRequired": "Please add the tracking number",
+        "markShipped": "Mark as shipped",
+        "shippedTitle": "Shipped",
+        "shippedBody": "Waiting for the buyer to confirm they received it.",
+        "doneTitle": "Order complete",
+        "doneBody": "The buyer confirmed they received it."
+      },
+      "cancel": {
+        "open": "Cancel order",
+        "title": "Cancel this order?",
+        "body": "This can't be undone. If money was already transferred, sort out the refund with the other side in chat.",
+        "reason": "Reason",
+        "optional": "optional",
+        "reasonRequired": "Please tell the buyer why",
+        "keep": "Keep order",
+        "confirm": "Cancel order"
+      },
+      "errors": {
+        "bad-image": "Couldn't open this image. Try a JPG or PNG.",
+        "storage-full": "This device's storage is full. Try a smaller image.",
+        "generic": "Something went wrong. Please try again."
+      }
+    },
+    "carriers": {
+      "thailand-post": "Thailand Post",
+      "kerry": "Kerry Express",
+      "flash": "Flash Express",
+      "jt": "J&T Express",
+      "ninjavan": "Ninja Van",
+      "other": "Other"
+    }
   }
 }
