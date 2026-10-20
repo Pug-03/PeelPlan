@@ -144,7 +144,14 @@ function StatusBanner({ shop }: { shop: Shop }) {
     return (
       <div role="status" className="flex items-start gap-3 rounded-2xl bg-[#FDE2E2] px-4 py-3 text-sm text-[#8A1F24]">
         <XCircle className="mt-0.5 size-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-        <span>{t("rejected")}</span>
+        <span>
+          {t("rejected")}
+          {shop.statusReason && (
+            <span className="mt-1 block">
+              <strong className="font-semibold">{t("reason")}</strong> {shop.statusReason}
+            </span>
+          )}
+        </span>
       </div>
     );
   return (
@@ -153,6 +160,11 @@ function StatusBanner({ shop }: { shop: Shop }) {
         <Clock className="mt-0.5 size-4 shrink-0" strokeWidth={2} aria-hidden="true" />
         <span>
           <strong className="font-semibold">{t("pendingTitle")}</strong> {t("pendingBody")}
+          {shop.statusReason && (
+            <span className="mt-1 block">
+              <strong className="font-semibold">{t("reason")}</strong> {shop.statusReason}
+            </span>
+          )}
         </span>
       </div>
       {TEST_MODE && (

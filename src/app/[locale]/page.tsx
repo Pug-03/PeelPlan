@@ -19,6 +19,7 @@ import { BreakFrame } from "@/components/landing/BreakFrame";
 import { KineticBand } from "@/components/landing/KineticBand";
 import { SmoothScroll } from "@/components/landing/SmoothScroll";
 import { LAPTOP_MODELS, getLaptopModel, lidGeometry } from "@/config/laptops";
+import { FeedbackLink } from "@/features/feedback/FeedbackLink";
 import { Link } from "@/i18n/navigation";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]">): Promise<Metadata> {
@@ -259,6 +260,7 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
       </main>
 
       <footer className="mx-auto flex max-w-7xl flex-col gap-8 px-5 pt-6 pb-12 text-sm text-muted sm:px-8">
+        <FeedbackLink className="border-b border-hairline pt-10 pb-10" />
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <Wordmark className="text-ink" />
           <div className="max-w-[60ch] space-y-1 md:text-right">

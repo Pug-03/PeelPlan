@@ -5,6 +5,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { FullscreenKey } from "@/components/FullscreenKey";
 import { ThemeScript, ThemeSync } from "@/components/ThemeSync";
+import { VisitTracker } from "@/features/analytics/VisitTracker";
 import { routing } from "@/i18n/routing";
 import { SITE_URL } from "@/lib/site";
 import "../globals.css";
@@ -64,6 +65,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
         <NextIntlClientProvider>
           <ThemeSync />
           <FullscreenKey />
+          <VisitTracker />
           {children}
         </NextIntlClientProvider>
       </body>

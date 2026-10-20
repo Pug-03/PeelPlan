@@ -36,9 +36,20 @@ export type Shop = {
   freeShippingFromThb?: number;
   productTypes: string[];
   status: ShopStatus;
+  /** Why staff rejected (or paused) the shop; shown to the seller. */
+  statusReason?: string;
   createdAt: string;
   /** Built-in example shop: read-only, cannot receive real payments. */
   example?: boolean;
+};
+
+/** A shop as the admin sees it: owner's name and a few counts for review. */
+export type AdminShop = Shop & {
+  ownerName: string;
+  productCount: number;
+  orderCount: number;
+  /** Orders placed in the last 30 days. */
+  recentOrderCount: number;
 };
 
 export const FINISHES = ["glossy", "matte", "clear", "holo"] as const;

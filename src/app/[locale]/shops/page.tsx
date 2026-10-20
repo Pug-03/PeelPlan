@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { LidArt } from "@/components/LidArt";
 import { SiteHeader } from "@/components/SiteHeader";
+import { FeedbackFooter } from "@/features/feedback/FeedbackFooter";
 import { EXAMPLE_LAYOUTS } from "@/components/landing/layouts";
 import { DEMO_SHOPS, shopSlug } from "@/config/demoShops";
 import { getLaptopModel, lidGeometry } from "@/config/laptops";
@@ -84,6 +85,7 @@ export default async function ShopsIndex({ params }: Props) {
 
         <p className="text-xs text-muted">{t("demoNote")}</p>
       </main>
+      <FeedbackFooter />
     </>
   );
 }

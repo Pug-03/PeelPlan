@@ -16,7 +16,7 @@
  */
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 import { EXAMPLE_PRODUCTS, EXAMPLE_SHOPS, type MarketStore } from "./store";
-import { LINK_KINDS, type Address, type Finish, type Message, type Order, type OrderStatus, type Product, type Shop, type ShopLinks, type ShopStatus, type Thread } from "./types";
+import { LINK_KINDS, type Address, type AdminShop, type Finish, type Message, type Order, type OrderStatus, type Product, type Shop, type ShopLinks, type ShopStatus, type Thread } from "./types";
 
 /* ---------- client, errors, events ---------- */
 
@@ -147,13 +147,15 @@ type ShopRow = {
   free_shipping_from_thb: number | string | null;
   product_types: string[];
   status: ShopStatus;
+  /** Added in 0003: staff's reason for rejecting / pausing, readable by the owner. */
+  status_reason?: string | null;
   created_at: string;
 };
 /** shops_public: no owner identity, no PromptPay. */
-type PublicShopRow = Omit<ShopRow, "owner_id" | "description" | "promptpay_id" | "promptpay_name" | "status"> & { about: string };
+type PublicShopRow = Omit<ShopRow, "owner_id" | "description" | "promptpay_id" | "promptpay_name" | "status" | "status_reason"> & { about: string };
 
 const SHOP_COLS =
-  "id, owner_id, slug, name, description, city, tint, logo_url, cover_url, links, promptpay_id, promptpay_name, shipping_thb, free_shipping_from_thb, product_types, status, created_at";
+  "id, owner_id, slug, name, description, city, tint, logo_url, cover_url, links, promptpay_id, promptpay_name, shipping_thb, free_shipping_from_thb, product_types, status, status_reason, created_at";
 
 function toShop(r: ShopRow | PublicShopRow): Shop {
   const own = "owner_id" in r ? r : null;
@@ -173,6 +175,7 @@ function toShop(r: ShopRow | PublicShopRow): Shop {
     freeShippingFromThb: optNum(r.free_shipping_from_thb),
     productTypes: r.product_types,
     status: own ? own.status : "approved",
+    statusReason: own?.status_reason ?? undefined,
     createdAt: r.created_at,
   };
 }
@@ -519,7 +522,33 @@ export const supabaseStore: MarketStore = {
     emit();
   },
 
-  // approveForTesting: intentionally absent. Shops are approved by staff (service role / dashboard).
+  // approveForTesting: intentionally absent. Shops are approved by staff (admin page / service role).
+
+  async listAllShops() {
+    // Admin-only RPC (raises 'not-admin' otherwise); returns every shop with owner name and counts.
+    type Row = ShopRow & { owner_name: string; product_count: number; order_count: number; recent_order_count: number };
+    const rows = (check(await db().rpc("admin_list_shops")) as Row[] | null) ?? [];
+    const real: AdminShop[] = rows.map((r) => ({
+      ...toShop(r),
+      ownerName: r.owner_name,
+      productCount: num(r.product_count),
+      orderCount: num(r.order_count),
+      recentOrderCount: num(r.recent_order_count),
+    }));
+    const examples: AdminShop[] = EXAMPLE_SHOPS.map((s) => ({
+      ...s,
+      ownerName: "PeelPlan",
+      productCount: EXAMPLE_PRODUCTS.filter((p) => p.shopId === s.id).length,
+      orderCount: 0,
+      recentOrderCount: 0,
+    }));
+    return [...real, ...examples];
+  },
+  async setShopStatus(shopId, status, reason) {
+    if (!isUuid(shopId)) throw new Error("not-found");
+    check(await db().rpc("set_shop_status", { p_shop_id: shopId, p_status: status, p_reason: reason?.trim() || null }));
+    emit();
+  },
 
   subscribe(cb) {
     listeners.add(cb);

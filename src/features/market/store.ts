@@ -11,10 +11,10 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { DEMO_SHOPS } from "@/config/demoShops";
 import { AUTH_ENABLED } from "@/lib/supabase/config";
 import { VISIBLE_LIBRARY, stickerThumb } from "@/stickers/library";
-import type { Address, Message, Order, OrderStatus, Product, Shop, Thread } from "./types";
+import type { Address, AdminShop, Message, Order, OrderStatus, Product, Shop, ShopStatus, Thread } from "./types";
 
 export type NewProduct = Omit<Product, "id" | "shopId" | "createdAt">;
-export type ShopPatch = Partial<Omit<Shop, "id" | "ownerId" | "status" | "createdAt" | "example">>;
+export type ShopPatch = Partial<Omit<Shop, "id" | "ownerId" | "status" | "statusReason" | "createdAt" | "example">>;
 
 export interface MarketStore {
   listShops(): Promise<Shop[]>;
@@ -45,6 +45,12 @@ export interface MarketStore {
 
   /** Test mode only: let the tester approve their own pending shop. */
   approveForTesting?(shopId: string): Promise<void>;
+
+  /* Admin (optional so older/partial backends still type-check; both built-in backends implement them). */
+  /** Every shop in any status, newest first. Supabase: admins only (RPC admin_list_shops). */
+  listAllShops?(): Promise<AdminShop[]>;
+  /** Approve / reject / send back to review. `reason` is shown to the seller (required to reject). */
+  setShopStatus?(shopId: string, status: ShopStatus, reason?: string): Promise<void>;
   /** Fires after any change, so views can reload. */
   subscribe(cb: () => void): () => void;
 }
@@ -162,6 +168,20 @@ function mutate<T>(fn: (d: LocalData) => T): T {
 
 const allShops = (d: LocalData) => [...d.shops, ...EXAMPLE_SHOPS];
 const allProducts = (d: LocalData) => [...d.products, ...EXAMPLE_PRODUCTS];
+
+/** Test mode keeps one simulated account per browser: its name is the only owner name we know. */
+function localOwnerNames(): Map<string, string> {
+  try {
+    const s = JSON.parse(localStorage.getItem("peelplan.session.v1") || "null") as {
+      user?: { id: string; name: string };
+      profile?: { displayName?: string; shop?: { ownerName?: string } } | null;
+    } | null;
+    if (!s?.user?.id) return new Map();
+    return new Map([[s.user.id, s.profile?.shop?.ownerName || s.profile?.displayName || s.user.name]]);
+  } catch {
+    return new Map();
+  }
+}
 
 const EXAMPLE_REPLY =
   "ร้านนี้เป็นร้านตัวอย่างสำหรับทดลองระบบ ข้อความนี้ตอบกลับอัตโนมัติ / This is an example shop for testing; this reply is automatic.";
@@ -368,7 +388,40 @@ export const localStore: MarketStore = {
   async approveForTesting(shopId) {
     mutate((d) => {
       const s = d.shops.find((x) => x.id === shopId);
-      if (s) s.status = "approved";
+      if (s) {
+        s.status = "approved";
+        delete s.statusReason;
+      }
+    });
+  },
+
+  async listAllShops() {
+    const d = load();
+    const owner = localOwnerNames();
+    const monthAgo = Date.now() - 30 * 86_400_000;
+    return [...d.shops]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .concat(EXAMPLE_SHOPS)
+      .map((s) => {
+        const orders = d.orders.filter((o) => o.shopId === s.id);
+        return {
+          ...s,
+          ownerName: s.example ? "PeelPlan" : (owner.get(s.ownerId) ?? ""),
+          productCount: allProducts(d).filter((p) => p.shopId === s.id).length,
+          orderCount: orders.length,
+          recentOrderCount: orders.filter((o) => Date.parse(o.createdAt) >= monthAgo).length,
+        };
+      });
+  },
+  async setShopStatus(shopId, status, reason) {
+    const why = reason?.trim().slice(0, 500) || undefined;
+    if (status === "rejected" && !why) throw new Error("reason-required");
+    mutate((d) => {
+      const s = d.shops.find((x) => x.id === shopId);
+      if (!s) throw new Error("not-found");
+      s.status = status;
+      if (status === "approved" || !why) delete s.statusReason;
+      else s.statusReason = why;
     });
   },
   subscribe(cb) {

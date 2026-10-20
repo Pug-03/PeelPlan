@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteHeader } from "@/components/SiteHeader";
+import { FeedbackFooter } from "@/features/feedback/FeedbackFooter";
 import { Link } from "@/i18n/navigation";
 
 /** Legal documents (PDPA). Text lives in messages under `legal.<doc>`. */
@@ -69,6 +70,7 @@ export default async function LegalPage({ params }: Props) {
           </div>
         </article>
       </main>
+      <FeedbackFooter width="max-w-6xl" />
     </>
   );
 }

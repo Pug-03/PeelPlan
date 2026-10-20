@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteHeader } from "@/components/SiteHeader";
+import { FeedbackFooter } from "@/features/feedback/FeedbackFooter";
 import { DEMO_SHOPS, getDemoShop, type DemoShop } from "@/config/demoShops";
 import { PRODUCT_TYPES } from "@/config/onboarding";
 import { ShopLoader } from "./ShopLoader";
@@ -58,6 +59,7 @@ export default async function ShopPage({ params, searchParams }: PageProps<"/[lo
     <>
       <SiteHeader />
       <main id="main">{shop ? <ShopView demo={shop} preview={preview} /> : <ShopLoader slug={slug} />}</main>
+      <FeedbackFooter />
     </>
   );
 }

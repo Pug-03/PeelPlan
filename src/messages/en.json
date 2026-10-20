@@ -668,7 +668,9 @@
             "Your sticker layouts, uploaded sticker images and screen calibration are currently stored only in your browser, not on our servers.",
             "When you buy from a shop: your shipping address and phone number, the items, totals and order status, any note you write, and the image of the PromptPay transfer slip you upload.",
             "When you chat with a shop: the messages and images you send, and any report you file about a conversation.",
-            "If you run a shop: your storefront details, products, PromptPay number and account name, and your shop's links to other platforms."
+            "If you run a shop: your storefront details, products, PromptPay number and account name, and your shop's links to other platforms.",
+            "Visit statistics, without cookies: the page you open (its address without anything after '?', and with order and chat ids removed), the site language, the domain of the website that linked to us, your device type (phone, tablet or computer, from the screen width) and a random visit ID that exists only in that browser tab and is gone when you close it. We do not store your IP address, use tracking cookies or fingerprinting, or use third-party analytics, and we don't link these statistics to your account.",
+            "When you send feedback or report a problem: your message, the page you sent it from, your device type and, only if you give it, an email address we use only to reply to you."
           ]
         },
         {
@@ -679,7 +681,8 @@
             "To check minimum age: users must be 13 or older; shop owners 20 or older under the Thai Civil and Commercial Code.",
             "To create a shop page if you sign up as a shop.",
             "To pass your order to the shop you bought from so it can confirm your payment and ship to you, and to let you and the shop talk about it.",
-            "To look into reports of fraud, abuse or infringing listings, and to keep a record in case of a dispute."
+            "To look into reports of fraud, abuse or infringing listings, and to keep a record in case of a dispute.",
+            "To count visits and see which pages people use so we can improve the site, and to read, fix and answer the problems and suggestions you send us."
           ]
         },
         {
@@ -687,7 +690,8 @@
           "p": [
             "Performance of our service contract (Section 24(3)) for your account and layouts.",
             "Your consent (Section 19) for anything not needed to provide the service; you can withdraw it at any time.",
-            "Where the law requires it, minors under 20 need a guardian's consent."
+            "Where the law requires it, minors under 20 need a guardian's consent.",
+            "Our legitimate interest (Section 24(5)) in running and improving the site, for cookieless visit statistics and the feedback you choose to send. If your browser sends a Do Not Track or Global Privacy Control signal, we don't record your visits at all."
           ]
         },
         {
@@ -711,7 +715,8 @@
             "Account data is kept while you use the service and deleted within 30 days of a deletion request, unless the law requires longer.",
             "Data in your browser can be removed by you at any time from your collection or browser settings.",
             "Orders, including the shipping address and payment slip, are kept for 1 year after the order is completed or cancelled, so either side can raise a dispute, and then deleted. Unpaid orders are cancelled automatically after a few days.",
-            "Chat messages and images are kept until you or the shop delete the account. Reports are kept as long as needed to deal with them."
+            "Chat messages and images are kept until you or the shop delete the account. Reports are kept as long as needed to deal with them.",
+            "Visit statistics are deleted automatically after 13 months. Feedback messages are kept for up to 2 years, or deleted sooner if you ask (tell us the email or wording you used)."
           ]
         },
         {
@@ -740,13 +745,14 @@
           "p": [
             "Sign-in: authentication cookies that keep you logged in.",
             "Your theme (light or dark) and language.",
-            "Layouts, uploaded sticker images and calibration, in your browser's localStorage and IndexedDB."
+            "Layouts, uploaded sticker images and calibration, in your browser's localStorage and IndexedDB.",
+            "A random visit ID in sessionStorage, for the current tab only and erased when you close it. It lets us count visits without cookies and without knowing who you are."
           ]
         },
         {
           "h": "Why there is no consent banner",
           "p": [
-            "Everything above is strictly necessary for the service you asked for, so it doesn't need separate consent. If we ever add analytics or marketing cookies, we will ask first and you can say no."
+            "Everything above is either strictly necessary for the service you asked for or, for the visit ID, privacy-friendly first-party statistics with no cookies, nothing that identifies you and nothing that follows you to other sites, so it doesn't need separate consent. If your browser sends Do Not Track or Global Privacy Control, we skip the statistics completely. If we ever add advertising or third-party analytics cookies, we will ask first and you can say no."
           ]
         },
         {
@@ -932,7 +938,8 @@
       "rejected": "Your shop wasn't approved, so buyers can't see it. Contact the PeelPlan team if you think this is a mistake.",
       "pendingTitle": "Waiting for approval.",
       "pendingBody": "Our team checks new shops before buyers can see them, usually within a day. Add products and set up PromptPay meanwhile.",
-      "approveForTesting": "Approve for testing"
+      "approveForTesting": "Approve for testing",
+      "reason": "Note from the PeelPlan team:"
     },
     "tabs": {
       "overview": "Overview",
@@ -1319,6 +1326,227 @@
       "jt": "J&T Express",
       "ninjavan": "Ninja Van",
       "other": "Other"
+    }
+  },
+  "admin": {
+    "eyebrow": "PeelPlan team",
+    "title": "Admin",
+    "testTitle": "Test mode.",
+    "testBody": "Anyone signed in with the test account can open this page, and everything here comes from this browser only. On the live site, only accounts with is_admin = true in Supabase (profiles table) get in.",
+    "needsAttention": "need attention",
+    "loadError": "Couldn't load this. Check your connection and try again.",
+    "saveError": "Couldn't save that change. Try again.",
+    "retry": "Try again",
+    "tabs": {
+      "overview": "Overview",
+      "visitors": "Visitors",
+      "shops": "Shops",
+      "feedback": "Feedback",
+      "reports": "Reports"
+    },
+    "devices": {
+      "mobile": "Phone",
+      "tablet": "Tablet",
+      "desktop": "Desktop"
+    },
+    "denied": {
+      "title": "This page is for the PeelPlan team",
+      "body": "Your account doesn't have admin access. If you're on the team, ask an existing admin to turn it on for you.",
+      "home": "Back to the home page"
+    },
+    "overview": {
+      "needsAction": "Needs your attention",
+      "pendingShops": "Shops waiting for approval",
+      "newFeedback": "New feedback",
+      "openReports": "Open chat reports",
+      "traffic": "Visitors",
+      "allStats": "All statistics",
+      "today": "Visits today",
+      "week": "Visits, last 7 days",
+      "month": "Visits, last 30 days",
+      "views": "Page views, last 30 days",
+      "trafficNote": "A visit is one browser tab on one day. Counted without cookies; people with Do Not Track or Global Privacy Control are not counted.",
+      "trafficNoteTest": "Test mode: these numbers only count visits made in this browser."
+    },
+    "visitors": {
+      "range": "Date range",
+      "days": "{n} days",
+      "timezone": "Days are in Thailand time (UTC+7)",
+      "testNote": "Test mode: these numbers only reflect visits made in this browser, so they will look small. On the live site every visitor is counted (except those with Do Not Track or Global Privacy Control).",
+      "emptyTitle": "No visits yet",
+      "emptyBody": "Statistics appear here once people visit the site. Admin pages are never counted.",
+      "visits": "Visits",
+      "views": "Page views",
+      "perVisit": "Pages per visit",
+      "avgDaily": "Visits per day",
+      "chartTitle": "Daily visits and page views",
+      "chartHint": "Hover, tap or use the arrow keys for a day's numbers",
+      "chartLabel": "Chart of daily visits and page views over {days} days. The numbers are also in the table below.",
+      "busiest": "Busiest day: {date} ({n} visits)",
+      "asTable": "Show as a table",
+      "date": "Date",
+      "topPages": "Top pages",
+      "page": "Page",
+      "referrers": "Where visitors came from",
+      "source": "Website",
+      "noReferrers": "No visits from other websites yet. Direct visits and apps that hide the referrer aren't listed.",
+      "none": "Nothing yet",
+      "devices": "Devices",
+      "locales": "Language"
+    },
+    "shops": {
+      "filter": "Filter by status",
+      "filters": {
+        "all": "All",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "search": "Search name, owner or link",
+      "tableLabel": "Shops",
+      "empty": "No shops here",
+      "emptyBody": "New shop applications show up here for approval.",
+      "noMatch": "No shops match your search",
+      "example": "Example",
+      "exampleNote": "Built-in example shop: read-only.",
+      "ppSet": "Set",
+      "ppMissing": "Not set",
+      "details": "Details",
+      "detailsFor": "Details for {name}",
+      "close": "Close",
+      "cols": {
+        "shop": "Shop",
+        "owner": "Owner",
+        "created": "Created",
+        "products": "Products",
+        "promptpay": "PromptPay",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "suspend": "Back to review",
+        "view": "View shop page"
+      },
+      "detail": {
+        "city": "City",
+        "types": "Products",
+        "orders": "Orders",
+        "ordersValue": "{total} in total · {recent} in the last 30 days",
+        "shipping": "Shipping",
+        "freeFrom": "free from ฿{n}",
+        "links": "Links",
+        "reason": "Note to seller"
+      },
+      "confirm": {
+        "rejectTitle": "Reject this shop?",
+        "rejectBody": "Buyers won't be able to see {name}. The seller sees your reason on their dashboard.",
+        "suspendTitle": "Send back to review?",
+        "suspendBody": "{name} will be hidden from buyers until you approve it again.",
+        "reason": "Reason for the seller",
+        "reasonOptional": "Note for the seller (optional)",
+        "reasonHint": "Shown to the seller on their dashboard. Be specific about what to fix.",
+        "reasonRequired": "Write a reason so the seller knows what to fix.",
+        "rejectSubmit": "Reject shop",
+        "suspendSubmit": "Send back to review",
+        "cancel": "Cancel"
+      },
+      "errors": {
+        "save": "Couldn't update {name}. Try again.",
+        "notAdmin": "this account isn't an admin"
+      }
+    },
+    "feedback": {
+      "statusFilter": "Filter by status",
+      "kindFilter": "Type",
+      "all": "All",
+      "kinds": {
+        "bug": "Problem / bug",
+        "idea": "Suggestion",
+        "other": "Other"
+      },
+      "status": {
+        "new": "New",
+        "in_progress": "In progress",
+        "done": "Done"
+      },
+      "setStatus": "Change status",
+      "page": "Page",
+      "copyEmail": "Copy email",
+      "copied": "Copied",
+      "noEmail": "No reply email",
+      "empty": "No feedback yet",
+      "emptyBody": "Messages from the form at the bottom of the site appear here, newest first.",
+      "noMatch": "Nothing matches these filters"
+    },
+    "reports": {
+      "filter": "Filter reports",
+      "filters": {
+        "open": "Open",
+        "handled": "Handled",
+        "all": "All"
+      },
+      "by": {
+        "buyer": "Reported by the buyer",
+        "shop": "Reported by the shop"
+      },
+      "noNote": "No details given",
+      "openThread": "Open conversation",
+      "markHandled": "Mark handled",
+      "reopen": "Reopen",
+      "empty": "No reports",
+      "emptyBody": "When someone reports a chat conversation, it shows up here.",
+      "noMatch": "Nothing here"
+    }
+  },
+  "feedback": {
+    "cta": "Report a problem or share an idea",
+    "linkBody": "Something not working, or an idea to make PeelPlan better? Tell us.",
+    "pageTitle": "Report a problem or share an idea",
+    "back": "Back to the previous page",
+    "title": "Found a problem or have an idea?",
+    "body": "Tell us what went wrong or what would make PeelPlan better. We read every message.",
+    "kindLabel": "What is it about?",
+    "kinds": {
+      "bug": "Problem / bug",
+      "idea": "Suggestion",
+      "other": "Other"
+    },
+    "messageLabel": "Your message",
+    "messagePlaceholder": "What happened, or what would you like to see?",
+    "attached": "We'll include this page ({path}) and your device type ({device}) to help us find it.",
+    "devices": {
+      "mobile": "phone",
+      "tablet": "tablet",
+      "desktop": "computer"
+    },
+    "emailLabel": "Email for a reply",
+    "optional": "(optional)",
+    "emailHint": "Only used to reply to this message.",
+    "honeypot": "Leave this field empty",
+    "consent": "By sending, you agree we keep this message as described in our <link>privacy policy</link>.",
+    "submit": "Send",
+    "sending": "Sending…",
+    "successTitle": "Thank you! We got your message.",
+    "successBody": "The team reads every message. If you left an email, we'll reply there.",
+    "testNote": "Test mode: the message is saved in this browser only, and shows up on the admin page.",
+    "again": "Send another",
+    "errors": {
+      "kind": "Choose what it's about.",
+      "message": {
+        "required": "Write a message.",
+        "short": "A little more detail, please (at least {min} characters).",
+        "long": "That's too long: keep it under {max} characters."
+      },
+      "email": "That email doesn't look right. Check it or leave it empty.",
+      "rate": "You've sent several messages in a short time. Please try again in an hour.",
+      "save": "Couldn't send. Check your connection and try again."
     }
   }
 }
