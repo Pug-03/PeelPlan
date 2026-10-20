@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, FileText, ImageIcon, TriangleAlert } from "lucide-react";
+import { Download, FileText, ImageDown, ImageIcon, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { useShallow } from "zustand/react/shallow";
@@ -13,20 +13,24 @@ import { useEditor } from "../store";
 import { Button, Segmented, Toggle } from "./controls";
 import { Dialog } from "./Dialog";
 import { stageHandle } from "./LidStage";
+import { renderLid, saveShareImage } from "./shareCard";
 
 /** PNG export density; independent of screen calibration. */
 const PNG_PX_PER_MM = 8;
 
 export function ExportDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useTranslations("export");
+  const te = useTranslations("editor");
   const locale = useLocale();
   // Always mounted: subscribe only to what the export needs, not every zoom or selection change.
-  const { modelId, items, assets, select } = useEditor(useShallow((s) => ({ modelId: s.modelId, items: s.items, assets: s.assets, select: s.select })));
+  const { modelId, colorId, items, assets } = useEditor(useShallow((s) => ({ modelId: s.modelId, colorId: s.colorId, items: s.items, assets: s.assets })));
   const [paper, setPaper] = useState<"a4" | "letter">(locale === "en" ? "letter" : "a4");
   const [mode, setMode] = useState<PdfMode>("guide");
   const [images, setImages] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  const [imageBusy, setImageBusy] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const model = getLaptopModel(modelId);
   const rows = coordinateRows(items);
   const stamp = new Date().toISOString().slice(0, 10);
@@ -46,17 +50,15 @@ export function ExportDialog({ open, onClose }: { open: boolean; onClose: () => 
   };
 
   const exportPng = () => {
-    const stage = stageHandle.stage;
-    if (!stage) return;
-    select([]);
-    // Wait a frame so the transformer is detached before rendering.
-    requestAnimationFrame(() => {
-      const r = stageHandle.lidRectPx;
-      const url = stage.toDataURL({ x: r.x, y: r.y, width: r.width, height: r.height, pixelRatio: PNG_PX_PER_MM / stageHandle.pxPerMm, mimeType: "image/png" });
-      fetch(url)
-        .then((res) => res.blob())
-        .then((b) => downloadBlob(b, `peelplan-${model.id}-${stamp}.png`));
-    });
+    // Selection, warnings and guides are hidden for the render; the layout itself is untouched.
+    renderLid(PNG_PX_PER_MM / stageHandle.pxPerMm)?.toBlob((b) => b && downloadBlob(b, `peelplan-${model.id}-${stamp}.png`), "image/png");
+  };
+
+  const saveImage = async () => {
+    setImageBusy(true);
+    setImageError(false);
+    setImageError(!(await saveShareImage(model, colorId)));
+    setImageBusy(false);
   };
 
   const exportCsv = () => {
@@ -121,13 +123,28 @@ export function ExportDialog({ open, onClose }: { open: boolean; onClose: () => 
               </p>
             )}
 
-            <div className="mt-2 flex items-start gap-3 border-t border-hairline pt-5">
-              <ImageIcon className="mt-0.5 size-5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
-              <div className="flex-1">
-                <h3 className="font-semibold">{t("png")}</h3>
-                <p className="text-sm text-muted">{t("pngBody")}</p>
+            <div className="mt-2 flex flex-col gap-3 border-t border-hairline pt-5">
+              <div className="flex items-start gap-3">
+                <ImageIcon className="mt-0.5 size-5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+                <div className="flex-1">
+                  <h3 className="font-semibold">{te("saveImage")}</h3>
+                  <p className="text-sm text-muted">{te("saveImageBody")}</p>
+                </div>
               </div>
-              <Button onClick={exportPng}>{t("downloadPng")}</Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="primary" onClick={saveImage} disabled={imageBusy}>
+                  <ImageDown className="size-4" strokeWidth={2} aria-hidden="true" />
+                  {imageBusy ? te("savingImage") : te("saveImage")}
+                </Button>
+                <Button variant="ghost" onClick={exportPng}>
+                  {te("lidOnlyPng")}
+                </Button>
+              </div>
+              {imageError && (
+                <p role="alert" className="text-sm text-[#C62F35]">
+                  {te("saveImageFailed")}
+                </p>
+              )}
             </div>
           </section>
 

@@ -22,7 +22,7 @@ const ROTATION_SNAPS = Array.from({ length: 24 }, (_, i) => i * 15);
 /** iOS Safari refuses canvases above ~16.7 M pixels; stay under it with headroom. */
 const MAX_CANVAS_PIXELS = 14_000_000;
 
-/** Lets the export dialog render the stage without prop drilling. */
+/** Lets the export dialog render the stage without prop drilling. Editing chrome is named "overlay" so exports can hide it. */
 export const stageHandle: { stage: Konva.Stage | null; lidRectPx: { x: number; y: number; width: number; height: number }; pxPerMm: number } = {
   stage: null,
   lidRectPx: { x: 0, y: 0, width: 0, height: 0 },
@@ -535,6 +535,7 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
             {/* The no-go box stands in for the logo; when the demo logo is drawn, it marks the zone itself. */}
             {keepLogoClear && !DEMO_ASSETS && (
               <Rect
+                name="overlay"
                 listening={false}
                 x={lid.logo.x - lid.logo.width / 2 - LOGO_CLEARANCE_MM}
                 y={lid.logo.y - lid.logo.height / 2 - LOGO_CLEARANCE_MM}
@@ -569,6 +570,7 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
                 warned(it.id) || (it.locked && selectedIds.includes(it.id)) ? (
                   <Rect
                     key={`w-${it.id}`}
+                    name="overlay"
                     listening={false}
                     x={it.xMm}
                     y={it.yMm}
@@ -587,6 +589,7 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
               g.kind === "line" ? (
                 <Line
                   key={i}
+                  name="overlay"
                   listening={false}
                   points={g.axis === "x" ? [g.at, g.from - 4, g.at, g.to + 4] : [g.from - 4, g.at, g.to + 4, g.at]}
                   stroke="#2F5BFF"
@@ -594,7 +597,7 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
                   dash={[3 / k, 3 / k]}
                 />
               ) : (
-                <Group key={i} listening={false}>
+                <Group key={i} name="overlay" listening={false}>
                   <Line points={g.axis === "x" ? [g.a, g.cross, g.b, g.cross] : [g.cross, g.a, g.cross, g.b]} stroke="#2F5BFF" strokeWidth={strokePx} />
                   <Text
                     x={g.axis === "x" ? (g.a + g.b) / 2 - 6 : g.cross + 1.5}
@@ -629,6 +632,7 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
           />
           {marquee && (
             <Rect
+              name="overlay"
               listening={false}
               x={Math.min(marquee.x0, marquee.x1)}
               y={Math.min(marquee.y0, marquee.y1)}

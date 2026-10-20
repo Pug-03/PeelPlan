@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, LayoutGrid, Link2, Maximize2, Minus, Plus, Redo2, Ruler, ScanLine, TriangleAlert, Undo2 } from "lucide-react";
+import { Download, ImageDown, LayoutGrid, Link2, Maximize2, Minus, Plus, Redo2, Ruler, ScanLine, TriangleAlert, Undo2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useEffectEvent, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
@@ -19,6 +19,7 @@ import { Button, IconButton, Toggle } from "./controls";
 import { ExportDialog } from "./ExportDialog";
 import { Inspector } from "./Inspector";
 import { LidStage } from "./LidStage";
+import { saveShareImage } from "./shareCard";
 import { StickerPanel, ensureLibraryAsset } from "./StickerPanel";
 import { UploadDialog } from "./UploadDialog";
 
@@ -276,6 +277,13 @@ export default function Editor() {
         </span>
         <IconButton label={t("share")} onClick={share} className="hidden sm:grid">
           <Link2 className="size-4" strokeWidth={1.75} />
+        </IconButton>
+        <IconButton
+          label={t("saveImage")}
+          onClick={() => void saveShareImage(model, s.colorId).then((ok) => !ok && setToast(t("saveImageFailed")))}
+          className="hidden sm:grid"
+        >
+          <ImageDown className="size-4" strokeWidth={1.75} />
         </IconButton>
         <Button variant="dark" onClick={() => setExportOpen(true)}>
           <Download className="size-4" strokeWidth={2} aria-hidden="true" />
