@@ -63,6 +63,20 @@ Database writes with rules (birth date, consent, shop application) go through th
 
 Flow: Google sign-in → `/auth/callback` → `/[locale]/onboarding` (name, birth date, "are you a shop?"; shops also give shop name, owner's full name, product types, and a description) → editor. Age rules (13+ to register, 20+ to own a shop) are enforced both in the server action and by database triggers. Shops start as `pending`, and only the service role can change that status.
 
+## Marketplace
+
+Buyers pay the shop directly by PromptPay and upload the transfer slip. PeelPlan never holds money. Without Supabase keys, the marketplace runs in test mode: shops, products, orders and chats live in this browser's localStorage (`localStore` in `src/features/market/store.ts`), so the whole buy → pay → ship → chat loop can be tried on one device. With keys, `supabaseStore.ts` uses the database. Both implement the same `MarketStore` interface.
+
+To turn on the real backend (after the Accounts steps above):
+
+1. Run `supabase/migrations/0002_marketplace.sql` (SQL editor or `supabase db push`). It extends `shops` (slug, storefront fields, PromptPay, shipping) and adds `products`, `orders` / `order_items` / `order_events`, `threads` / `messages` and `reports`, all with RLS. Orders, status changes, slips and chat go through RPCs (`place_order`, `set_order_status`, `submit_slip`, `open_thread`, `send_message`, `mark_thread_read`). These check stock, compute totals server-side, and enforce the same status rules as `NEXT_STATUS`.
+2. The migration also creates four Storage buckets with policies: `product-images` and `shop-images` (public, path `<shop_id>/…`, owner writes) and `slips` (`<order_id>/…`) and `chat-images` (`<thread_id>/…`). The last two are private and shown with signed URLs to the two parties only. Check they appear under Storage.
+3. Realtime: the migration adds `messages`, `threads` and `orders` to the `supabase_realtime` publication. Confirm under Database → Publications. Clients only receive rows RLS lets them read.
+4. Approve shops as staff: `update shops set status = 'approved' where slug = '…';` in the SQL editor (clients can't change status).
+5. Optional, with the `pg_cron` extension: schedule `expire_unpaid_orders()` (cancels unpaid orders after 3 days and restores stock) and `purge_closed_orders()` (deletes orders 1 year after they close, matching the privacy policy). Slip files must be deleted through the Storage API.
+
+The example shops are client-side only. They show in both modes, but in Supabase mode they can't take orders or chats (`shop-unavailable`).
+
 ## Demo-only artwork
 
 `NEXT_PUBLIC_DEMO_ASSETS=true` (set in `.env.local`, which is gitignored) turns on the Apple-style lid logo, the character fan-art stickers (`CHARACTERS` in `src/stickers/library.ts`), and the 60 stickers cut from founder-supplied sheets (Mickey, Hello Kitty, programming brands). Those live in `public/stickers/demo` and are listed in `src/stickers/sheets.ts`. These are trademarked or copyrighted and exist for private mockups only. Leave the variable unset on any public deployment unless you've licensed the rights.
