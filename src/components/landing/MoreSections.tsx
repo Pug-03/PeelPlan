@@ -5,6 +5,7 @@ import { PACKED_DEV_LID } from "./packedLid";
 import { LAPTOP_MODELS, getLaptopModel, lidGeometry } from "@/config/laptops";
 import { Link } from "@/i18n/navigation";
 import { stickerSrcById } from "@/stickers/library";
+import { scatter } from "./scatter";
 
 /**
  * Landing sections below "How it works". Anything that would need real customers (reviews,
@@ -128,33 +129,51 @@ export async function UseCases() {
  * Gallery lids: every lid gets its own four stickers (no sticker repeats across the gallery).
  * Each set is laid out in the lid's four quadrants with a little rotation.
  */
-const GALLERY_SETS: { modelId: string; color: string; ids: [string, string, string, string] }[] = [
+/** Example lids with as few as three stickers and as many as a dozen, so the gallery doesn't repeat itself. */
+const GALLERY_SETS: { modelId: string; color: string; ids: string[] }[] = [
   { modelId: "macbook-air-13-m5", color: "#C2CDD7", ids: ["p2-som-tam", "p2-pad-thai", "p2-cha-yen", "p2-mango"] },
-  { modelId: "macbook-pro-14-m5", color: "#D9DADC", ids: ["p2-cat", "p2-pup", "p2-frog", "p2-capybara"] },
-  { modelId: "macbook-neo-13", color: "#E2CDC8", ids: ["p2-tuk-tuk", "p2-lotus", "p2-krathong", "p2-sky-lantern"] },
-  { modelId: "macbook-air-15-m5", color: "#D6CCBC", ids: ["p2-rocket", "p2-ufo", "p2-saturn", "p2-alien"] },
-  { modelId: "macbook-pro-16-m5", color: "#2B2B2D", ids: ["p2-cassette", "p2-game-controller", "p2-headphones", "p2-boombox"] },
-  { modelId: "macbook-neo-13", color: "#DCDAB2", ids: ["p2-sun", "p2-rainbow", "p2-cactus", "p2-monstera"] },
-  { modelId: "macbook-air-13-m5", color: "#CACBCE", ids: ["p2-su-su", "p2-555", "p2-heart", "p2-sparkle"] },
-  { modelId: "macbook-pro-14-m5", color: "#D9DADC", ids: ["p2-axolotl", "p2-penguin", "p2-panda", "p2-bunny"] },
-  { modelId: "macbook-air-15-m5", color: "#C2CDD7", ids: ["p2-durian", "p2-mangosteen", "p2-watermelon", "p2-coconut"] },
-  { modelId: "macbook-neo-13", color: "#CACBCE", ids: ["p2-longtail-boat", "p2-elephant-head", "p2-temple-roof", "p2-water-gun"] },
-  { modelId: "macbook-air-13-m5", color: "#D6CCBC", ids: ["p2-donut", "p2-pizza", "p2-burger", "p2-ice-cream"] },
-  { modelId: "macbook-pro-16-m5", color: "#D9DADC", ids: ["p2-fox", "p2-whale", "p2-octopus", "p2-bee"] },
-  { modelId: "macbook-pro-14-m5", color: "#2B2B2D", ids: ["p2-film-camera", "p2-polaroid", "p2-vinyl", "p2-floppy"] },
-  { modelId: "macbook-neo-13", color: "#DCDAB2", ids: ["p2-chill", "p2-good-vibes", "p2-smiley", "p2-peace-hand"] },
-  { modelId: "macbook-air-15-m5", color: "#CACBCE", ids: ["p2-daisy", "p2-tulip", "p2-sleepy-moon", "p2-seedling"] },
-  { modelId: "macbook-air-13-m5", color: "#E2CDC8", ids: ["p2-boba-taro", "p2-roti", "p2-khanom-krok", "p2-dumpling"] },
+  { modelId: "macbook-pro-14-m5", color: "#D9DADC", ids: ["p2-cat", "p2-pup", "p2-frog", "p2-capybara", "p2-bear", "p2-chick", "p2-hedgehog"] },
+  { modelId: "macbook-neo-13", color: "#E2CDC8", ids: ["p2-lotus", "p2-paper-umbrella", "p2-daisy"] },
+  { modelId: "macbook-air-15-m5", color: "#D6CCBC", ids: ["p2-rocket", "p2-ufo", "p2-saturn", "p2-alien", "p2-comet"] },
+  {
+    modelId: "macbook-pro-16-m5",
+    color: "#2B2B2D",
+    ids: ["p2-cassette", "p2-game-controller", "p2-headphones", "p2-boombox", "code-coder", "code-key-esc", "code-sym-braces", "code-say-lgtm", "code-rubber-duck"],
+  },
+  { modelId: "macbook-neo-13", color: "#DCDAB2", ids: ["p2-sun", "p2-rainbow", "p2-cactus"] },
+  {
+    modelId: "macbook-air-13-m5",
+    color: "#CACBCE",
+    ids: ["p2-su-su", "p2-555", "p2-heart", "p2-sparkle", "p2-mai-pen-rai", "p2-chill", "p2-wow-burst", "p2-oops", "p2-checkmark", "p2-twinkle-stars", "p2-tired-but-ok", "p2-hello"],
+  },
+  { modelId: "macbook-pro-14-m5", color: "#D9DADC", ids: ["p2-axolotl", "p2-penguin", "p2-jellyfish"] },
+  { modelId: "macbook-air-15-m5", color: "#C2CDD7", ids: ["p2-durian", "p2-mangosteen", "p2-watermelon", "p2-coconut", "p2-chili", "p2-moo-ping"] },
+  { modelId: "macbook-neo-13", color: "#CACBCE", ids: ["p2-longtail-boat", "p2-elephant-head", "p2-temple-roof", "p2-tuk-tuk"] },
+  {
+    modelId: "macbook-air-13-m5",
+    color: "#D6CCBC",
+    ids: ["p2-donut", "p2-pizza", "p2-burger", "p2-ice-cream", "p2-sushi", "p2-popsicle", "p2-coffee-mug", "p2-boba-matcha"],
+  },
+  { modelId: "macbook-pro-16-m5", color: "#D9DADC", ids: ["p2-fox", "p2-whale", "p2-octopus"] },
+  {
+    modelId: "macbook-pro-14-m5",
+    color: "#2B2B2D",
+    ids: ["p2-film-camera", "p2-polaroid", "p2-vinyl", "p2-floppy", "p2-laptop", "code-term-tests", "code-git-graph", "code-key-copy", "code-say-todo", "code-stamp-ship-it"],
+  },
+  { modelId: "macbook-neo-13", color: "#DCDAB2", ids: ["p2-good-vibes", "p2-smiley", "p2-peace-hand", "p2-stay-curious", "p2-jasmine-garland"] },
+  { modelId: "macbook-air-15-m5", color: "#CACBCE", ids: ["p2-sleepy-moon", "p2-seedling", "p2-rain-cloud"] },
+  {
+    modelId: "macbook-air-13-m5",
+    color: "#E2CDC8",
+    ids: ["p2-boba-taro", "p2-roti", "p2-khanom-krok", "p2-dumpling", "p2-tom-yum", "p2-sticky-rice-basket"],
+  },
 ];
-const SLOT_TILT = [-8, 6, 5, -7];
-const GALLERY: { modelId: string; color: string; stickers: ArtSticker[] }[] = GALLERY_SETS.map(({ modelId, color, ids }) => {
-  const g = lidGeometry(getLaptopModel(modelId));
-  return {
-    modelId,
-    color,
-    stickers: ids.map((id, i) => ({ id, x: g.widthMm * (i % 2 ? 0.76 : 0.24), y: g.heightMm * (i < 2 ? 0.3 : 0.72), r: SLOT_TILT[i] })),
-  };
-});
+
+const GALLERY: { modelId: string; color: string; stickers: ArtSticker[] }[] = GALLERY_SETS.map(({ modelId, color, ids }, i) => ({
+  modelId,
+  color,
+  stickers: scatter(ids, lidGeometry(getLaptopModel(modelId)), i * 7919),
+}));
 
 export async function Gallery() {
   const t = await getTranslations("more");

@@ -5,11 +5,20 @@ import { EXAMPLE_LAYOUTS } from "./layouts";
 import { shopSlug } from "@/config/demoShops";
 import { Link } from "@/i18n/navigation";
 import { DragMarquee } from "./DragMarquee";
+import { pickStickers, scatter } from "./scatter";
 
-function Card({ layout, hidden }: { layout: (typeof EXAMPLE_LAYOUTS)[number]; hidden?: boolean }) {
+/** How many stickers each example lid shows, so the strip doesn't repeat the same density. */
+const COUNTS = [4, 8, 3, 6, 11, 5];
+const POOL = EXAMPLE_LAYOUTS.flatMap((l) => l.stickers.map((s) => s.id));
+
+function Card({ layout, index, hidden }: { layout: (typeof EXAMPLE_LAYOUTS)[number]; index: number; hidden?: boolean }) {
   const locale = useLocale() as "th" | "en";
   const model = getLaptopModel(layout.modelId);
   const g = lidGeometry(model);
+  const own = layout.stickers.map((s) => s.id);
+  // Borrow from the other shops (starting after this one) when a lid shows more than its own six.
+  const pool = [...POOL.slice((index + 1) * 6), ...POOL.slice(0, (index + 1) * 6)];
+  const stickers = scatter(pickStickers(own, pool, COUNTS[index % COUNTS.length]), g, index * 104729);
   return (
     <figure aria-hidden={hidden} className="group relative w-[19rem] shrink-0 sm:w-[22rem]">
       <div className="drop-shadow-[0_18px_22px_rgb(0_0_0/0.14)] transition-transform duration-500 ease-[var(--ease-out-soft)] group-hover:-translate-y-1">
@@ -20,7 +29,7 @@ function Card({ layout, hidden }: { layout: (typeof EXAMPLE_LAYOUTS)[number]; hi
           heightMm={g.heightMm}
           radiusMm={g.cornerRadiusMm}
           color={layout.color}
-          stickers={layout.stickers}
+          stickers={stickers}
           className="h-auto w-full"
         />
       </div>
@@ -49,7 +58,7 @@ export function Marquee({ label, pauseLabel, playLabel }: { label: string; pause
     <section className="relative pb-12">
       <DragMarquee label={label} pauseLabel={pauseLabel} playLabel={playLabel}>
         {[...EXAMPLE_LAYOUTS, ...EXAMPLE_LAYOUTS].map((l, i) => (
-          <Card key={i} layout={l} hidden={i >= EXAMPLE_LAYOUTS.length} />
+          <Card key={i} layout={l} index={i % EXAMPLE_LAYOUTS.length} hidden={i >= EXAMPLE_LAYOUTS.length} />
         ))}
       </DragMarquee>
     </section>
