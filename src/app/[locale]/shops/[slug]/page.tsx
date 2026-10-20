@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteHeader } from "@/components/SiteHeader";
 import { DEMO_SHOPS, getDemoShop, type DemoShop } from "@/config/demoShops";
 import { PRODUCT_TYPES } from "@/config/onboarding";
+import { ShopLoader } from "./ShopLoader";
 import { ShopView } from "./ShopView";
 
 export function generateStaticParams() {
@@ -43,23 +43,21 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/shops/[s
   // A seller's preview is private and pending review: keep it out of search results.
   if (slug === "preview") return { robots: { index: false } };
   const shop = getDemoShop(slug);
-  return shop ? { title: `${shop.name} - PeelPlan`, alternates: { canonical: `/${locale}/shops/${slug}` } } : {};
+  // Sellers' own shops load on the client (test mode keeps them on this device): not indexable from here.
+  return shop ? { title: `${shop.name} - PeelPlan`, alternates: { canonical: `/${locale}/shops/${slug}` } } : { robots: { index: false } };
 }
 
 export default async function ShopPage({ params, searchParams }: PageProps<"/[locale]/shops/[slug]">) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
-  const sp = await searchParams;
   const preview = slug === "preview";
   const t = await getTranslations("shop");
-  const shop = preview ? previewShop(sp, t("yourShop")) : getDemoShop(slug);
-  if (!shop) notFound();
+  // Only the preview reads the query, so the example shops stay statically rendered.
+  const shop = preview ? previewShop(await searchParams, t("yourShop")) : getDemoShop(slug);
   return (
     <>
       <SiteHeader />
-      <main id="main">
-        <ShopView shop={shop} preview={preview} />
-      </main>
+      <main id="main">{shop ? <ShopView demo={shop} preview={preview} /> : <ShopLoader slug={slug} />}</main>
     </>
   );
 }

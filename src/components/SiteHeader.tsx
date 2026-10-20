@@ -1,7 +1,8 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Menu } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { RulerMark, Wordmark } from "./Wordmark";
@@ -34,6 +35,9 @@ export function ThemeToggle() {
 }
 
 const noSubscribe = () => () => {};
+
+// Cart / messages counts read this device's storage and the session: client-only, so the server HTML never disagrees.
+const HeaderMarket = dynamic(() => import("./HeaderMarket"), { ssr: false });
 
 export function LocaleSwitch({ className = "" }: { className?: string }) {
   const t = useTranslations("nav");
@@ -90,8 +94,8 @@ export function SiteHeader() {
     };
   }, []);
 
-  // The menu only exists while folded; Escape and outside clicks close it.
-  const menuOpen = folded && open;
+  // The menu card opens from the folded button, or from the menu button on phones; Escape and outside clicks close it.
+  const menuOpen = open;
   useEffect(() => {
     if (!menuOpen) return;
     const key = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
@@ -131,6 +135,16 @@ export function SiteHeader() {
             <div className="ml-auto flex items-center md:ml-0">
               <LocaleSwitch className="text-center sm:w-[5rem]" />
               <ThemeToggle />
+              <HeaderMarket />
+              <button
+                type="button"
+                className="grid size-10 place-items-center rounded-full text-ink transition-colors hover:bg-surface md:hidden"
+                aria-label={t("menu")}
+                aria-expanded={menuOpen}
+                onClick={() => setOpen((o) => !o)}
+              >
+                <Menu className="size-5" strokeWidth={1.75} aria-hidden="true" />
+              </button>
               <Link
                 href="/editor"
                 className="hidden h-10 w-[9.5rem] place-items-center rounded-full text-sm font-medium text-ink transition-colors hover:bg-surface sm:grid"
@@ -168,6 +182,9 @@ export function SiteHeader() {
             <Link href="/#faq" className="rounded-xl px-3 py-2.5 text-sm hover:bg-surface" onClick={() => setOpen(false)}>
               {t("faq")}
             </Link>
+            <div className="my-1 flex flex-col gap-0.5 border-t border-hairline pt-2">
+              <HeaderMarket variant="menu" onNavigate={() => setOpen(false)} />
+            </div>
             <div className="my-1 flex items-center justify-between border-t border-hairline pt-2">
               <LocaleSwitch />
               <ThemeToggle />
