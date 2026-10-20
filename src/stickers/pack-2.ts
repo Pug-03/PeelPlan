@@ -158,7 +158,7 @@ function boba(tea: string, band: string, straw: string, faceArt: string, extra =
     )}
     <path d="${cup}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
     ${rc(11, 40, 68, 12, 6, "#fff")}${ln("M18 45h22", "#DCEAF3", 2.5)}
-    ${gloss("M25 68L28 100")}
+    ${gloss("M25 62L27 82")}
     ${faceArt}`;
 }
 
@@ -213,6 +213,7 @@ const BAG = "M24 50C24 44 28 40 34 40H66C72 40 76 44 76 50L82 112C82 124 70 130 
 const BAG_NECK = "M34 42L40 24H60L66 42Z";
 const KRATIP_LID = "M22 52C22 38 36 30 55 30C74 30 88 38 88 52Z";
 const KRATIP_FOOT = "M32 108H78L74 122H36Z";
+const KRATIP_BODY = "M26 52Q26 50 28 50H82Q84 50 84 52V100Q84 112 72 112H38Q26 112 26 100Z";
 
 const food: LibrarySticker[] = [
   mk(
@@ -245,12 +246,15 @@ const food: LibrarySticker[] = [
     `${die(`<ellipse cx="80" cy="72" rx="66" ry="26"/>` + pd(PAD_MOUND, PAD_LIME))}
      ${el(80, 72, 66, 26, "#EAF4FA")}
      <ellipse cx="80" cy="70" rx="54" ry="18" fill="#fff" stroke="#CFE3EE" stroke-width="2"/>
+     ${p(PAD_MOUND, "#F6C47E")}
+     ${clip(
+       "p2-pad-thai-noodles",
+       `<path d="${PAD_MOUND}"/>`,
+       ln("M38 62c6-7 13-7 19 0s13 7 19 0 13-7 19 0 13 7 19 0 13-7 19 0", "#E3A04F", 2.6) + ln("M48 48c5-5 11-5 16 0s11 5 16 0 11-5 16 0 11 5 16 0", "#E3A04F", 2.6),
+     )}
      ${p(PAD_LIME, "#9BD85A", 3)}
      ${p("M122 56L141 49A13 13 0 0 1 135 71Z", "#D7F2A8", 0)}
      ${ln("M122 56L139 56M122 56L136 65", "#9BD85A", 1.8)}
-     ${p(PAD_MOUND, "#F6C47E")}
-     ${ln("M38 62c6-7 13-7 19 0s13 7 19 0 13-7 19 0 13 7 19 0 13-7 19 0", "#E3A04F", 2.6)}
-     ${ln("M48 48c5-5 11-5 16 0s11 5 16 0 11-5 16 0 11 5 16 0", "#E3A04F", 2.6)}
      <g transform="translate(-10 -6)">${p(SHRIMP, "#FF8A5B", 2.8)}${ln("M58 38l2 5M66 37l-1 6", "#FFD0BC", 2)}</g>
      <g transform="translate(170 -6) scale(-1 1)">${p(SHRIMP, "#FF8A5B", 2.8)}${ln("M58 38l2 5M66 37l-1 6", "#FFD0BC", 2)}</g>
      <g fill="#5DBB63"><rect x="56" y="66" width="5" height="3" rx="1"/><rect x="98" y="64" width="5" height="3" rx="1"/><rect x="74" y="70" width="5" height="3" rx="1"/><rect x="112" y="60" width="4" height="3" rx="1"/></g>
@@ -277,11 +281,11 @@ const food: LibrarySticker[] = [
     "มะพร้าวอ่อน",
     110,
     136,
-    `${die(`<circle cx="55" cy="84" r="38"/><rect x="-5" y="-22" width="10" height="44" rx="4" transform="translate(66 38) rotate(20)"/>`)}
+    `${die(`<circle cx="55" cy="84" r="38"/><rect x="-5" y="-22" width="10" height="40" rx="4" transform="translate(66 38) rotate(20)"/>`)}
      ${ci(55, 84, 38, "#86C96A")}
      ${ln("M28 102Q55 124 82 102", "#64AD52", 6)}
      ${el(55, 54, 22, 7, "#FFF8E6", 3)}${el(55, 54, 14, 4, "#F1E6C8", 0)}
-     <g transform="translate(66 38) rotate(20)">${rc(-5, -22, 10, 44, 4, "#FF8FB1", 3)}${ln("M-5 -12l10-4M-5 0l10-4", "#fff", 2.4)}</g>
+     <g transform="translate(66 38) rotate(20)">${rc(-5, -22, 10, 40, 4, "#FF8FB1", 3)}${ln("M-5 -12l10-4M-5 0l10-4", "#fff", 2.4)}</g>
      ${flower(80, 70, 5, "#FF6B8B")}
      ${gloss("M27 80q1-9 6-15")}
      ${face(55, 92, 12)}`,
@@ -303,7 +307,7 @@ const food: LibrarySticker[] = [
      )}
      <path d="${CHA_CUP}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
      ${rc(13, 30, 64, 10, 5, "#fff")}
-     ${gloss("M26 84L29 108")}
+     ${gloss("M26.5 81L27.5 93")}
      ${face(45, 96, 9, 0.95)}`,
   ),
   mk(
@@ -332,8 +336,17 @@ const food: LibrarySticker[] = [
            `<g transform="translate(${x} ${y}) rotate(${r})">${rc(-17, -17, 34, 34, 5, "#F2C26B", 3)}<g fill="#D9963F"><circle cx="-8" cy="-6" r="2.4"/><circle cx="7" cy="5" r="3"/><circle cx="-3" cy="9" r="1.8"/></g>${ci(-2, -2, 5.5, "#FFF3C4", 2)}${ci(8, -8, 4.5, "#FFF3C4", 2)}</g>`,
        )
        .join("")}
-     ${ln("M30 46l8 6 8-7 8 7 8-7 8 7 8-7 8 7 8-7 8 7 8-6 8 5", "#fff", 3.2)}
-     ${ln("M34 56l8-5 8 6 8-6 8 6 8-6 8 6 8-6 8 6 8-6 8 5", "#7A4A2E", 2.4)}
+     ${clip(
+       "p2-roti-drizzle",
+       [
+         [46, 58, -12],
+         [75, 50, 8],
+         [104, 58, -6],
+       ]
+         .map(([x, y, r]) => `<rect x="-17" y="-17" width="34" height="34" rx="5" transform="translate(${x} ${y}) rotate(${r})"/>`)
+         .join(""),
+       ln("M30 46l8 6 8-7 8 7 8-7 8 7 8-7 8 7 8-7 8 7 8-6 8 5", "#fff", 3.2) + ln("M34 56l8-5 8 6 8-6 8 6 8-6 8 6 8-6 8 6 8-6 8 5", "#7A4A2E", 2.4),
+     )}
      ${p(ROTI_TRAY, "#fff")}
      ${ln("M24 74H126", "#E8453C", 3)}
      ${face(75, 84, 11, 0.9)}`,
@@ -350,9 +363,9 @@ const food: LibrarySticker[] = [
      ${ln("M32 98Q65 124 98 98", "#A5B83C", 6)}
      ${ln(
        [
-         [40, 54],
+         [48, 58],
          [65, 46],
-         [90, 54],
+         [82, 58],
          [34, 80],
          [96, 80],
          [46, 104],
@@ -378,7 +391,7 @@ const food: LibrarySticker[] = [
      ${ln("M46 62C62 78 94 84 120 74", "#C42A22", 5)}
      ${gloss("M44 45Q54 49 62 57", 3.5)}
      ${p(CHILI_CAP, "#4CAF50", 3)}
-     ${face(80, 66, 9, 0.8)}`,
+     <g transform="rotate(20 76 70)">${face(76, 70, 8, 0.75)}</g>`,
   ),
   mk(
     "rice-bowl",
@@ -405,7 +418,7 @@ const food: LibrarySticker[] = [
      ${p(BOWL, "#fff")}
      ${ln("M22 74Q70 86 118 74", "#4C8DFF", 4)}
      <g fill="#4C8DFF"><circle cx="40" cy="88" r="2.4"/><circle cx="70" cy="94" r="2.4"/><circle cx="100" cy="88" r="2.4"/></g>
-     ${gloss("M34 44q4-10 14-14")}
+     ${gloss("M37 51q3-9 11-13")}
      ${face(70, 46, 11)}`,
   ),
   mk(
@@ -417,7 +430,8 @@ const food: LibrarySticker[] = [
     `${die(pd(DUMPLING, DUMPLING_KNOT) + `<circle cx="65" cy="30" r="4"/>` + sd("M40 36c-4-6 4-10 0-16M90 36c-4-6 4-10 0-16", 16))}
      ${ln("M40 36c-4-6 4-10 0-16M90 36c-4-6 4-10 0-16", "#B9D7E8", 3.5)}
      ${p(DUMPLING, "#FFF4E2")}
-     ${ln("M26 92Q65 108 104 92", "#F0D9B8", 6)}
+     ${clip("p2-dumpling-shade", `<path d="${DUMPLING}"/>`, ln("M18 90Q65 110 112 90", "#F0D9B8", 6))}
+     <path d="${DUMPLING}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
      ${ln("M65 48L58 62M65 48L72 62M60 48L44 58M70 48L86 58", "#E9D3B4", 2.5)}
      ${p(DUMPLING_KNOT, "#FFF4E2")}
      ${ci(65, 30, 4, "#FF8A3D", 2.5)}
@@ -450,10 +464,11 @@ const food: LibrarySticker[] = [
     "มังคุด",
     120,
     126,
-    `${die(`<circle cx="60" cy="76" r="40"/><rect x="57" y="14" width="6" height="14" rx="3"/>` + pd(...MANGOSTEEN_LEAVES))}
-     ${rc(57, 14, 6, 14, 3, "#6B4A2B", 2.5)}
+    `${die(`<circle cx="60" cy="76" r="40"/><rect x="57" y="14" width="6" height="28" rx="3"/>` + pd(...MANGOSTEEN_LEAVES))}
+     ${rc(57, 14, 6, 28, 3, "#6B4A2B", 2.5)}
      ${ci(60, 76, 40, "#A24C93")}
-     ${ln("M30 98Q60 124 92 98", "#7E3573", 6)}
+     ${clip("p2-mangosteen-shade", `<circle cx="60" cy="76" r="40"/>`, ln("M22 96Q60 126 98 96", "#7E3573", 6))}
+     ${ci(60, 76, 40, "none")}
      ${MANGOSTEEN_LEAVES.map((d) => p(d, "#6FAE4E", 3)).join("")}
      ${gloss("M30 70q3-12 13-18")}
      ${face(60, 84, 12)}`,
@@ -490,9 +505,9 @@ const food: LibrarySticker[] = [
     `<g transform="rotate(-12 85 52)">
        ${die(`<rect x="14" y="48" width="142" height="8" rx="4"/>` + [52, 85, 118].map((x) => `<rect x="${x - 17}" y="35" width="34" height="34" rx="13"/>`).join(""))}
        ${rc(14, 48, 142, 8, 4, "#E3B47A", 3)}
-       ${[52, 85, 118].map((x) => `${rc(x - 17, 35, 34, 34, 13, "#B5652F")}${ln(`M${x - 9} 44l6-4M${x + 2} 58l7-5M${x - 10} 60l5-3`, "#7A3E1C", 2.6)}${gloss(`M${x - 11} 46q2-5 7-7`, 2.5)}`).join("")}
-     </g>
-     ${happy(85, 49, 7, 0.75)}`,
+       ${[52, 85, 118].map((x) => `${rc(x - 17, 35, 34, 34, 13, "#B5652F")}${x === 85 ? "" : ln(`M${x + 3} 44l6-4M${x + 2} 58l7-5M${x - 10} 60l5-3`, "#7A3E1C", 2.6)}${gloss(`M${x - 11} 46q2-5 7-7`, 2.5)}`).join("")}
+       ${happy(85, 50, 7, 0.75)}
+     </g>`,
   ),
   mk(
     "khanom-krok",
@@ -509,10 +524,13 @@ const food: LibrarySticker[] = [
      ]
        .map(
          ([x, y]) =>
-           `${ci(x, y, 17, "#EFA94A")}${ci(x, y, 11.5, "#FFF6DE", 2.5)}<g fill="#5DBB63"><rect x="${x - 6}" y="${y - 5}" width="4" height="2.4" rx="1"/><rect x="${x + 3}" y="${y - 3}" width="4" height="2.4" rx="1"/></g>`,
+           `${ci(x, y, 17, "#EFA94A")}${ci(x, y, 11.5, "#FFF6DE", 2.5)}` +
+           (x === 75
+             ? ""
+             : `<g fill="#5DBB63"><rect x="${x - 6}" y="${y - 6}" width="4" height="2.4" rx="1" transform="rotate(-25 ${x - 4} ${y - 5})"/><rect x="${x + 2}" y="${y + 2}" width="4" height="2.4" rx="1" transform="rotate(20 ${x + 4} ${y + 3})"/><rect x="${x + 3}" y="${y - 6}" width="3" height="2.2" rx="1"/></g>`),
        )
        .join("")}
-     ${happy(75, 52, 5, 0.6)}`,
+     ${happyEyes(75, 51, 5, 0.6)}${cheeks(75, 51, 2, 0.55)}${grin(75, 51, 0.6)}`,
   ),
   mk("boba-taro", "Taro bubble tea", "ชานมเผือกไข่มุก", 90, 146, boba("#C3A6E6", "#E3D3F7", "#8B7CF6", face(45, 88, 9, 0.95))),
   mk("boba-matcha", "Matcha bubble tea", "ชาเขียวไข่มุก", 90, 146, boba("#A8D47A", "#E4F2D2", "#5DBB63", happy(45, 86, 9, 0.95))),
@@ -522,7 +540,7 @@ const food: LibrarySticker[] = [
     "ชานมบราวน์ชูการ์",
     90,
     146,
-    boba("#F4E6D4", "#FFF6EA", "#FFB627", wink(45, 86, 9, 0.95), ln("M18 66Q30 78 22 94Q16 108 28 126M72 66Q60 80 68 96Q74 110 62 128", "#A8673A", 5)),
+    boba("#F4E6D4", "#FFF6EA", "#FFB627", wink(45, 86, 9, 0.95), ln("M18 66Q30 78 22 94Q16 108 28 126M72 66Q60 78 68 94Q74 108 62 126", "#A8673A", 5)),
   ),
   mk(
     "iced-coffee-bag",
@@ -552,12 +570,12 @@ const food: LibrarySticker[] = [
     "กระติ๊บข้าวเหนียว",
     110,
     134,
-    `${die(pd(KRATIP_LID, KRATIP_FOOT) + `<rect x="26" y="50" width="58" height="62" rx="12"/>` + sd("M28 58C12 44 30 16 55 18C80 16 98 44 82 58", 16))}
+    `${die(pd(KRATIP_LID, KRATIP_FOOT, KRATIP_BODY) + sd("M28 58C12 44 30 16 55 18C80 16 98 44 82 58", 16))}
      ${tube("M28 58C12 44 30 16 55 18C80 16 98 44 82 58", "#8C5A2B", 3)}
      ${p(KRATIP_FOOT, "#C98F46")}
-     ${rc(26, 50, 58, 62, 12, "#E1B169")}
-     ${clip("c", `<rect x="26" y="50" width="58" height="62" rx="12"/>`, ln(Array.from({ length: 9 }, (_, i) => `M${18 + i * 10} 48l-16 70M${18 + i * 10} 48l16 70`).join(""), "#C99A52", 2))}
-     <rect x="26" y="50" width="58" height="62" rx="12" fill="none" stroke="${O}" stroke-width="${S}"/>
+     ${p(KRATIP_BODY, "#E1B169")}
+     ${clip("c", `<path d="${KRATIP_BODY}"/>`, ln(Array.from({ length: 9 }, (_, i) => `M${18 + i * 10} 48l-16 70M${18 + i * 10} 48l16 70`).join(""), "#C99A52", 2))}
+     <path d="${KRATIP_BODY}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
      ${p(KRATIP_LID, "#C98F46")}
      ${ln("M30 44Q55 36 80 44", "#A8712F", 3)}
      ${gloss("M33 64v24", 3.5)}
@@ -578,7 +596,7 @@ const ELE_BODY =
   "M26 98C22 72 38 54 64 54C86 54 100 62 106 76L108 108Q108 112 104 112H94Q90 112 90 108V100H58V108Q58 112 54 112H44Q40 112 40 108V102C32 102 26 100 26 98Z";
 const ELE_TRUNK = "M122 76C136 70 140 54 134 38";
 const ELE_DROPS = [drop(122, 26, 4), drop(142, 24, 4.5), drop(154, 40, 3.5)];
-const ELE_HEAD_TRUNK = "M80 80C80 98 82 108 92 110C98 110 100 104 96 100";
+const ELE_HEAD_TRUNK = "M80 80C80 98 82 108 90 110C95 110 97 106 94 103";
 const LOTUS = {
   outer: ["M70 92C46 92 22 80 16 58C34 56 56 66 70 92Z", "M70 92C94 92 118 80 124 58C106 56 84 66 70 92Z"],
   mid: ["M70 92C50 84 38 62 44 38C60 46 70 66 70 92Z", "M70 92C90 84 102 62 96 38C80 46 70 66 70 92Z"],
@@ -589,7 +607,7 @@ const T_GABLE = "M90 22L138 76H42Z";
 const T_HOOKS = "M22 96C16 92 16 86 20 84M158 96C164 92 164 86 160 84M42 76C36 76 34 70 38 66M138 76C144 76 146 70 142 66M90 22C90 14 97 12 100 17";
 const WG_BODY = "M30 44Q30 34 40 34H124Q132 34 132 42V58Q132 64 126 64H76L68 96Q66 102 60 102H48Q42 102 44 96L50 64H40Q30 64 30 54Z";
 const LANTERN = "M55 14C80 14 92 36 92 64C92 88 82 104 72 110H38C28 104 18 88 18 64C18 36 30 14 55 14Z";
-const KT_SIDE = "M19 84V92Q19 104 75 104Q131 104 131 92V84Z";
+const KT_SIDE = "M19 78V94Q19 110 75 110Q131 110 131 94V78Z";
 const KT_FOLDS = "M24 84L30 64L40 82L48 60L58 80L66 58L75 80L84 58L92 80L102 60L110 82L120 64L126 84Z";
 const UMB = `M18 70A52 52 0 0 1 122 70${"a8.67 6 0 0 1 -17.33 0".repeat(6)}Z`;
 const UMB_CUSPS = [0, 1, 2, 3, 4, 5, 6].map((k) => f(18 + k * 17.33));
@@ -621,17 +639,22 @@ const culture: LibrarySticker[] = [
     "เรือหางยาว",
     200,
     108,
-    `${die(pd(HULL, WATER) + `<rect x="72" y="34" width="64" height="18"/><rect x="150" y="38" width="18" height="14" rx="4"/>` + sd("M166 50L182 80", 20))}
+    `${die(pd(HULL, WATER) + `<rect x="72" y="34" width="64" height="18"/><rect x="150" y="38" width="18" height="14" rx="4"/>` + sd("M164 52L176 78", 20))}
      ${ln("M80 42v12M128 42v12", O, 3)}
      ${rc(72, 34, 64, 8, 4, "#E8453C", 3)}
-     ${tube("M166 50L182 80", "#8E9AAF", 3)}${el(183, 83, 3, 6, "#8E9AAF", 2.5, -28)}
+     ${tube("M164 52L176 78", "#8E9AAF", 3)}
      ${rc(150, 38, 18, 14, 4, "#8E9AAF", 3)}
-     ${tube("M20 38l-3 12", "#FF6B8B", 3)}${tube("M24 41l0 12", "#FFD23F", 3)}${tube("M28 44l3 11", "#7AE582", 3)}
      ${p(HULL, "#B5713F")}
-     ${ln("M58 56H164", "#F6C443", 3)}${ln("M24 44Q36 54 54 56", "#F6C443", 3)}
+     ${clip(
+       "p2-longtail-boat-hull",
+       `<path d="${HULL}"/>`,
+       ln("M28 46Q38 52.5 56 55.5H166", "#F6C443", 3),
+     )}
+     <path d="${HULL}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
+     ${flower(25, 42, 2.6, "#FF6B8B", "#FFD23F", 1.5)}
      ${p(WATER, "#4FB3E8")}
      ${ln("M32 84h20M92 86h24M146 84h16", "#fff", 3)}
-     ${face(104, 59, 8, 0.7)}`,
+     ${face(104, 61.5, 8, 0.65)}`,
   ),
   mk(
     "elephant-splash",
@@ -661,16 +684,19 @@ const culture: LibrarySticker[] = [
     `${die(`<ellipse cx="42" cy="64" rx="24" ry="30"/><ellipse cx="118" cy="64" rx="24" ry="30"/><ellipse cx="80" cy="60" rx="32" ry="30"/>` + sd(ELE_HEAD_TRUNK, 28))}
      ${el(42, 64, 24, 30, "#93A6C2")}${el(118, 64, 24, 30, "#93A6C2")}
      ${el(45, 66, 13, 19, "#F2B8C6", 0)}${el(115, 66, 13, 19, "#F2B8C6", 0)}
+     ${p("M60 82q-8 9-4 16q2-7 9-10Z", "#FFF8EC", 2.5)}${p("M100 82q8 9 4 16q-2-7-9-10Z", "#FFF8EC", 2.5)}
      ${tube(ELE_HEAD_TRUNK, "#A3B5CF", 12)}
      ${el(80, 60, 32, 30, "#A3B5CF")}
      ${ln(ELE_HEAD_TRUNK, "#A3B5CF", 12)}
-     ${p("M64 84q-6 10 0 16q2-8 6-12Z", "#FFF8EC", 2.5)}${p("M96 84q6 10 0 16q-2-8-6-12Z", "#FFF8EC", 2.5)}
-     ${p("M58 34Q80 24 102 34L98 50Q80 58 62 50Z", "#E8453C", 3)}
-     ${ln("M62 47Q80 55 98 47", "#F6C443", 3)}
-     <g fill="#F6C443"><circle cx="68" cy="38" r="2"/><circle cx="80" cy="35" r="2"/><circle cx="92" cy="38" r="2"/></g>
+     ${clip(
+       "p2-elephant-head-cap",
+       `<ellipse cx="80" cy="60" rx="32" ry="30"/>`,
+       `${p("M48 34Q80 22 112 34L98 50Q80 58 62 50Z", "#E8453C", 3)}${ln("M62 47Q80 55 98 47", "#F6C443", 3)}<g fill="#F6C443"><circle cx="68" cy="38" r="2"/><circle cx="80" cy="35" r="2"/><circle cx="92" cy="38" r="2"/></g>`,
+     )}
+     ${clip("p2-elephant-head-rim", `<rect x="40" y="20" width="80" height="34"/>`, el(80, 60, 32, 30, "none"))}
      ${p("M80 50l6 7-6 7-6-7Z", "#F6C443", 2.5)}
      ${eyes(80, 70, 15, 0.9)}${cheeks(80, 70, 15, 0.9)}
-     ${gloss("M56 46q3-8 9-11", 3)}`,
+     ${gloss("M53 61q1-5 4-9", 3)}`,
   ),
   mk(
     "lotus",
@@ -683,9 +709,9 @@ const culture: LibrarySticker[] = [
      ${LOTUS.outer.map((d) => p(d, "#F48FB1")).join("")}
      ${LOTUS.mid.map((d) => p(d, "#F7A8C4")).join("")}
      ${p(LOTUS.centre, "#FFC2D9")}
-     ${ln("M70 30q-6 10-6 24M46 46q4 10 10 20M94 46q-4 10-10 20", "#F48FB1", 2.5)}
-     ${gloss("M64 40q2-6 5-10", 3)}
-     ${face(70, 68, 8, 0.8)}`,
+     ${ln("M73 34q4 9 4 20M46 46q4 10 10 20M94 46q-4 10-10 20", "#F48FB1", 2.5)}
+     ${gloss("M64 46q1-7 5-12", 3)}
+     ${eyes(70, 64, 5, 0.7)}${cheeks(70, 64, 2, 0.55)}${smile(70, 64, 0.7)}`,
   ),
   mk(
     "temple-roof",
@@ -695,10 +721,10 @@ const culture: LibrarySticker[] = [
     124,
     `${die(pd(T_BACK, T_GABLE) + `<rect x="46" y="94" width="88" height="18" rx="2"/>` + sd(T_HOOKS, 16))}
      ${tube(T_HOOKS, "#F6C443", 3.5)}
-     ${p(T_BACK, "#2F8F63")}${ln("M32 88H148M42 79H138", "#257552", 2.5)}
      ${rc(46, 94, 88, 18, 2, "#FFF4DC")}
-     ${ln("M60 96v14M120 96v14", O, 2.5)}
-     ${p("M80 112V102Q90 94 100 102V112Z", "#E0A526", 2.5)}
+     ${ln("M60 98v12M120 98v12", O, 2.5)}
+     ${p("M81 112V106Q90 99 99 106V112Z", "#E0A526", 2.5)}
+     ${p(T_BACK, "#2F8F63")}${ln("M32 88H148M42 79H138", "#257552", 2.5)}
      ${p(T_GABLE, "#F6C443")}
      ${p("M90 36L124 72H56Z", "#C8372D", 2.5)}
      ${p("M90 46l8 10-8 10-8-10Z", "#F6C443", 2)}${ci(90, 56, 2.5, "#C8372D", 0)}
@@ -729,14 +755,14 @@ const culture: LibrarySticker[] = [
     "โคมลอย",
     110,
     150,
-    `${die(pd(LANTERN, spark(22, 30, 7), spark(92, 124, 6)) + `<rect x="36" y="108" width="38" height="7" rx="3.5"/><circle cx="55" cy="128" r="12"/>`)}
+    `${die(pd(LANTERN, spark(13, 26, 6), spark(92, 124, 6)) + `<rect x="36" y="108" width="38" height="7" rx="3.5"/><circle cx="55" cy="128" r="12"/>`)}
      ${ci(55, 128, 12, "#FFE9A8", 0)}
      ${p(drop(55, 130, 6), "#FF9F1C", 2.5)}${p(drop(55, 131.5, 3), "#FFE066", 0)}
      ${p(LANTERN, "#FFC857")}
      ${clip("c", `<path d="${LANTERN}"/>`, ln("M40 18Q28 64 42 110M70 18Q82 64 68 110", "#F5A524", 3) + `<path d="M10 10H100V34Q55 22 10 34Z" fill="#FFD983"/>`)}
      <path d="${LANTERN}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
      ${rc(36, 108, 38, 7, 3.5, "#C98F46", 3)}
-     ${p(spark(22, 30, 7), "#FFD23F", 2)}${p(spark(92, 124, 6), "#FFD23F", 2)}
+     ${p(spark(13, 26, 6), "#FFD23F", 2)}${p(spark(92, 124, 6), "#FFD23F", 2)}
      ${gloss("M30 50q4-16 14-24")}
      ${face(55, 70, 11)}`,
   ),
@@ -746,9 +772,10 @@ const culture: LibrarySticker[] = [
     "กระทง",
     150,
     118,
-    `${die(pd(KT_SIDE, KT_FOLDS, drop(75, 26, 4.5)) + `<ellipse cx="75" cy="84" rx="56" ry="13"/><ellipse cx="75" cy="62" rx="30" ry="15"/><rect x="71" y="30" width="8" height="26"/>` + sd("M64 52L56 28M86 52L94 30", 14))}
+    `${die(pd(KT_SIDE) + `<ellipse cx="75" cy="78" rx="56" ry="12"/><g transform="translate(0 -6)">${pd(KT_FOLDS, drop(75, 26, 4.5))}<ellipse cx="75" cy="62" rx="30" ry="15"/><rect x="71" y="30" width="8" height="26"/>${sd("M64 52L56 28M86 52L94 30", 14)}</g>`)}
      ${p(KT_SIDE, "#7DB357")}
-     ${el(75, 84, 56, 13, "#9CCB6B")}
+     ${el(75, 78, 56, 12, "#9CCB6B")}
+     <g transform="translate(0 -6)">
      ${p(KT_FOLDS, "#4FA34F", 3)}
      ${ln("M64 52L56 28M86 52L94 30", "#B5713F", 2.5)}${ci(56, 28, 2.2, "#E8453C", 0)}${ci(94, 30, 2.2, "#E8453C", 0)}
      ${rc(71, 30, 8, 26, 2, "#FFF4DC", 2.5)}
@@ -767,7 +794,8 @@ const culture: LibrarySticker[] = [
        .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.2"/>`)
        .join("")}</g>
      ${flower(60, 52, 3.4, "#C77DFF", "#FFF4DC", 1.5)}${flower(92, 54, 3.4, "#FF8FB1", "#FFF4DC", 1.5)}
-     ${face(75, 92, 10, 0.8)}`,
+     </g>
+     ${face(75, 97, 10, 0.75)}`,
   ),
   mk(
     "paper-umbrella",
@@ -805,15 +833,14 @@ const culture: LibrarySticker[] = [
     `${die(`<circle cx="55" cy="48" r="32"/><rect x="49" y="76" width="12" height="40" rx="6"/><circle cx="55" cy="110" r="12"/>` + sd("M48 118Q44 126 42 134M55 120V136M62 118Q66 126 68 134", 14))}
      ${tube("M48 118Q44 126 42 134M55 120V136M62 118Q66 126 68 134", "#5DBB63", 2.5)}
      ${ci(42, 134, 3.2, "#fff", 2)}${ci(55, 136, 3.2, "#fff", 2)}${ci(68, 134, 3.2, "#fff", 2)}
-     <circle cx="55" cy="48" r="24" fill="none" stroke="${O}" stroke-width="16"/><circle cx="55" cy="48" r="24" fill="none" stroke="#FFFDF5" stroke-width="9"/>
-     <g fill="#E3EBD3">${Array.from({ length: 16 }, (_, i) => {
-       const a = (i / 16) * Math.PI * 2;
-       return `<circle cx="${f(55 + 24 * Math.cos(a))}" cy="${f(48 + 24 * Math.sin(a))}" r="1.6"/>`;
-     }).join("")}</g>
+     ${Array.from({ length: 20 }, (_, i) => {
+       const a = (i / 20) * Math.PI * 2 - Math.PI / 2;
+       return ci(f(55 + 24 * Math.cos(a)), f(48 + 24 * Math.sin(a)), 4.6, "#FFFDF5", 2.2);
+     }).join("")}
      ${[0, 90, 180, 270].map((d) => ci(f(55 + 24 * Math.cos((d * Math.PI) / 180)), f(48 + 24 * Math.sin((d * Math.PI) / 180)), 5, "#FFA62B", 2.2)).join("")}
      ${ci(55, 84, 6, "#FFA62B", 2.5)}${ci(55, 96, 6, "#FFFDF5", 2.5)}
      ${ci(55, 110, 11, "#E8453C", 3)}${ln("M50 110a5 5 0 1 1 5 5", "#B82D25", 2)}
-     ${gloss("M38 34q6-8 14-9", 3)}`,
+     ${gloss("M49 106q1-4 5-5", 2.5)}`,
   ),
 ];
 
@@ -833,11 +860,11 @@ const CAPY = "M16 86C16 64 30 54 52 54H98C112 42 136 46 140 64C142 76 138 86 130
 const AXO_GILLS = "M44 48L24 36M40 60L20 60M44 72L24 84M106 48L126 36M110 60L130 60M106 72L126 84";
 const PENGUIN = "M55 16C82 16 94 44 94 78C94 110 78 126 55 126C32 126 16 110 16 78C16 44 28 16 55 16Z";
 const PENGUIN_BELLY = "M55 50C60 40 74 36 80 46C86 58 84 76 82 88C80 108 70 120 55 120C40 120 30 108 28 88C26 76 24 58 30 46C36 36 50 40 55 50Z";
-const PENGUIN_FLIPPERS = ["M22 70C14 82 15 94 24 98Z", "M88 70C96 82 95 94 86 98Z"];
-const FOX = "M20 50C30 44 44 44 65 46C86 44 100 44 110 50C112 76 92 100 65 104C38 100 18 76 20 50Z";
-const FOX_EARS = ["M24 52L28 16L54 40Z", "M106 52L102 16L76 40Z"];
+const PENGUIN_FLIPPERS = ["M20 66C10 78 10 92 20 98Z", "M90 66C100 78 100 92 90 98Z"];
+const FOX = "M18 56C18 36 40 28 65 28C90 28 112 36 112 56C112 80 92 100 65 104C38 100 18 80 18 56Z";
+const FOX_EARS = ["M22 50L26 12L58 32Z", "M108 50L104 12L72 32Z"];
 const WHALE = "M16 70C16 46 40 34 72 34C104 34 126 50 130 70C130 92 104 104 72 104C40 104 16 92 16 70Z";
-const WHALE_TAIL = "M124 76C132 66 136 56 134 46C142 50 152 48 156 42C158 56 146 70 130 82Z";
+const WHALE_TAIL = "M122 62C132 62 138 56 140 48C134 46 130 40 132 34C140 36 146 42 147 48C150 42 155 38 161 40C159 50 154 56 146 58C144 70 136 80 124 84Z";
 const WHALE_SPOUT = "M64 34C62 26 56 22 50 22M64 34C66 26 72 22 78 22";
 const OCTO =
   "M24 66C24 36 42 18 65 18C88 18 106 36 106 66C106 74 112 82 118 86C112 92 104 88 100 84C98 96 104 104 112 108C102 116 90 106 88 96C86 108 82 114 76 118C70 112 70 102 70 96C66 104 60 114 52 116C48 108 50 100 52 94C46 104 36 110 24 106C28 98 32 92 34 86C26 90 18 88 14 84C20 80 24 74 24 66Z";
@@ -848,7 +875,7 @@ const JELLY = "M18 62C18 34 34 18 55 18C76 18 92 34 92 62C86 68 78 62 73 66C68 7
 const JELLY_LEGS =
   "M30 66C26 80 36 90 30 104C26 114 34 120 32 126M46 68C42 82 52 92 46 106C42 116 50 120 48 128M64 68C68 82 58 92 64 106C68 116 60 120 62 128M80 66C84 80 74 90 80 104C84 114 76 120 78 126";
 const HEDGE = `M${spikes(72, 86, 58, 50, 10, 10, 180, 330).join("L")}L118 98H24Q14 98 14 90Z`;
-const HEDGE_SNOUT = "M96 58C116 56 134 70 140 84C134 94 116 98 96 96Z";
+const HEDGE_SNOUT = "M96 58C116 56 134 70 140 84C134 94 116 98 100 96C92 84 90 70 96 58Z";
 
 const animals: LibrarySticker[] = [
   mk(
@@ -869,7 +896,7 @@ const animals: LibrarySticker[] = [
      ${ln("M27 64l10 2M27 72l10-1M103 64l-10 2M103 72l-10-1", O, 2)}
      ${face(65, 62, 13)}
      ${p("M62 65h6l-3 3z", "#FF8FA3", 1.5)}
-     ${gloss("M38 50q3-10 12-14")}`,
+     ${gloss("M38 52q3-9 11-13")}`,
   ),
   mk(
     "cat-loaf",
@@ -878,18 +905,17 @@ const animals: LibrarySticker[] = [
     150,
     120,
     `${die(pd(LOAF, ...LOAF_EARS) + sd(LOAF_TAIL, 24))}
+     ${tube(LOAF_TAIL, "#4A4458", 8)}
      ${LOAF_EARS.map((d) => p(d, "#4A4458")).join("")}
      ${p("M41 46L43 32L53 41Z", "#FF9EB5", 0)}${p("M109 46L107 32L97 41Z", "#FF9EB5", 0)}
      ${p(LOAF, "#4A4458")}
-     ${ln("M28 88Q75 96 122 88", "#3A3446", 5)}
-     ${el(60, 94, 8, 5, "#fff", 2.5)}${el(90, 94, 8, 5, "#fff", 2.5)}
-     ${tube(LOAF_TAIL, "#4A4458", 8)}
+     ${ln("M28 88Q75 96 122 88", "#3A3446", 5)}     ${el(60, 94, 8, 5, "#fff", 2.5)}${el(90, 94, 8, 5, "#fff", 2.5)}
      ${[58, 92].map((x) => el(x, 66, 7, 8, "#F9E27D", 2.5) + el(x, 67, 2.4, 5.2, O, 0) + ci(x + 2, 63, 1.6, "#fff", 0)).join("")}
      ${p("M72 75h6l-3 3z", "#FF9EB5", 0)}
      ${ln("M75 78q-3 4-6 1M75 78q3 4 6 1", "#E9E2F2", 2)}
      ${ln("M30 74l14 2M30 82l14-1M120 74l-14 2M120 82l-14-1", "#B7AEC6", 2)}
-     <g fill="#FF8FA3" opacity=".6"><ellipse cx="46" cy="80" rx="5" ry="3"/><ellipse cx="104" cy="80" rx="5" ry="3"/></g>
-     ${gloss("M32 64q6-14 20-20")}`,
+     <g fill="#FF8FA3" opacity=".6"><ellipse cx="50" cy="80" rx="5" ry="3"/><ellipse cx="100" cy="80" rx="5" ry="3"/></g>
+     ${gloss("M32 68q5-12 17-18")}`,
   ),
   mk(
     "pup",
@@ -903,10 +929,10 @@ const animals: LibrarySticker[] = [
      ${PUP_EARS.map((d) => p(d, "#B9794D")).join("")}
      ${el(70, 82, 17, 12, "#FFF8EE", 3)}
      ${el(70, 76, 6, 4.5, O, 0)}${ci(68, 74.5, 1.4, "#fff", 0)}
+     ${p("M66.5 85q3.5 9 7 0z", "#FF6F86", 2)}
      ${ln("M70 80v4M64 84q3 3 6 0q3 3 6 0", O, 2.4)}
-     ${p("M67 86q3 8 6 0z", "#FF6F86", 2)}
      ${eyes(70, 60, 15)}${cheeks(70, 62, 17, 0.9)}
-     ${gloss("M42 52q4-12 14-16")}`,
+     ${gloss("M51 48q3-7 9-10")}`,
   ),
   mk(
     "frog",
@@ -916,9 +942,7 @@ const animals: LibrarySticker[] = [
     122,
     `${die(pd(FROG) + `<circle cx="46" cy="42" r="17"/><circle cx="94" cy="42" r="17"/><ellipse cx="36" cy="104" rx="12" ry="6"/><ellipse cx="104" cy="104" rx="12" ry="6"/>`)}
      ${el(36, 104, 12, 6, "#5CC245", 3)}${el(104, 104, 12, 6, "#5CC245", 3)}
-     ${p(FROG, "#7ED957")}
-     ${ci(46, 42, 17, "#7ED957")}${ci(94, 42, 17, "#7ED957")}
-     ${p("M30 52Q70 40 110 52", "#7ED957", 0)}
+     ${blob(`<path d="${FROG}"/><circle cx="46" cy="42" r="17"/><circle cx="94" cy="42" r="17"/>`, "#7ED957")}
      ${el(70, 88, 26, 13, "#C9F2A8", 0)}
      ${[46, 94].map((x) => ci(x, 42, 10, "#fff", 2.5) + ci(x + 2, 43, 5, O, 0) + ci(x + 3.5, 41, 1.6, "#fff", 0)).join("")}
      <g fill="#FF8FA3" opacity=".75"><ellipse cx="36" cy="68" rx="6" ry="3.5"/><ellipse cx="104" cy="68" rx="6" ry="3.5"/></g>
@@ -968,7 +992,7 @@ const animals: LibrarySticker[] = [
      ${ln("M46 72Q75 90 104 72", "#FFA9C0", 5)}
      ${eyes(75, 56, 16)}${cheeks(75, 56, 16)}
      ${ln("M66 64q9 8 18 0", O, 3)}
-     ${gloss("M48 46q4-10 14-14")}`,
+     ${gloss("M50 50q4-10 14-13")}`,
   ),
   mk(
     "penguin",
@@ -983,7 +1007,7 @@ const animals: LibrarySticker[] = [
      ${p(PENGUIN_BELLY, "#fff", 0)}
      ${eyes(55, 62, 11, 0.9)}${cheeks(55, 62, 11, 0.9)}
      ${p("M50 70h10l-5 6Z", "#FFA62B", 2)}
-     ${gloss("M30 36q6-12 16-15", 3.5)}`,
+     ${gloss("M30 40q6-12 16-15", 3.5)}`,
   ),
   mk(
     "bear",
@@ -1025,14 +1049,14 @@ const animals: LibrarySticker[] = [
     116,
     `${die(pd(FOX, ...FOX_EARS))}
      ${FOX_EARS.map((d) => p(d, "#FF8A3D")).join("")}
-     ${p("M30 44L32 26L46 38Z", "#FFE3CC", 0)}${p("M100 44L98 26L84 38Z", "#FFE3CC", 0)}
+     ${p("M28 40L30 21L46 31Z", "#FFE3CC", 0)}${p("M102 40L100 21L84 31Z", "#FFE3CC", 0)}
      ${p(FOX, "#FF8A3D")}
-     ${clip("c", `<path d="${FOX}"/>`, `<path d="M38 68C50 68 60 76 65 98C70 76 80 68 92 68C100 86 84 104 65 106C46 104 30 86 38 68Z" fill="#FFF6EC"/>`)}
+     ${clip("p2-fox-c", `<path d="${FOX}"/>`, `<path d="M38 68C50 68 62 74 65 88C68 74 80 68 92 68C100 86 84 104 65 106C46 104 30 86 38 68Z" fill="#FFF6EC"/>`)}
      <path d="${FOX}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
-     ${el(65, 94, 5, 4, O, 0)}
-     ${ln("M65 98v2M61 100q2 3 4 0q2 3 4 0", O, 2.2)}
-     ${happyEyes(65, 66, 16)}${cheeks(65, 66, 18)}
-     ${gloss("M30 58q2-6 8-8", 3)}`,
+     ${el(65, 88, 5, 4, O, 0)}
+     ${ln("M65 92v2M61 94q2 3 4 0q2 3 4 0", O, 2.2)}
+     ${happyEyes(65, 64, 16)}${cheeks(65, 64, 18)}
+     ${gloss("M28 52q3-8 11-12", 3)}`,
   ),
   mk(
     "whale",
@@ -1044,9 +1068,9 @@ const animals: LibrarySticker[] = [
      ${tube(WHALE_SPOUT, "#7FD0F5", 3.5)}${ci(46, 22, 3, "#7FD0F5", 2)}${ci(82, 22, 3, "#7FD0F5", 2)}
      ${p(WHALE_TAIL, "#5BA8E8")}
      ${p(WHALE, "#5BA8E8")}
-     ${clip("c", `<path d="${WHALE}"/>`, `<path d="M10 80C40 98 100 102 140 80V110H10Z" fill="#CFEAF7"/>${ln("M50 92v10M66 94v10M82 94v10M98 92v10", "#A9D6EE", 2.5)}`)}
+     ${clip("p2-whale-c", `<path d="${WHALE}"/>`, `<path d="M10 80C40 98 100 102 140 80V110H10Z" fill="#CFEAF7"/>${ln("M50 92v10M66 94v10M82 94v10M98 92v10", "#A9D6EE", 2.5)}`)}
      <path d="${WHALE}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
-     ${p("M76 84q-4 12 8 14q2-8-8-14Z", "#4A93D4", 2.5)}
+     ${p("M78 74q-2 14 12 17q1-12-12-17Z", "#4A93D4", 2.5)}
      ${gloss("M30 52q8-10 20-12")}
      ${face(48, 64, 10)}`,
   ),
@@ -1076,9 +1100,9 @@ const animals: LibrarySticker[] = [
      ${p("M118 64L134 70L118 76Z", "#3A2E2A", 3)}
      ${ln("M50 46Q42 32 34 32", O, 3)}${ci(34, 32, 4, O, 0)}
      ${el(78, 70, 42, 30, "#FFD23F")}
-     ${clip("c", `<ellipse cx="78" cy="70" rx="42" ry="30"/>`, `<g fill="#3A2E2A"><rect x="80" y="30" width="11" height="80"/><rect x="101" y="30" width="11" height="80"/></g>`)}
+     ${clip("p2-bee-c", `<ellipse cx="78" cy="70" rx="42" ry="30"/>`, `<g fill="#3A2E2A"><rect x="80" y="30" width="11" height="80"/><rect x="101" y="30" width="11" height="80"/></g>`)}
      <ellipse cx="78" cy="70" rx="42" ry="30" fill="none" stroke="${O}" stroke-width="${S}"/>
-     ${gloss("M44 58q5-10 14-13")}
+     ${gloss("M46 62q5-10 14-13")}
      ${face(58, 70, 9, 0.9)}`,
   ),
   mk(
@@ -1093,7 +1117,7 @@ const animals: LibrarySticker[] = [
      ${p(SNAIL, "#C9E88F")}
      ${ln("M24 94H120", "#A9D06A", 4)}
      ${ci(68, 58, 30, "#FFA65C")}
-     ${ln("M68 58m-3 0a3 3 0 1 1 6 0a9 9 0 1 1 -16 1a15 15 0 1 1 28 0a21 21 0 1 1 -38 -2", "#E07A35", 3)}
+     ${ln("M65 58a3 3 0 0 1 6 0a6 6 0 0 1 -12 0a9 9 0 0 1 18 0a12 12 0 0 1 -24 0a15 15 0 0 1 30 0", "#E07A35", 3)}
      ${gloss("M46 46q4-8 12-11")}
      ${face(124, 70, 6, 0.7)}`,
   ),
@@ -1107,12 +1131,12 @@ const animals: LibrarySticker[] = [
      ${p("M52 26C50 18 56 14 60 18C62 14 68 16 66 22Z", "#FFD23F", 2.5)}
      ${ci(55, 54, 30, "#FFD23F")}
      ${el(30, 62, 6, 9, "#FFC21A", 2.5, 20)}${el(80, 62, 6, 9, "#FFC21A", 2.5, -20)}
-     ${eyes(55, 48, 11)}${cheeks(55, 48, 11)}
+     ${eyes(55, 48, 11)}${cheeks(55, 48, 8)}
      ${p("M50 56h10l-5 6Z", "#FFA62B", 2)}
      ${gloss("M34 42q4-10 12-13", 3.5)}
      ${p(EGG, "#FFFDF6")}
      ${ln("M26 96Q55 114 84 96", "#EFE6D2", 5)}
-     <g fill="#EADFC8"><circle cx="36" cy="90" r="2.2"/><circle cx="72" cy="100" r="2.6"/><circle cx="60" cy="88" r="1.8"/></g>`,
+     <g fill="#EADFC8"><circle cx="36" cy="90" r="2.2"/><circle cx="76" cy="92" r="2.6"/><circle cx="60" cy="88" r="1.8"/></g>`,
   ),
   mk(
     "panda",
@@ -1137,8 +1161,8 @@ const animals: LibrarySticker[] = [
     "เต่าน้อย",
     160,
     112,
-    `${die(pd(SHELL, "M22 80l-6 3 6 2Z") + `<rect x="20" y="74" width="110" height="12" rx="6"/><rect x="112" y="62" width="22" height="14" rx="7"/><circle cx="132" cy="62" r="16"/><ellipse cx="42" cy="90" rx="10" ry="7"/><ellipse cx="108" cy="90" rx="10" ry="7"/>`)}
-     ${p("M22 80l-6 3 6 2Z", "#8ED18C", 2.5)}
+    `${die(pd(SHELL, "M30 73Q16 74 9 84Q18 89 30 88Z") + `<rect x="20" y="74" width="110" height="12" rx="6"/><rect x="112" y="62" width="22" height="14" rx="7"/><circle cx="132" cy="62" r="16"/><ellipse cx="42" cy="90" rx="10" ry="7"/><ellipse cx="108" cy="90" rx="10" ry="7"/>`)}
+     ${p("M30 73Q16 74 9 84Q18 89 30 88Z", "#8ED18C", 3)}
      ${el(42, 90, 10, 7, "#8ED18C", 3)}${el(108, 90, 10, 7, "#8ED18C", 3)}
      ${rc(112, 62, 22, 14, 7, "#8ED18C", 3)}
      ${ci(132, 62, 16, "#8ED18C")}
@@ -1176,7 +1200,7 @@ const animals: LibrarySticker[] = [
      ${ci(140, 84, 4.5, O, 0)}
      ${el(116, 74, 3, 4, O, 0)}${ci(117, 72.5, 1.2, "#fff", 0)}
      <ellipse cx="120" cy="86" rx="4.5" ry="2.6" fill="#FF8FA3" opacity=".75"/>
-     ${ln("M128 90q4 3 7 0", O, 2.4)}
+     ${ln("M125 85q3 3 6 0", O, 2.4)}
      ${ci(62, 44, 8, "#F0544F", 3)}${p("M62 36q4-6 9-4q-3 5-9 4Z", "#5DBB63", 2)}`,
   ),
 ];
@@ -1221,8 +1245,7 @@ const nature: LibrarySticker[] = [
     140,
     `${die(pd(SUN_RAYS))}
      ${p(SUN_RAYS, "#FFA62B")}
-     ${ci(70, 70, 32, "#FFD23F")}
-     ${ln("M46 88Q70 104 94 88", "#FFC21A", 5)}
+     ${ci(70, 70, 32, "#FFD23F", 0)}${clip("p2-sun-shade", `<circle cx="70" cy="70" r="32"/>`, ln("M38 86Q70 106 102 86", "#FFC21A", 5))}${ci(70, 70, 32, "none")}
      ${gloss("M48 58q4-10 14-14")}
      ${happy(70, 70, 12)}`,
   ),
@@ -1270,7 +1293,7 @@ const nature: LibrarySticker[] = [
     `${die(CACTUS + pd(POT) + `<rect x="22" y="94" width="66" height="12" rx="4"/><circle cx="55" cy="22" r="9"/>`)}
      ${blob(CACTUS, "#6CC46B")}
      ${ln("M45 34V94M65 34V94M25 48v18M85 38v16", "#4FA34F", 2.5)}
-     ${ln("M38 46l-4-1M38 84l-4 1M72 42l4-1M72 88l4 1M18 54h-3M92 44h3", O, 1.8)}
+     ${ln("M50 42l2 2M60 50l-2 2M50 88l2 2M60 92l-2 2M23 46l2 2M87 40l-2 2", "#3F8F3F", 1.8)}
      ${flower(55, 22, 4, "#FF7AB6", "#FFD23F", 2)}
      ${p(POT, "#E07A4F")}
      ${rc(22, 94, 66, 12, 4, "#F09062")}
@@ -1284,15 +1307,15 @@ const nature: LibrarySticker[] = [
     150,
     `${die(pd(LEAF) + sd("M66 120Q66 128 70 134", 20))}
      ${tube("M66 120Q66 128 70 134", "#4FA34F", 4)}
-     <defs><mask id="m"><rect width="140" height="150" fill="#fff"/>${SLITS.map((d) => `<path d="${d}" fill="#000"/>`).join("")}</mask></defs>
-     <g mask="url(#m)">
+     <defs><mask id="p2-monstera-m"><rect width="140" height="150" fill="#fff"/>${SLITS.map((d) => `<path d="${d}" fill="#000"/>`).join("")}</mask></defs>
+     <g mask="url(#p2-monstera-m)">
        ${p(LEAF, "#5BBE5E")}
-       ${clip("c", `<path d="${LEAF}"/>`, `<path d="M68 20Q76 70 66 124H140V0H68Z" fill="#4CAF50"/>`)}
+       ${clip("p2-monstera-c", `<path d="${LEAF}"/>`, `<path d="M68 20Q76 70 66 124H140V0H68Z" fill="#4CAF50"/>`)}
        <path d="${LEAF}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
        ${ln("M68 30Q74 74 66 118", "#3F9A4B", 3)}
        ${gloss("M28 44q8-14 22-18")}
      </g>
-     ${clip("k", `<path d="${LEAF}"/>`, SLITS.map((d) => `<path d="${d}" fill="none" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`).join(""))}
+     <defs><mask id="p2-monstera-k"><path d="${LEAF}" fill="#fff" stroke="#fff" stroke-width="${S}" stroke-linejoin="round"/></mask></defs><g mask="url(#p2-monstera-k)">${SLITS.map((d) => `<path d="${d}" fill="none" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>`).join("")}</g>
      ${el(36, 66, 4, 2.5, "#fff", 2.5)}${el(104, 64, 4, 2.5, "#fff", 2.5)}`,
   ),
   mk(
@@ -1319,8 +1342,8 @@ const nature: LibrarySticker[] = [
     `${die(pd(GRASS, ...CAPS) + `<rect x="38" y="74" width="14" height="24" rx="6"/><rect x="72" y="52" width="16" height="46" rx="7"/><rect x="110" y="70" width="14" height="28" rx="6"/>`)}
      ${rc(38, 74, 14, 24, 6, "#FFF4E2", 3)}${rc(72, 52, 16, 46, 7, "#FFF4E2", 3)}${rc(110, 70, 14, 28, 6, "#FFF4E2", 3)}
      ${p(CAPS[0], "#FF8FB1")}${p(CAPS[1], "#A88BEB")}${p(CAPS[2], "#FFD23F")}
-     <g fill="#fff"><circle cx="36" cy="66" r="2.6"/><circle cx="54" cy="62" r="2"/><circle cx="66" cy="40" r="3.2"/><circle cx="92" cy="36" r="2.6"/><circle cx="96" cy="50" r="2"/></g>
-     <g fill="#FF9F1C"><circle cx="106" cy="64" r="2.4"/><circle cx="126" cy="60" r="2.8"/></g>
+     <g fill="#fff"><circle cx="37" cy="67" r="2.6"/><circle cx="52" cy="66" r="2"/><circle cx="66" cy="38" r="3.2"/><circle cx="90" cy="33" r="2.6"/><circle cx="97" cy="44" r="2"/></g>
+     <g fill="#FF9F1C"><circle cx="106" cy="62" r="2.4"/><circle cx="124" cy="58" r="2.6"/></g>
      ${face(80, 46, 8, 0.7)}${happy(45, 66, 5, 0.5)}${sleepy(117, 64, 5, 0.5)}
      ${p(GRASS, "#7ED957")}
      ${p("M34 96l4-10 4 10ZM66 96l3-8 3 8ZM98 96l4-10 4 10ZM124 96l3-8 3 8Z", "#5CC245", 2)}`,
@@ -1348,7 +1371,7 @@ const nature: LibrarySticker[] = [
      ${TULIP_LEAVES.map((d) => p(d, "#6CC46B")).join("")}
      ${p(TULIP, "#FF5D6C")}
      ${ln("M38 48C40 62 44 72 50 76C56 72 60 62 62 48", "#E8434F", 3)}
-     ${gloss("M32 46q0 10 4 16", 3)}
+     ${gloss("M34 48q0 9 4 14", 3)}
      ${face(50, 58, 8, 0.8)}`,
   ),
   mk(
@@ -1359,13 +1382,11 @@ const nature: LibrarySticker[] = [
     124,
     `${die(pd(CURL, CURL_BASE))}
      ${p(CURL, "#3D8BE0")}
-     ${clip("c", `<path d="${CURL}"/>`, ln("M28 104C28 72 46 46 76 36", "#5FA6EE", 9) + ln("M100 62C96 56 100 52 104 54", "#7FC3F5", 4))}
+     ${clip("p2-curl-wave-c", `<path d="${CURL}"/>`, ln("M28 104C28 72 46 46 76 36", "#5FA6EE", 9) + ln("M100 62C96 56 100 52 104 54", "#7FC3F5", 4) + ln("M44 46C58 34 80 30 100 34", "#fff", 4) + `<g fill="#fff"><circle cx="110" cy="34" r="2.6"/><circle cx="118" cy="42" r="2"/><circle cx="38" cy="56" r="2.2"/></g>`)}
      <path d="${CURL}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
-     ${ln("M44 42C58 30 80 26 100 30", "#fff", 4)}
-     <g fill="#fff"><circle cx="112" cy="30" r="2.6"/><circle cx="120" cy="38" r="2"/><circle cx="36" cy="52" r="2.2"/></g>
      ${p(CURL_BASE, "#7FC3F5")}
      ${ln("M30 106h18M92 108h20", "#fff", 3)}
-     ${face(36, 80, 7, 0.75)}`,
+     ${face(36, 84, 6, 0.7)}`,
   ),
   mk(
     "sleepy-moon",
@@ -1390,7 +1411,7 @@ const nature: LibrarySticker[] = [
     `${die(pd(...STARS))}
      ${p(STARS[1], "#FF8FB8", 3)}${p(STARS[2], "#7FC4FF", 3)}
      ${p(STARS[0], "#FFD23F")}
-     ${clip("c", `<path d="${STARS[0]}"/>`, `<path d="M64 66L150 40V130H64Z" fill="#FFC21A"/>`)}
+     ${clip("p2-twinkle-stars-c", `<path d="${STARS[0]}"/>`, `<path d="M64 66L150 40V130H64Z" fill="#FFC21A"/>`)}
      <path d="${STARS[0]}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
      ${gloss("M58 34l-3 8", 3)}
      ${happy(64, 70, 9, 0.85)}
@@ -1440,12 +1461,11 @@ const space: LibrarySticker[] = [
      ${R_FINS.map((d) => p(d, "#FF6B6B")).join("")}
      ${rc(40, 94, 34, 10, 4, "#8E9AAF", 3)}
      ${p(R_BODY, "#F4F1EA")}
-     ${clip("c", `<path d="${R_BODY}"/>`, `<rect x="0" y="0" width="114" height="36" fill="#FF6B6B"/><rect x="0" y="80" width="114" height="20" fill="#E3DED2"/>`)}
+     ${clip("p2-rocket-c", `<path d="${R_BODY}"/>`, `<rect x="0" y="0" width="114" height="36" fill="#FF6B6B"/><rect x="0" y="80" width="114" height="20" fill="#E3DED2"/>` + ln("M20 36H94", O, 3))}
      <path d="${R_BODY}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
-     ${ln("M37 36H77", O, 3)}
+     ${gloss("M42 74q-1-16 6-30")}
      ${ci(57, 58, 14, "#fff")}${ci(57, 58, 10, "#7FD0F5", 2.5)}
-     ${face(57, 57, 4, 0.5)}
-     ${gloss("M42 74q-1-16 6-30")}`,
+     ${face(57, 57, 4, 0.5)}`,
   ),
   mk(
     "ufo",
@@ -1456,9 +1476,9 @@ const space: LibrarySticker[] = [
     `${die(pd(UFO_DOME, UFO_BEAM) + `<ellipse cx="85" cy="66" rx="66" ry="18"/>`)}
      ${p(UFO_BEAM, "#FFF1A8", 0)}${ln("M62 92h46M56 102h58", "#FFE066", 2.5)}
      ${p(UFO_DOME, "#BFE8F7", 0)}
-     ${ln("M80 40L74 30M90 40L96 30", O, 2.5)}${ci(74, 30, 2.6, "#FF7AB6", 2)}${ci(96, 30, 2.6, "#FF7AB6", 2)}
-     ${el(85, 50, 15, 13, "#8EE07A", 3)}
-     ${eyes(85, 48, 5, 0.6)}${smile(85, 47, 0.6)}
+     ${ln("M80 37L75 30M90 37L95 30", O, 2.5)}${ci(75, 30, 2.4, "#FF7AB6", 2)}${ci(95, 30, 2.4, "#FF7AB6", 2)}
+     ${el(85, 45, 13, 11, "#8EE07A", 3)}
+     ${eyes(85, 41, 5, 0.6)}${smile(85, 40, 0.6)}
      <path d="${UFO_DOME}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
      ${gloss("M64 46q2-10 10-14", 3)}
      ${el(85, 66, 66, 18, "#9AA6C0")}
@@ -1482,10 +1502,9 @@ const space: LibrarySticker[] = [
     `${die(`<circle cx="67" cy="62" r="46"/><rect x="32" y="100" width="70" height="20" rx="8"/><rect x="16" y="50" width="12" height="26" rx="4"/><rect x="106" y="50" width="12" height="26" rx="4"/>`)}
      ${rc(32, 100, 70, 20, 8, "#C9D2DE")}${ln("M40 110h54", "#AEB8C8", 3)}${ci(84, 110, 4, "#E8453C", 2)}
      ${rc(16, 50, 12, 26, 4, "#FF8A3D")}${rc(106, 50, 12, 26, 4, "#FF8A3D")}
-     ${ci(67, 62, 46, "#F4F6FA")}
-     ${ln("M30 86Q67 112 104 86", "#D9DEE6", 5)}
+     ${ci(67, 62, 46, "#F4F6FA", 0)}${clip("p2-astronaut-helmet-shade", `<circle cx="67" cy="62" r="46"/>`, ln("M22 84Q67 114 112 84", "#D9DEE6", 5))}${ci(67, 62, 46, "none")}
      ${p(VISOR, "#2B3A67")}
-     ${clip("c", `<path d="${VISOR}"/>`, `<circle cx="96" cy="84" r="16" fill="#3C4E86"/>${ci(86, 72, 5, "#FF8FB8", 0)}`)}
+     ${clip("p2-astronaut-helmet-c", `<path d="${VISOR}"/>`, `<circle cx="96" cy="84" r="16" fill="#3C4E86"/>${ci(86, 72, 5, "#FF8FB8", 0)}`)}
      <g fill="#fff"><circle cx="58" cy="70" r="1.4"/><circle cx="76" cy="46" r="1.2"/><circle cx="48" cy="76" r="1"/></g>
      ${p(spark(84, 56, 5), "#fff", 0)}
      ${ln("M42 54q4-10 14-13", "#fff", 4)}
@@ -1500,10 +1519,10 @@ const space: LibrarySticker[] = [
     `${die(`<circle cx="85" cy="59" r="32"/><ellipse cx="85" cy="59" rx="69" ry="21" transform="rotate(-12 85 59)"/>` + pd(spark(26, 26, 7), spark(146, 96, 6)))}
      <g transform="rotate(-12 85 59)" fill="none"><ellipse cx="85" cy="59" rx="64" ry="16" stroke="${O}" stroke-width="11"/><ellipse cx="85" cy="59" rx="64" ry="16" stroke="#6FD3C7" stroke-width="5"/></g>
      ${ci(85, 59, 32, "#FFCF7A")}
-     ${clip("c", `<circle cx="85" cy="59" r="32"/>`, `<rect x="40" y="40" width="90" height="7" fill="#F6A65A"/><rect x="40" y="56" width="90" height="5" fill="#FFE4A8"/><rect x="40" y="70" width="90" height="8" fill="#F6A65A"/>`)}
+     ${clip("p2-saturn-c", `<circle cx="85" cy="59" r="32"/>`, `<rect x="40" y="40" width="90" height="7" fill="#F6A65A"/><rect x="40" y="56" width="90" height="5" fill="#FFE4A8"/><rect x="40" y="70" width="90" height="8" fill="#F6A65A"/>`)}
      <circle cx="85" cy="59" r="32" fill="none" stroke="${O}" stroke-width="${S}"/>
      ${gloss("M64 44q5-9 14-12")}
-     <g transform="rotate(-12 85 59)" fill="none" stroke-linecap="round"><path d="M21 59A64 16 0 0 0 149 59" stroke="${O}" stroke-width="11"/><path d="M21 59A64 16 0 0 0 149 59" stroke="#6FD3C7" stroke-width="5"/><path d="M40 66A64 16 0 0 0 80 75" stroke="#fff" stroke-width="2" opacity=".8"/></g>
+     ${clip("p2-saturn-front", `<circle cx="85" cy="59" r="41"/>`, `<g transform="rotate(-12 85 59)" fill="none"><path d="M21 59A64 16 0 0 0 149 59" stroke="${O}" stroke-width="11"/><path d="M21 59A64 16 0 0 0 149 59" stroke="#6FD3C7" stroke-width="5"/></g>`)}<g transform="rotate(-12 85 59)" fill="none" stroke-linecap="round"><path d="M40 66A64 16 0 0 0 80 75" stroke="#fff" stroke-width="2" opacity=".8"/></g>
      ${p(spark(26, 26, 7), "#FFD23F", 2)}${p(spark(146, 96, 6), "#FF8FB8", 2)}`,
   ),
   mk(
@@ -1514,10 +1533,9 @@ const space: LibrarySticker[] = [
     106,
     `${die(pd(COMET, spark(44, 88, 6), spark(80, 18, 5)) + `<circle cx="132" cy="52" r="24"/>`)}
      ${p(COMET, "#FF9EC7")}
-     ${clip("c", `<path d="${COMET}"/>`, `<path d="M0 0H176V40Q100 34 0 44Z" fill="#7FD0F5"/><path d="M0 56Q100 50 176 58V106H0Z" fill="#FFD23F"/>`)}
+     ${clip("p2-comet-c", `<path d="${COMET}"/>`, `<path d="M0 0H176V40Q100 34 0 44Z" fill="#7FD0F5"/><path d="M0 56Q100 50 176 58V106H0Z" fill="#FFD23F"/>`)}
      <path d="${COMET}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
-     ${ci(132, 52, 24, "#FFE07A")}
-     ${ln("M112 64Q132 80 152 64", "#FFC94A", 5)}
+     ${ci(132, 52, 24, "#FFE07A", 0)}${clip("p2-comet-shade", `<circle cx="132" cy="52" r="24"/>`, ln("M106 62Q132 82 158 62", "#FFC94A", 5))}${ci(132, 52, 24, "none")}
      ${gloss("M116 42q4-8 12-10")}
      ${face(132, 52, 9, 0.9)}
      ${p(spark(44, 88, 6), "#FFD23F", 2)}${p(spark(80, 18, 5), "#7FD0F5", 2)}`,
@@ -1554,9 +1572,9 @@ const SCOOP = "M24 84C18 70 26 58 40 58C46 52 58 52 64 58C78 58 86 70 80 84Q70 9
 const SLICE = "M18 30Q65 14 112 30L70 132Q65 140 60 132Z";
 const CRUST = "M18 30Q65 14 112 30L106 44Q65 30 24 44Z";
 const BUN = "M22 58C22 34 44 20 75 20C106 20 128 34 128 58Q128 64 122 64H28Q22 64 22 58Z";
-const LETTUCE = `M18 68${"q7-8 14 0".repeat(8)}q2 0 2 2V74H18Z`;
-const CHEESE = "M24 70H126V76H110L104 86L98 76H42L36 84L30 76H24Z";
-const BUN_BASE = "M24 96H126V100Q126 110 116 110H34Q24 110 24 100Z";
+const LETTUCE = `M19 68${"q7-8 14 0".repeat(8)}V74H19Z`;
+const CHEESE = "M24 70H126V76H110L104 86L98 76H52L46 84L40 76H24Z";
+const BUN_BASE = "M24 93H126V100Q126 110 116 110H34Q24 110 24 100Z";
 const NIGIRI_RICE = "M20 72C20 60 30 56 60 56C90 56 100 60 100 72C100 86 90 92 60 92C30 92 20 86 20 72Z";
 const SALMON = "M16 60C18 46 36 40 62 42C88 44 104 52 104 62C96 68 80 70 60 70C36 70 22 68 16 60Z";
 const POP = "M22 30Q22 14 45 14Q52 14 56 15A6 6 0 0 0 64 22A6 6 0 0 0 68 32V104Q68 110 62 110H28Q22 110 22 104Z";
@@ -1651,7 +1669,7 @@ const retro: LibrarySticker[] = [
     156,
     136,
     `<g transform="translate(3 0)">
-       ${die(pd(HP_BAND) + `<rect x="14" y="66" width="30" height="48" rx="13"/><rect x="106" y="66" width="30" height="48" rx="13"/>`)}
+       ${die(pd(HP_BAND, "M38 84V68A37 37 0 0 1 112 68V84Z") + `<rect x="14" y="66" width="30" height="48" rx="13"/><rect x="106" y="66" width="30" height="48" rx="13"/>`)}
        ${p(HP_BAND, "#FF7AB6")}
        ${ln("M32 56A44 44 0 0 1 58 28", "#fff", 3)}
        ${rc(36, 72, 12, 36, 6, "#3A3340", 3)}${rc(102, 72, 12, 36, 6, "#3A3340", 3)}
@@ -1668,11 +1686,11 @@ const retro: LibrarySticker[] = [
     "แผ่นเสียง",
     160,
     132,
-    `${die(`<rect x="14" y="24" width="90" height="90" rx="6"/><circle cx="102" cy="69" r="46"/>`)}
-     ${ci(102, 69, 46, "#2B2320")}
-     <g fill="none" stroke="#4A4048" stroke-width="2"><circle cx="102" cy="69" r="38"/><circle cx="102" cy="69" r="30"/><circle cx="102" cy="69" r="23"/></g>
-     ${ci(102, 69, 15, "#FF6B6B", 2.5)}${ci(102, 69, 2.5, "#2B2320", 0)}
-     ${ln("M118 34A38 38 0 0 1 136 52", "#fff", 3)}
+    `${die(`<rect x="14" y="24" width="90" height="90" rx="6"/><circle cx="104" cy="69" r="41"/>`)}
+     ${ci(104, 69, 41, "#2B2320")}
+     <g fill="none" stroke="#4A4048" stroke-width="2"><circle cx="104" cy="69" r="34"/><circle cx="104" cy="69" r="27"/><circle cx="104" cy="69" r="21"/></g>
+     ${ci(104, 69, 14, "#FF6B6B", 2.5)}${ci(104, 69, 2.5, "#2B2320", 0)}
+     ${ln("M120 39A34 34 0 0 1 135 55", "#fff", 3)}
      ${rc(14, 24, 90, 90, 6, "#FFB627")}
      ${ln("M24 96H94M24 104H94", "#FF8A3D", 4)}
      ${ci(59, 60, 20, "#FF6B6B", 3)}
@@ -1704,7 +1722,7 @@ const retro: LibrarySticker[] = [
        ${die(`<rect x="22" y="22" width="80" height="98" rx="4"/><rect x="48" y="16" width="28" height="12" rx="2"/>`)}
        ${rc(22, 22, 80, 98, 4, "#fff")}
        ${clip(
-         "c",
+         "p2-polaroid-photo",
          `<rect x="30" y="30" width="64" height="64"/>`,
          `<rect x="30" y="30" width="64" height="64" fill="#FFC9A8"/><circle cx="62" cy="72" r="13" fill="#FFD23F"/><rect x="30" y="72" width="64" height="22" fill="#4FB3E8"/>${ln("M52 80h20M56 86h12", "#fff", 2.5)}${ln("M40 44q3-3 6 0q3-3 6 0M72 40q2-2 4 0q2-2 4 0", O, 1.8)}`,
        )}
@@ -1721,14 +1739,14 @@ const retro: LibrarySticker[] = [
     152,
     `${die(pd(CONE, SCOOP) + `<circle cx="52" cy="46" r="22"/><circle cx="58" cy="24" r="6"/>` + sd("M58 18q2-5 7-6", 12))}
      ${p(CONE, "#F2B866")}
-     ${clip("c", `<path d="${CONE}"/>`, ln("M30 84l30 30M44 82l24 24M24 96l30 30M74 84l-30 30M62 82l-24 24M80 96l-30 30", "#D9963F", 2.5))}
+     ${clip("p2-ice-cream-cone", `<path d="${CONE}"/>`, ln("M30 84l30 30M44 82l24 24M24 96l30 30M74 84l-30 30M62 82l-24 24M80 96l-30 30", "#D9963F", 2.5))}
      <path d="${CONE}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
      ${p(SCOOP, "#9EE6C4")}
      ${ci(52, 46, 22, "#FF9EC7")}
-     <g fill="#fff"><rect x="34" y="40" width="5" height="2.4" rx="1.2" transform="rotate(30 36 41)"/><rect x="66" y="36" width="5" height="2.4" rx="1.2" transform="rotate(-30 68 37)"/></g>
-     <g fill="#FFD23F"><rect x="40" y="30" width="5" height="2.4" rx="1.2" transform="rotate(-20 42 31)"/><rect x="66" y="56" width="5" height="2.4" rx="1.2" transform="rotate(40 68 57)"/></g>
+     <g fill="#fff"><rect x="33" y="44" width="5" height="2.4" rx="1.2" transform="rotate(30 35.5 45.2)"/><rect x="64" y="34" width="5" height="2.4" rx="1.2" transform="rotate(-30 66 35)"/></g>
+     <g fill="#FFD23F"><rect x="46" y="33" width="5" height="2.4" rx="1.2" transform="rotate(-20 48 34)"/><rect x="66" y="43" width="5" height="2.4" rx="1.2" transform="rotate(60 68 44)"/></g>
      ${ln("M58 18q2-5 7-6", O, 2.5)}${ci(58, 24, 6, "#E8392F", 3)}${ci(56, 22, 1.5, "#fff", 0)}
-     ${gloss("M36 34q3-4 7-6", 3)}
+     ${gloss("M38 37q3-4 7-6", 3)}
      ${face(52, 48, 9, 0.85)}`,
   ),
   mk(
@@ -1742,7 +1760,7 @@ const retro: LibrarySticker[] = [
      ${p(wavy(65, 65, 40, 3, 9), "#FF8FB8", 3)}
      ${ci(65, 65, 14, "#E9B26F", 3)}${ci(65, 65, 9, "#fff", 2.5)}
      ${[
-       [42, 44, 30, "#FFD23F"],
+       [46, 72, 30, "#FFD23F"],
        [60, 34, -20, "#7FD0F5"],
        [84, 40, 60, "#fff"],
        [92, 60, -40, "#7AE582"],
@@ -1753,7 +1771,7 @@ const retro: LibrarySticker[] = [
      ]
        .map(([x, y, r, c]) => `<rect x="${+x - 4}" y="${+y - 1.5}" width="8" height="3" rx="1.5" fill="${c}" transform="rotate(${r} ${x} ${y})"/>`)
        .join("")}
-     ${gloss("M30 52q4-12 14-18")}
+     ${gloss("M39 56q2-10 11-16")}
      ${face(65, 90, 8, 0.8)}`,
   ),
   mk(
@@ -1766,9 +1784,9 @@ const retro: LibrarySticker[] = [
      ${p(SLICE, "#FFD45C")}
      ${p(CRUST, "#E9A85A")}
      <g fill="#C9803A"><circle cx="40" cy="34" r="1.6"/><circle cx="65" cy="28" r="1.6"/><circle cx="90" cy="34" r="1.6"/></g>
-     ${ci(42, 56, 8, "#E8453C", 3)}${ci(90, 58, 8, "#E8453C", 3)}${ci(66, 104, 7, "#E8453C", 3)}
-     <g fill="#C9302A"><circle cx="40" cy="54" r="1.6"/><circle cx="92" cy="56" r="1.6"/><circle cx="64" cy="102" r="1.4"/></g>
-     ${el(52, 92, 5, 3, "#5DBB63", 2, -30)}${el(82, 88, 5, 3, "#5DBB63", 2, 30)}
+     ${ci(42, 56, 8, "#E8453C", 3)}${ci(88, 56, 8, "#E8453C", 3)}${ci(66, 104, 7, "#E8453C", 3)}
+     <g fill="#C9302A"><circle cx="40" cy="54" r="1.6"/><circle cx="86" cy="54" r="1.6"/><circle cx="64" cy="102" r="1.4"/></g>
+     ${el(52, 92, 5, 3, "#5DBB63", 2, -30)}${el(79, 89, 5, 3, "#5DBB63", 2, 30)}
      ${face(66, 72, 9, 0.85)}`,
   ),
   mk(
@@ -1794,7 +1812,7 @@ const retro: LibrarySticker[] = [
      ]
        .map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="3" ry="1.6" transform="rotate(${r} ${x} ${y})"/>`)
        .join("")}</g>
-     ${gloss("M34 40q4-10 14-14")}
+     ${gloss("M30 48q3-9 10-13")}
      ${face(75, 46, 12, 0.85)}`,
   ),
   mk(
@@ -1803,14 +1821,14 @@ const retro: LibrarySticker[] = [
     "ซูชิ",
     170,
     110,
-    `${die(pd(NIGIRI_RICE, SALMON) + `<circle cx="136" cy="70" r="22"/>`)}
+    `${die(pd(NIGIRI_RICE, SALMON) + `<circle cx="136" cy="70" r="22"/><rect x="98" y="60" width="24" height="22" rx="4"/>`)}
      ${p(NIGIRI_RICE, "#FFFDF6")}
      <g fill="#EADFC8"><ellipse cx="36" cy="80" rx="2.6" ry="1.3"/><ellipse cx="84" cy="82" rx="2.6" ry="1.3"/></g>
      ${p(SALMON, "#FF8C69")}
-     ${ln("M34 52Q44 60 40 66M54 48Q64 58 60 68M76 48Q86 58 82 68", "#FFD2C2", 3)}
+     ${clip("p2-sushi-salmon", `<path d="${SALMON}"/>`, ln("M34 52Q44 60 40 64M54 48Q64 58 61 65M76 48Q86 58 83 65", "#FFD2C2", 3))}
      ${face(60, 76, 10, 0.75)}
      ${ci(136, 70, 22, "#2E3B33")}${ci(136, 70, 16, "#FFFDF6", 2.5)}
-     ${ci(136, 70, 7, "#FF8C69", 2.5)}${rc(139, 64, 5, 5, 1, "#7ED957", 0)}
+     ${ci(134, 70, 7, "#FF8C69", 2.5)}${rc(143.5, 66.5, 5, 7, 1.5, "#7ED957", 1.5)}
      ${gloss("M120 58q3-6 8-8", 3)}`,
   ),
   mk(
@@ -1822,7 +1840,7 @@ const retro: LibrarySticker[] = [
     `${die(pd(POP) + `<rect x="38" y="106" width="14" height="32" rx="7"/>`)}
      ${rc(38, 106, 14, 32, 7, "#E3B47A", 3)}
      ${p(POP, "#FF7AB6")}
-     ${clip("c", `<path d="${POP}"/>`, `<path d="M10 72L80 58V120H10Z" fill="#FFD23F"/><path d="M10 72L80 58" stroke="${O}" stroke-width="2.5"/>`)}
+     ${clip("p2-popsicle-pop", `<path d="${POP}"/>`, `<path d="M10 72L80 58V120H10Z" fill="#FFD23F"/><path d="M10 72L80 58" stroke="${O}" stroke-width="2.5"/>`)}
      <path d="${POP}" fill="none" stroke="${O}" stroke-width="${S}" stroke-linejoin="round"/>
      ${gloss("M30 30v24")}
      ${face(45, 84, 9, 0.85)}`,
@@ -1926,14 +1944,14 @@ const words: LibrarySticker[] = [
     "555",
     220,
     130,
-    `${die(pd(drop(26, 44, 5), drop(200, 56, 5)))}
+    `${die(pd(drop(26, 44, 5), drop(196, 57, 5)))}
      <g transform="rotate(-6 110 70)">
        ${LOL('fill="#fff" stroke="#000" stroke-opacity=".13" stroke-width="36" transform="translate(0 4)"')}
        ${LOL('fill="#fff" stroke="#fff" stroke-width="34" transform="translate(0 4)"')}
        ${LOL('fill="#E5A800" stroke="#E5A800" stroke-width="12" transform="translate(0 5)"')}
        ${LOL(`fill="#FFD23F" stroke="${O}" stroke-width="12"`)}
      </g>
-     ${p(drop(26, 44, 5), "#7FD0F5", 2.5)}${p(drop(200, 56, 5), "#7FD0F5", 2.5)}`,
+     ${p(drop(26, 44, 5), "#7FD0F5", 2.5)}${p(drop(196, 57, 5), "#7FD0F5", 2.5)}`,
   ),
   mk(
     "tired-but-ok",
@@ -1956,15 +1974,15 @@ const words: LibrarySticker[] = [
     90,
     `${die(`<rect x="14" y="14" width="182" height="62" rx="31"/>`)}
      ${clip(
-       "c",
+       "p2-good-vibes-pill",
        `<rect x="14" y="14" width="182" height="62" rx="31"/>`,
        ["#FF9EC7", "#FFC48A", "#FFE58A", "#A8EBC0", "#9FD3FF"]
          .map((c, i) => `<rect x="14" y="${14 + i * 12.4}" width="182" height="12.6" fill="${c}"/>`)
          .join(""),
      )}
      ${rc(14, 14, 182, 62, 31, "none")}
-     ${text(105, 52, "GOOD VIBES", 19, "#fff", { tl: 140, stroke: O, sw: 6 })}
-     ${p(spark(184, 26, 6), "#fff", 2)}${p(spark(28, 62, 5), "#fff", 2)}`,
+     ${text(105, 52, "GOOD VIBES", 19, "#fff", { tl: 132, stroke: O, sw: 6 })}
+     ${p(spark(180, 30, 5), "#fff", 2)}${p(spark(30, 60, 5), "#fff", 2)}`,
   ),
   mk(
     "stay-curious",
@@ -2046,7 +2064,7 @@ const shapes: LibrarySticker[] = [
     `${die(pd(WOW))}
      ${p(WOW, "#FF7AB6")}
      ${p(star(70, 70, 44, 28, 11, -80), "#FFD23F", 0)}
-     <g transform="rotate(-8 70 70)">${text(70, 80, "WOW!", 26, "#fff", { tl: 80, stroke: O, sw: 6 })}</g>`,
+     <g transform="rotate(-8 70 70)">${text(70, 79, "WOW!", 25, "#fff", { tl: 66, stroke: O, sw: 6 })}</g>`,
   ),
   mk(
     "checkmark",
@@ -2054,12 +2072,12 @@ const shapes: LibrarySticker[] = [
     "เสร็จแล้ว",
     130,
     110,
-    `${die(pd(CHECK, spark(112, 86, 7)))}
+    `${die(pd(CHECK, spark(98, 74, 7)))}
      ${p(CHECK, "#3DD68C")}
-     ${ln("M36 58l18 18 44-44", "#2FB874", 4)}
+     ${ln("M30 61L54 85L100 39", "#2FB874", 4)}
      ${gloss("M26 57l8-8", 3)}${gloss("M92 30l5-5", 3)}
-     ${happy(54, 76, 5, 0.55)}
-     ${p(spark(112, 86, 7), "#FFD23F", 2)}`,
+     ${happy(54, 72, 5.5, 0.6)}
+     ${p(spark(98, 74, 7), "#FFD23F", 2)}`,
   ),
   mk(
     "sparkle",
@@ -2067,10 +2085,10 @@ const shapes: LibrarySticker[] = [
     "ประกายวิ้ง",
     136,
     140,
-    `${die(pd(BIG_SPARK, spark(108, 32, 13), spark(28, 116, 8)))}
-     <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFB3E6"/><stop offset=".5" stop-color="#B3D9FF"/><stop offset="1" stop-color="#C9FFD9"/></linearGradient></defs>
-     ${p(BIG_SPARK, "url(#g)")}
-     ${p(spark(108, 32, 13), "#FFD23F", 3)}${p(spark(28, 116, 8), "#B3D9FF", 2.5)}
+    `${die(pd(BIG_SPARK, spark(98, 40, 13), spark(34, 104, 8)))}
+     <defs><linearGradient id="p2-sparkle-holo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFB3E6"/><stop offset=".5" stop-color="#B3D9FF"/><stop offset="1" stop-color="#C9FFD9"/></linearGradient></defs>
+     ${p(BIG_SPARK, "url(#p2-sparkle-holo)")}
+     ${p(spark(98, 40, 13), "#FFD23F", 3)}${p(spark(34, 104, 8), "#B3D9FF", 2.5)}
      ${gloss("M60 42l-2 12", 3)}
      ${face(64, 72, 6, 0.7)}`,
   ),
@@ -2085,9 +2103,9 @@ const shapes: LibrarySticker[] = [
      ${ln("M30 86Q62 116 94 86", "#FFC21A", 6)}
      ${el(46, 50, 6, 10, O, 0)}${el(78, 50, 6, 10, O, 0)}
      ${ci(48, 46, 2.2, "#fff", 0)}${ci(80, 46, 2.2, "#fff", 0)}
-     ${p("M36 70Q62 102 88 70Z", O, 3)}
-     ${p("M50 86Q62 78 74 86Q62 94 50 86Z", "#FF6F86", 0)}
-     <g fill="#FF8FA3" opacity=".75"><ellipse cx="32" cy="66" rx="6" ry="3.5"/><ellipse cx="92" cy="66" rx="6" ry="3.5"/></g>
+     ${clip("smiley-mouth", `<path d="M34 69Q62 110 90 69Z"/>`, `<path d="M34 69Q62 110 90 69Z" fill="${O}"/><ellipse cx="62" cy="88" rx="17" ry="10" fill="#FF6F86"/><path d="M62 80v6" stroke="#E0526B" stroke-width="1.6" stroke-linecap="round"/>`)}
+     ${p("M34 69Q62 110 90 69Z", "none", 3)}
+     <g fill="#FF8FA3" opacity=".75"><ellipse cx="30" cy="61" rx="6" ry="3.5"/><ellipse cx="94" cy="61" rx="6" ry="3.5"/></g>
      ${gloss("M30 46q4-14 18-20")}`,
   ),
   mk(
@@ -2099,7 +2117,7 @@ const shapes: LibrarySticker[] = [
     `${die(FINGERS + PALM + `<rect x="36" y="120" width="48" height="20" rx="5"/>`)}
      ${blob(FINGERS + PALM, "#FFCF8A")}
      ${rc(58, 80, 34, 15, 7.5, "#FFCF8A", 3)}${rc(58, 94, 32, 15, 7.5, "#FFCF8A", 3)}
-     <g transform="rotate(-18 50 102)">${rc(28, 96, 40, 16, 8, "#FFCF8A", 3)}</g>
+     ${clip("p2-peace-hand-palm", PALM, `<g transform="rotate(-16 50 100)">${rc(10, 93, 58, 16, 8, "#FFCF8A", 3)}</g>`)}
      ${gloss("M40 30l-2 12", 3)}${gloss("M76 28l2 12", 3)}
      ${rc(36, 120, 48, 20, 5, "#7FD0F5")}${ln("M42 130h36", "#5DB4E0", 3)}`,
   ),

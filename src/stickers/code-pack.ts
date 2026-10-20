@@ -26,6 +26,9 @@ const sticker = (id: string, name: Name, { w, h, body }: Art): LibrarySticker =>
 /** Monospace glyphs are ~0.6em wide. */
 const monoWidth = (text: string, size: number) => [...text].length * size * 0.6;
 
+/** Outline colour for a filled shape: a dark fill keeps its own colour (a near-black ring on near-black reads as a muddy band). */
+const edge = (bg: string) => (bg === "#1B1B1F" || bg === "#0D1117" ? bg : O);
+
 /** One-line shell command on a pill: `$ text`. */
 function command(text: string, bg: string, fg = "#fff", prompt = "#7AE582"): Art {
   const size = 16;
@@ -59,7 +62,7 @@ function terminal(lines: string[], accent = "#7AE582"): Art {
       <rect x="10" y="10" width="${w - 20}" height="${h - 20}" rx="13" fill="#0D1117"/>
       <path d="M10 30V23a13 13 0 0 1 13-13h${w - 46}a13 13 0 0 1 13 13v7z" fill="#21262D"/>
       <circle cx="24" cy="20" r="4" fill="#FF5F57"/><circle cx="36" cy="20" r="4" fill="#FEBC2E"/><circle cx="48" cy="20" r="4" fill="#28C840"/>
-      ${lines.map((l, i) => `<text x="22" y="${50 + i * 17}" font-family="${MONO}" font-weight="700" font-size="${size}">${lead(l)}</text>`).join("")}`,
+      ${lines.map((l, i) => `<text x="22" y="${48 + i * 17}" font-family="${MONO}" font-weight="700" font-size="${size}">${lead(l)}</text>`).join("")}`,
   };
 }
 
@@ -105,9 +108,9 @@ function bubble(text: string, bg: string, fg = O, mono = false): Art {
     w,
     h: 82,
     body: `${die(shapes)}
-      <path d="M30 52L24 72L52 54Z" fill="${bg}" stroke="${O}" stroke-width="3.5" stroke-linejoin="round"/>
-      <rect x="10" y="10" width="${w - 20}" height="48" rx="24" fill="${bg}" stroke="${O}" stroke-width="3.5"/>
-      <path d="M28 50L48 50" stroke="${bg}" stroke-width="5"/>
+      <path d="M30 52L24 72L52 54Z" fill="${bg}" stroke="${edge(bg)}" stroke-width="3.5" stroke-linejoin="round"/>
+      <rect x="10" y="10" width="${w - 20}" height="48" rx="24" fill="${bg}" stroke="${edge(bg)}" stroke-width="3.5"/>
+      <path d="M30 52L24 72L52 54Z" fill="${bg}"/>
       ${gloss("M24 24q4-6 12-7", 3)}
       <text x="${w / 2}" y="${34 + size * 0.36}" text-anchor="middle" font-family="${mono ? MONO : BLACK}" font-weight="900" font-size="${size}" fill="${fg}">${esc(text)}</text>`,
   };
@@ -120,7 +123,7 @@ function symbol(glyph: string, bg: string, fg: string): Art {
     w: 110,
     h: 110,
     body: `${die(`<rect x="12" y="12" width="86" height="86" rx="22"/>`)}
-      <rect x="12" y="12" width="86" height="86" rx="22" fill="${bg}" stroke="${O}" stroke-width="3.5"/>
+      <rect x="12" y="12" width="86" height="86" rx="22" fill="${bg}" stroke="${edge(bg)}" stroke-width="3.5"/>
       ${gloss("M24 34q3-10 13-12", 3.5)}
       <text x="55" y="${55 + size * 0.36}" text-anchor="middle" font-family="${MONO}" font-weight="800" font-size="${size}" fill="${fg}">${esc(glyph)}</text>`,
   };
@@ -136,7 +139,7 @@ function stamp(text: string, color: string): Art {
     body: `${die(`<rect x="10" y="10" width="${w - 20}" height="54" rx="8"/>`)}
       <rect x="10" y="10" width="${w - 20}" height="54" rx="8" fill="#FFFDF7" stroke="${color}" stroke-width="4"/>
       <rect x="17" y="17" width="${w - 34}" height="40" rx="4" fill="none" stroke="${color}" stroke-width="1.8"/>
-      <text x="${w / 2}" y="45" text-anchor="middle" font-family="${BLACK}" font-weight="900" font-size="${size}" letter-spacing="2" fill="${color}">${esc(text)}</text>`,
+      <text x="${w / 2 + 1}" y="44.6" text-anchor="middle" font-family="${BLACK}" font-weight="900" font-size="${size - 1}" letter-spacing="2" fill="${color}">${esc(text)}</text>`,
   };
 }
 
@@ -187,7 +190,7 @@ const drawn: LibrarySticker[] = [
         <path d="M100 46C112 44 118 48 116 54C112 58 104 56 100 54Z" fill="#FF8A3D" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>
         <path d="M40 76C48 66 66 68 70 80C62 88 46 88 40 76Z" fill="#FFC21F" stroke="${O}" stroke-width="3" stroke-linejoin="round"/>
         ${gloss("M64 32q5-8 14-9")}
-        <ellipse cx="94" cy="52" rx="4.5" ry="2.8" fill="#FF8FA3" opacity=".75"/>
+        <ellipse cx="92" cy="53" rx="4.5" ry="2.8" fill="#FF8FA3" opacity=".75"/>
         <ellipse cx="86" cy="40" rx="3.6" ry="4.6" fill="${O}"/><circle cx="87.3" cy="38.2" r="1.5" fill="#fff"/>`,
     },
   ),
@@ -217,7 +220,7 @@ const drawn: LibrarySticker[] = [
         <path d="M20 52a30 10 0 0 0 60 0M20 74a30 10 0 0 0 60 0" stroke="${O}" stroke-width="3" fill="none"/>
         <ellipse cx="50" cy="30" rx="30" ry="10" fill="#A99BFF" stroke="${O}" stroke-width="3.5"/>
         ${gloss("M27 44v40", 3.5)}
-        ${face(52, 61, 8, 0.8)}`,
+        ${face(50, 70, 8, 0.8)}`,
     },
   ),
   sticker(
@@ -228,8 +231,8 @@ const drawn: LibrarySticker[] = [
       h: 90,
       body: `${die(`<rect x="10" y="10" width="130" height="70" rx="16"/>`)}
         <rect x="10" y="10" width="130" height="70" rx="16" fill="${C.dark}"/>
-        <path d="M28 56H122" stroke="${C.mint}" stroke-width="4" stroke-linecap="round"/>
         <path d="M48 56C56 56 58 34 70 34H98C110 34 112 56 122 56" stroke="${C.pink}" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M28 56H122" stroke="${C.mint}" stroke-width="4" stroke-linecap="round"/>
         <g fill="${C.dark}" stroke-width="3.5"><circle cx="28" cy="56" r="6" stroke="${C.mint}"/><circle cx="84" cy="56" r="6" stroke="${C.mint}"/><circle cx="122" cy="56" r="7" stroke="${C.yellow}" fill="${C.yellow}"/><circle cx="70" cy="34" r="6" stroke="${C.pink}"/><circle cx="98" cy="34" r="6" stroke="${C.pink}"/></g>`,
     },
   ),
