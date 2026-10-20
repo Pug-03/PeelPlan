@@ -1,6 +1,9 @@
 import type { ArtSticker } from "@/components/LidArt";
 import { VISIBLE_LIBRARY } from "@/stickers/library";
 
+/** In-house coding stickers (always shipped), used to fill lids whose example art is demo-only. */
+export const IN_HOUSE_CODE = VISIBLE_LIBRARY.filter((s) => s.id.startsWith("code-") && !s.demo).map((s) => s.id);
+
 /** Never fewer stickers than this on an example lid. */
 export const MIN_STICKERS = 3;
 
@@ -57,12 +60,24 @@ export function scatter(ids: string[], g: { widthMm: number; heightMm: number },
  * Pick `count` visible stickers for an example lid: its own first, then from `pool`, skipping repeats
  * and anything hidden in this build (demo-only art), so a lid never ends up with fewer than MIN_STICKERS.
  */
-export function pickStickers(own: string[], pool: string[], count: number) {
+export function pickStickers(own: string[], pool: string[], count: number, offset = 0) {
   const want = Math.max(MIN_STICKERS, count);
   const out: string[] = [];
-  for (const id of [...own, ...pool]) {
+  // Last resort: the in-house code stickers, so a build without demo art never shows a bare lid.
+  const filler = [...IN_HOUSE_CODE.slice(offset % IN_HOUSE_CODE.length), ...IN_HOUSE_CODE.slice(0, offset % IN_HOUSE_CODE.length)];
+  for (const id of [...own, ...pool, ...filler]) {
     if (out.length >= want) break;
     if (libSize.has(id) && !out.includes(id)) out.push(id);
   }
   return out;
+}
+
+/**
+ * A hand-made example layout as shown in this build: kept as is when enough of its stickers are
+ * visible, otherwise rebuilt from what is visible plus in-house fillers.
+ */
+export function visibleLayout(stickers: ArtSticker[], g: { widthMm: number; heightMm: number }, count = 6, variant = 0): ArtSticker[] {
+  const shown = stickers.filter((s) => libSize.has(s.id));
+  if (shown.length >= Math.min(count, stickers.length)) return shown;
+  return scatter(pickStickers(shown.map((s) => s.id), [], count, variant * 11), g, 7 + variant);
 }

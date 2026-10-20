@@ -5,6 +5,7 @@ import { LidArt } from "@/components/LidArt";
 import { SiteHeader } from "@/components/SiteHeader";
 import { FeedbackFooter } from "@/features/feedback/FeedbackFooter";
 import { EXAMPLE_LAYOUTS } from "@/components/landing/layouts";
+import { visibleLayout } from "@/components/landing/scatter";
 import { DEMO_SHOPS, shopSlug } from "@/config/demoShops";
 import { getLaptopModel, lidGeometry } from "@/config/laptops";
 import { Link } from "@/i18n/navigation";
@@ -35,7 +36,7 @@ export default async function ShopsIndex({ params }: Props) {
         </header>
 
         <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {DEMO_SHOPS.map((shop) => {
+          {DEMO_SHOPS.map((shop, i) => {
             const layout = EXAMPLE_LAYOUTS.find((l) => shopSlug(l.shop.name) === shop.slug);
             const model = getLaptopModel(layout?.modelId ?? "");
             const g = lidGeometry(model);
@@ -53,7 +54,7 @@ export default async function ShopsIndex({ params }: Props) {
                       heightMm={g.heightMm}
                       radiusMm={g.cornerRadiusMm}
                       color={layout?.color ?? model.colors[0].hex}
-                      stickers={layout?.stickers ?? []}
+                      stickers={visibleLayout(layout?.stickers ?? [], g, 6, i)}
                       className="h-auto w-full"
                     />
                   </div>

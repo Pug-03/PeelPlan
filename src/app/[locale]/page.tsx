@@ -19,6 +19,7 @@ import { BreakFrame } from "@/components/landing/BreakFrame";
 import { KineticBand } from "@/components/landing/KineticBand";
 import { SmoothScroll } from "@/components/landing/SmoothScroll";
 import { LAPTOP_MODELS, getLaptopModel, lidGeometry } from "@/config/laptops";
+import { visibleLayout } from "@/components/landing/scatter";
 import { FeedbackLink } from "@/features/feedback/FeedbackLink";
 import { Link } from "@/i18n/navigation";
 
@@ -85,7 +86,7 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
             </div>
           </div>
           <div className="hero-fade group relative mx-auto w-full max-w-lg lg:max-w-none" style={{ "--d": "300ms" } as React.CSSProperties}>
-            <HeroPlayground initial={heroLayout.stickers} initialModelId={heroLayout.modelId} initialColor={heroLayout.color} />
+            <HeroPlayground initial={visibleLayout(heroLayout.stickers, lidGeometry(getLaptopModel(heroLayout.modelId)))} initialModelId={heroLayout.modelId} initialColor={heroLayout.color} />
           </div>
         </section>
 
