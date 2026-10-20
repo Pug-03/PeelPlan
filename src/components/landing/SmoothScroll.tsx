@@ -5,10 +5,15 @@ import Lenis from "lenis";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-/** Lenis smooth scroll wired into GSAP's ticker; disabled under reduced motion. */
+/**
+ * Lenis smooth scroll wired into GSAP's ticker, for mouse and trackpad only. Phones and tablets keep
+ * the browser's native touch scrolling: Lenis doesn't smooth touch anyway, and running it there only
+ * added a second scroll listener that forced style recalcs on every frame. Off under reduced motion.
+ */
 export function SmoothScroll() {
   useEffect(() => {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;
     gsap.registerPlugin(ScrollTrigger);
     const lenis = new Lenis({ duration: 1.1, anchors: true });
     lenis.on("scroll", ScrollTrigger.update);

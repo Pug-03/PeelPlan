@@ -12,12 +12,15 @@ import { useSession } from "@/lib/session";
 
 function useUnread(userId: string | null) {
   return (
-    useMarket(async (s) => {
-      if (!userId) return 0;
-      const [mine, shop] = await Promise.all([s.buyerThreads(userId), s.myShop(userId)]);
-      const forShop = shop ? await s.shopThreads(shop.id) : [];
-      return mine.reduce((n, t) => n + t.unreadBuyer, 0) + forShop.reduce((n, t) => n + t.unreadShop, 0);
-    }, [userId]) ?? 0
+    useMarket(
+      async (s) => {
+        if (!userId) return 0;
+        const [mine, shop] = await Promise.all([s.buyerThreads(userId), s.myShop(userId)]);
+        const forShop = shop ? await s.shopThreads(shop.id) : [];
+        return mine.reduce((n, t) => n + t.unreadBuyer, 0) + forShop.reduce((n, t) => n + t.unreadShop, 0);
+      },
+      [userId],
+    ) ?? 0
   );
 }
 
@@ -35,7 +38,9 @@ function Badge({ n }: { n: number }) {
   );
 }
 
-const iconBtn = "relative grid size-9 place-items-center rounded-full text-muted transition-colors hover:bg-surface hover:text-ink sm:size-10";
+// The after: box widens the tap area to 44 px on phones without changing the look.
+const iconBtn =
+  "relative grid size-9 place-items-center rounded-full text-muted transition-colors after:absolute after:-inset-1 hover:bg-surface hover:text-ink sm:size-10 sm:after:hidden";
 
 /** Icons in the full bar. Messages show from `sm` up; on phones they live in the ☰ menu. */
 export default function HeaderMarket({ variant = "bar", onNavigate }: { variant?: "bar" | "menu"; onNavigate?: () => void }) {
@@ -48,7 +53,8 @@ export default function HeaderMarket({ variant = "bar", onNavigate }: { variant?
 
   if (variant === "menu") {
     const row = "flex items-center justify-between rounded-xl px-3 py-2.5 text-sm hover:bg-surface";
-    const count = (n: number) => n > 0 && <span className="rounded-full bg-[#D7FF3A] px-2 py-0.5 text-xs font-semibold text-[#111] tabular-nums">{cap(n)}</span>;
+    const count = (n: number) =>
+      n > 0 && <span className="rounded-full bg-[#D7FF3A] px-2 py-0.5 text-xs font-semibold text-[#111] tabular-nums">{cap(n)}</span>;
     return (
       <>
         <Link href="/cart" className={row} onClick={onNavigate}>

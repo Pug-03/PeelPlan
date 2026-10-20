@@ -308,10 +308,12 @@
     scale: 1.035;
   }
 }
+/* Grows with transform and opacity only: animating `inset` re-ran layout and re-blurred the halo on
+   every frame, forever, while the button was on the page. */
 @keyframes cta-halo {
   50% {
     opacity: 0.85;
-    inset: -16px;
+    transform: scale(1.05, 1.15);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -374,4 +376,11 @@
   border-color: #1b1b1f;
   color: #1b1b1f;
   font-weight: 600;
+}
+
+/* Endless decorative loops rest while their section is off screen (ScrollFx marks sections with
+   data-offscreen), so they don't keep the page busy while you scroll elsewhere. */
+[data-offscreen] :is(.lid-float, .size-outline, .review-track, .cta-pop),
+[data-offscreen] .cta-pop::before {
+  animation-play-state: paused;
 }

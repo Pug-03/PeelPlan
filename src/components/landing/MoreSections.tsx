@@ -85,34 +85,38 @@ const USE_CASES: { key: "dev" | "student" | "collector" | "brand"; modelId: stri
 export async function UseCases() {
   const t = await getTranslations("more");
   return (
-    <section data-fx="hscroll" className="relative overflow-hidden">
-      {/* Scrolling down moves this row to the left. */}
-      <div data-fx-track className="flex h-[100dvh] w-max items-center gap-8 px-5 sm:px-8 lg:pl-[max(2rem,calc((100vw-80rem)/2+2rem))]">
-        <div className="flex w-[min(80vw,26rem)] shrink-0 flex-col gap-5">
-          <h2 className={heading}>
-            {t("useTitleA")} <span className="editorial-italic text-muted">{t("useTitleB")}</span>
-          </h2>
-          <p className="flex items-center gap-2 text-sm text-muted">
-            <ArrowRight className="size-4" strokeWidth={2} aria-hidden="true" />
-            {t("useHint")}
-          </p>
+    // ScrollFx makes this section taller and slides the row while the sticky frame is held. Without
+    // motion the row simply scrolls sideways.
+    <section data-fx="hscroll" className="relative overflow-x-clip">
+      <div data-fx-frame className="sticky top-0 h-svh overflow-hidden motion-reduce:overflow-x-auto">
+        {/* Scrolling down moves this row to the left. */}
+        <div data-fx-track className="flex h-full w-max items-center gap-8 px-5 sm:px-8 lg:pl-[max(2rem,calc((100vw-80rem)/2+2rem))]">
+          <div className="flex w-[min(80vw,26rem)] shrink-0 flex-col gap-5">
+            <h2 className={heading}>
+              {t("useTitleA")} <span className="editorial-italic text-muted">{t("useTitleB")}</span>
+            </h2>
+            <p className="flex items-center gap-2 text-sm text-muted">
+              <ArrowRight className="size-4" strokeWidth={2} aria-hidden="true" />
+              {t("useHint")}
+            </p>
+          </div>
+          <ul className="flex gap-6">
+            {USE_CASES.map((u, i) => (
+              <li key={u.key} className="group flex w-[min(78vw,30rem)] shrink-0 flex-col gap-5" style={{ marginTop: i % 2 ? "6rem" : 0 }}>
+                <div data-tilt className="lid-float drop-shadow-[0_28px_32px_rgb(0_0_0/0.16)]" style={{ animationDelay: `${i * -1.3}s` }}>
+                  <Lid modelId={u.modelId} color={u.color} stickers={u.stickers} />
+                </div>
+                <div className="flex flex-col gap-2 px-1">
+                  <p className="text-sm tabular-nums text-muted">
+                    {String(i + 1).padStart(2, "0")} / {String(USE_CASES.length).padStart(2, "0")}
+                  </p>
+                  <h3 className="text-2xl font-semibold tracking-tight">{t(`use.${u.key}.title`)}</h3>
+                  <p className="max-w-[40ch] leading-relaxed text-muted">{t(`use.${u.key}.body`)}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
-        <ul className="flex gap-6">
-          {USE_CASES.map((u, i) => (
-            <li key={u.key} className="group flex w-[min(78vw,30rem)] shrink-0 flex-col gap-5" style={{ marginTop: i % 2 ? "6rem" : 0 }}>
-              <div data-tilt className="lid-float drop-shadow-[0_28px_32px_rgb(0_0_0/0.16)]" style={{ animationDelay: `${i * -1.3}s` }}>
-                <Lid modelId={u.modelId} color={u.color} stickers={u.stickers} />
-              </div>
-              <div className="flex flex-col gap-2 px-1">
-                <p className="text-sm tabular-nums text-muted">
-                  {String(i + 1).padStart(2, "0")} / {String(USE_CASES.length).padStart(2, "0")}
-                </p>
-                <h3 className="text-2xl font-semibold tracking-tight">{t(`use.${u.key}.title`)}</h3>
-                <p className="max-w-[40ch] leading-relaxed text-muted">{t(`use.${u.key}.body`)}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
       </div>
     </section>
   );

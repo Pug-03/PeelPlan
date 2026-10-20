@@ -43,9 +43,13 @@ export function DragMarquee({ children, pauseLabel, playLabel, label }: { childr
     let raf = 0;
     let last = performance.now();
 
-    const half = () => tr.scrollWidth / 2;
+    // Measured on resize only: reading scrollWidth right after writing the transform forced a style and
+    // layout pass on every animation frame.
+    let halfWidth = tr.scrollWidth / 2;
+    const ro = new ResizeObserver(() => (halfWidth = tr.scrollWidth / 2));
+    ro.observe(tr);
     const apply = () => {
-      const h = half();
+      const h = halfWidth;
       if (h > 0) s.offset = ((s.offset % h) + h) % h;
       tr.style.transform = `translate3d(${-s.offset}px,0,0)`;
     };
@@ -141,6 +145,7 @@ export function DragMarquee({ children, pauseLabel, playLabel, label }: { childr
     return () => {
       cancelAnimationFrame(raf);
       io.disconnect();
+      ro.disconnect();
       el.removeEventListener("pointerdown", down);
       el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerup", up);

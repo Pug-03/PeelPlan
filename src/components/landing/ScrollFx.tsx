@@ -15,7 +15,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
  * - `data-fx="parallax"` + `data-speed` (px): floats up or down while in view.
  * - `data-fx="draw"`: `[data-fx-path]` strokes draw one after another.
  * - `data-fx="print"`: `[data-fx-paper]` feeds out of the printer.
- * - `data-fx="hscroll"`: pins the section and moves `[data-fx-track]` sideways as you scroll down.
+ * - `data-fx="hscroll"`: holds the sticky `[data-fx-frame]` and moves `[data-fx-track]` sideways as you scroll down.
  * - `data-fx="sheet"`: the section slides up over the one before it like a sheet being laid down.
  * - `data-tilt`: a card that tilts in 3D under the pointer with a glare that follows it.
  * Everything rests at its final state under reduced motion.
@@ -24,35 +24,40 @@ export function ScrollFx() {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
     const mm = gsap.matchMedia();
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
+    mm.add({ motion: "(prefers-reduced-motion: no-preference)", small: "(max-width: 767px)" }, (ctx) => {
+      if (!ctx.conditions?.motion) return;
+      const small = !!ctx.conditions.small;
       const all = (sel: string) => gsap.utils.toArray<HTMLElement>(sel);
+      const undo: (() => void)[] = [];
 
+      // A CSS-sticky frame inside a section made taller by the row's travel, instead of a ScrollTrigger
+      // pin: the compositor holds it, so touch scrolling can't make it jitter or shift the layout.
       all('[data-fx="hscroll"]').forEach((el) => {
+        const frame = el.querySelector<HTMLElement>("[data-fx-frame]");
         const track = el.querySelector<HTMLElement>("[data-fx-track]");
-        if (!track) return;
-        const distance = () => Math.max(0, track.scrollWidth - el.clientWidth);
-        // Phones move the row about twice as far per scroll, so the pin doesn't eat several screens.
-        const pinLength = () => distance() * (matchMedia("(max-width: 767px)").matches ? 0.55 : 1);
+        if (!frame || !track) return;
+        const distance = () => Math.max(0, track.scrollWidth - frame.clientWidth);
+        // Phones move the row about twice as far per scroll, so the hold doesn't eat several screens.
+        const holdLength = () => distance() * (small ? 0.55 : 1);
+        const size = () => (el.style.height = `calc(100svh + ${Math.round(holdLength())}px)`);
+        size();
+        undo.push(() => (el.style.height = ""));
         gsap.to(track, {
           x: () => -distance(),
           ease: "none",
-          scrollTrigger: { trigger: el, start: "top top", end: () => `+=${pinLength()}`, pin: true, scrub: 0.8, invalidateOnRefresh: true },
+          scrollTrigger: { trigger: el, start: "top top", end: "bottom bottom", scrub: 0.8, invalidateOnRefresh: true, onRefreshInit: size },
         });
       });
 
+      // Phones slide the sheet up without the shrink and corner rounding: those repaint the whole
+      // section on every frame, which is what made this stretch stutter on a phone.
       all('[data-fx="sheet"]').forEach((el) => {
-        gsap.fromTo(
-          el,
-          { borderTopLeftRadius: 56, borderTopRightRadius: 56, scale: 0.94, y: 80 },
-          {
-            borderTopLeftRadius: 0,
-            borderTopRightRadius: 0,
-            scale: 1,
-            y: 0,
-            ease: "none",
-            scrollTrigger: { trigger: el, start: "top bottom", end: "top 25%", scrub: true },
-          },
-        );
+        gsap.fromTo(el, small ? { y: 80 } : { borderTopLeftRadius: 56, borderTopRightRadius: 56, scale: 0.94, y: 80 }, {
+          ...(small ? {} : { borderTopLeftRadius: 0, borderTopRightRadius: 0, scale: 1 }),
+          y: 0,
+          ease: "none",
+          scrollTrigger: { trigger: el, start: "top bottom", end: "top 25%", scrub: true },
+        });
       });
 
       all('[data-fx="countup"]').forEach((el) => {
@@ -148,6 +153,7 @@ export function ScrollFx() {
         );
         tl.fromTo(el.querySelectorAll("[data-fx-ink]"), { opacity: 0 }, { opacity: 1, stagger: 0.12, duration: 0.3 }, 0.25);
       });
+      return () => undo.forEach((f) => f());
     });
     // Pointer toys (fine pointers only): tilting cards with a moving glare.
     mm.add("(prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine)", () => {
@@ -181,14 +187,23 @@ export function ScrollFx() {
       return () => off.forEach((f) => f());
     });
 
-    // Pinned scenes live in several components; once all have mounted, order every trigger by its
-    // place on the page so each pin's added scroll length shifts the ones after it correctly.
+    // Scroll scenes live in several components; once all have mounted (and the hscroll section has its
+    // height), order every trigger by its place on the page and measure them all again.
     const raf = requestAnimationFrame(() => {
       ScrollTrigger.sort();
       ScrollTrigger.refresh();
     });
+
+    // Marks sections that are off screen; landing-extras.css pauses their endless CSS loops meanwhile.
+    const sections = document.querySelectorAll<HTMLElement>("main > section");
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => e.target.toggleAttribute("data-offscreen", !e.isIntersecting)), {
+      rootMargin: "100px 0px",
+    });
+    sections.forEach((s) => io.observe(s));
     return () => {
       cancelAnimationFrame(raf);
+      io.disconnect();
+      sections.forEach((s) => s.removeAttribute("data-offscreen"));
       mm.revert();
     };
   }, []);

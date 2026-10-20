@@ -71,14 +71,15 @@ export function StickerStorm({ lineA, lineB, mark, caption, side }: { lineA: str
         return;
       }
 
+      // The stage is CSS-sticky inside a taller section (no ScrollTrigger pin): the browser's compositor
+      // holds it in place, so it can't jitter or shift layout as the pin starts and ends on touch scrolling.
+      // Phones get a shorter hold (section height in the markup): the page is already very tall there.
       const tl = gsap.timeline({
         defaults: { ease: "power2.inOut" },
         scrollTrigger: {
           trigger: el,
           start: "top top",
-          // Phones get a shorter pin: the page is already very tall there.
-          end: ctx.conditions?.small ? "+=90%" : "+=170%",
-          pin: true,
+          end: "bottom bottom",
           scrub: 0.9,
           invalidateOnRefresh: true,
           onRefreshInit: size,
@@ -102,7 +103,8 @@ export function StickerStorm({ lineA, lineB, mark, caption, side }: { lineA: str
         );
       });
       tl.fromTo(lid, { yPercent: 55, rotationX: 58, scale: 0.86, opacity: 0 }, { yPercent: 0, rotationX: 0, scale: 1, opacity: 1, duration: 0.9 }, 0.2)
-        .to(q("[data-type]"), { scale: 0.72, opacity: 0.1, filter: "blur(5px)", duration: 0.9 }, 0.25)
+        // The blur is desktop only: re-filtering this much huge type every frame stutters on phones.
+        .to(q("[data-type]"), { scale: 0.72, opacity: 0.1, ...(ctx.conditions?.small ? {} : { filter: "blur(5px)" }), duration: 0.9 }, 0.25)
         .fromTo(q("[data-mark]"), { backgroundSize: "0% 100%" }, { backgroundSize: "100% 100%", duration: 0.35, ease: "power1.out" }, 0)
         .fromTo(q("[data-caption]"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.3 }, 1.15);
 
@@ -123,8 +125,10 @@ export function StickerStorm({ lineA, lineB, mark, caption, side }: { lineA: str
   }, [pieces]);
 
   return (
-    <section ref={root} className="relative z-10 h-[100dvh] overflow-x-clip" aria-label={`${lineA} ${lineB}`}>
-      <div data-stage className="absolute inset-0 [perspective:1100px]">
+    // Section height = one screen + the scroll the scene plays over. Small-viewport units (svh) keep the
+    // page height steady while a phone's address bar slides in and out.
+    <section ref={root} className="relative z-10 h-[190svh] overflow-x-clip motion-reduce:h-svh md:h-[270svh]" aria-label={`${lineA} ${lineB}`}>
+      <div data-stage className="sticky top-0 h-svh [perspective:1100px]">
         {/* Side labels, like a print spec sheet */}
         <p className="absolute top-1/2 left-3 hidden origin-center -translate-y-1/2 -rotate-180 text-[11px] tracking-[0.2em] text-muted uppercase [writing-mode:vertical-rl] sm:block">
           {side}

@@ -87,7 +87,7 @@ export function BreakFrame({
     if (!el) return;
     gsap.registerPlugin(ScrollTrigger);
     const mm = gsap.matchMedia();
-    mm.add({ motion: "(prefers-reduced-motion: no-preference)", still: "(prefers-reduced-motion: reduce)", small: "(max-width: 767px)" }, (ctx) => {
+    mm.add({ motion: "(prefers-reduced-motion: no-preference)", still: "(prefers-reduced-motion: reduce)" }, (ctx) => {
       const q = gsap.utils.selector(el);
       const lid = q("[data-lid]")[0] as HTMLElement;
       const big = q("[data-big]")[0] as HTMLElement;
@@ -128,10 +128,10 @@ export function BreakFrame({
         defaults: { ease: "power2.inOut" },
         scrollTrigger: {
           trigger: el,
+          // Plays while the CSS-sticky stage is held (no ScrollTrigger pin: no jitter or layout shift on touch
+          // scrolling). Phones hold it over about half the scroll (section height below).
           start: "top top",
-          // Phones still hold the finished scene, over about half the scroll.
-          end: ctx.conditions?.small ? "+=180%" : "+=360%",
-          pin: true,
+          end: "bottom bottom",
           scrub: 0.9,
           invalidateOnRefresh: true,
           onRefreshInit: size,
@@ -154,8 +154,9 @@ export function BreakFrame({
   }, [aspect]);
 
   return (
-    <section ref={root} className="relative h-[100dvh] overflow-hidden bg-bg">
-      <div data-stage className="absolute inset-0 cursor-copy" onClick={slap}>
+    // One screen + the scroll the scene plays over; svh keeps the page height steady as a phone's address bar moves.
+    <section ref={root} className="relative h-[280svh] bg-bg motion-reduce:h-svh md:h-[460svh]">
+      <div data-stage className="sticky top-0 h-svh cursor-copy overflow-hidden" onClick={slap}>
         <div data-type className="absolute inset-x-0 top-[12vh] px-4 text-center">
           <h2 className="text-[clamp(3.5rem,13vw,12rem)] leading-[0.86] font-extrabold tracking-[-0.055em] uppercase">
             <span className="block">{lineA}</span>

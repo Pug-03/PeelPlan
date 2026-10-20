@@ -26,7 +26,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={t("theme")}
-      className="grid size-9 place-items-center rounded-full text-muted transition-colors hover:bg-surface hover:text-ink sm:size-10"
+      className="relative grid size-9 place-items-center rounded-full text-muted transition-colors after:absolute after:-inset-1 hover:bg-surface hover:text-ink sm:size-10 sm:after:hidden"
     >
       <Sun className="hidden size-[18px] dark:block" strokeWidth={1.75} />
       <Moon className="size-[18px] dark:hidden" strokeWidth={1.75} />
@@ -76,22 +76,21 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
 
+  // Two invisible markers from the top of the page down to FOLD_AT and UNFOLD_AT; watching them leave and
+  // return replaces reading scrollY on every frame (each read forced a style recalc while scroll scenes ran).
+  const foldMark = useRef<HTMLDivElement>(null);
+  const unfoldMark = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    let raf = 0;
-    const onScroll = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        const y = window.scrollY;
-        setFolded((f) => (f ? y > UNFOLD_AT : y > FOLD_AT));
-      });
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      cancelAnimationFrame(raf);
-    };
+    const seen = new Map<Element, boolean>();
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => seen.set(e.target, e.isIntersecting));
+      const pastFold = seen.get(foldMark.current!) === false;
+      const pastUnfold = seen.get(unfoldMark.current!) === false;
+      setFolded((f) => (f ? pastUnfold : pastFold));
+    });
+    io.observe(foldMark.current!);
+    io.observe(unfoldMark.current!);
+    return () => io.disconnect();
   }, []);
 
   // The menu card opens from the folded button, or from the menu button on phones; Escape and outside clicks close it.
@@ -113,7 +112,10 @@ export function SiteHeader() {
   return (
     <>
       {/* Holds the bar's space in the page flow; the header itself is fixed. */}
-      <div className="h-[76px]" aria-hidden="true" />
+      <div className="relative h-[76px]" aria-hidden="true">
+        <div ref={foldMark} className="pointer-events-none absolute top-0 left-0 w-px" style={{ height: FOLD_AT }} />
+        <div ref={unfoldMark} className="pointer-events-none absolute top-0 left-0 w-px" style={{ height: UNFOLD_AT }} />
+      </div>
       <div ref={panel} data-folded={folded} className="site-header fixed z-50" style={{ top: "calc(env(safe-area-inset-top, 0px) + 10px)" }}>
         <header className="site-header-shell">
           {/* Full bar */}

@@ -299,7 +299,7 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
               type="button"
               aria-pressed={m.id === modelId}
               onClick={() => setModelId(m.id)}
-              className="rounded-full border border-hairline px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors hover:border-ink aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-bg"
+              className="rounded-full border border-hairline px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors hover:border-ink aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-bg sm:py-1.5"
             >
               {shortName(m.name)}
             </button>
@@ -315,7 +315,7 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
                 aria-label={c.name[locale]}
                 title={c.name[locale]}
                 onClick={() => setColorHex(c.hex)}
-                className="size-6 rounded-full border border-black/15 ring-offset-2 ring-offset-bg transition-shadow aria-pressed:ring-2 aria-pressed:ring-ink"
+                className="relative size-6 rounded-full border border-black/15 ring-offset-2 ring-offset-bg transition-shadow after:absolute after:-inset-2.5 after:rounded-full aria-pressed:ring-2 aria-pressed:ring-ink"
                 style={{ background: c.hex }}
               />
             ))}
