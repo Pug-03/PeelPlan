@@ -36,6 +36,8 @@ export type PdfLid = {
   heightMm: number;
   cornerRadiusMm: number;
   logo?: { x: number; y: number; width: number; height: number };
+  /** Some drawn geometry (corner radius, logo box) is an estimate; the cover page says so. */
+  estimated?: boolean;
 };
 
 /** Every string printed in the PDF, so the caller can pass the current locale's copy. */
@@ -66,6 +68,8 @@ export type PdfText = {
   colRotation: string;
   rotationCw: (deg: number) => string;
   flipped: string;
+  /** Shown on the cover only when the model's corner radius or logo box is an estimate. */
+  estimateNote: string;
 };
 
 /** ASCII copy: the built-in Helvetica can only draw Latin text. */
@@ -95,6 +99,7 @@ export const DEFAULT_PDF_TEXT: PdfText = {
   colRotation: "Rotation (CW)",
   rotationCw: (deg) => `${deg} deg CW`,
   flipped: "(flipped)",
+  estimateNote: "Note: corner radius and logo position are estimates, not published specs.",
 };
 
 /** TrueType bytes for a Unicode font (regular + bold); lets the PDF print Thai. */
@@ -111,6 +116,8 @@ export type PdfOptions = {
   text?: PdfText;
   /** Unicode font to embed. Missing or unusable → Helvetica with DEFAULT_PDF_TEXT. */
   fonts?: PdfFontBytes | null;
+  /** Called with the asset id of every sticker image that could not be decoded and was left out. */
+  onSkippedAsset?: (assetId: string) => void;
 };
 
 const DEFAULT_PADDING_MM = 14;
@@ -220,7 +227,7 @@ type Ctx = {
   lid: PdfLid;
   items: LayoutItem[];
   images: Map<string, PDFImage>;
-  opts: Required<Omit<PdfOptions, "fonts">>;
+  opts: Required<Omit<PdfOptions, "fonts" | "onSkippedAsset">>;
   contentW: number;
   contentH: number;
 };
@@ -354,6 +361,9 @@ function drawCoverPage(ctx: Ctx, plan: TilePlan) {
   if (plan.tiles.length > 1) {
     line(text.stepJoin);
   }
+  // The ±1 mm promise covers the lid size, which is published; say so when the drawn corner radius
+  // or logo box is only an estimate, rather than letting the sheet imply both are measured.
+  if (lid.estimated) line(text.estimateNote, 8, font, MUTED, 4);
   y -= mmToPt(6);
 
   // Horizontal and vertical 100 mm checks (verifies both printer axes).
@@ -424,8 +434,25 @@ async function embedUnicodeFonts(doc: PDFDocument, fonts: PdfFontBytes) {
   }
 }
 
+/**
+ * Whether the browser can actually decode these PNG bytes. pdf-lib's inflate loops forever on a
+ * corrupt deflate stream — on the main thread, so no timeout or try/catch can rescue the export —
+ * while `createImageBitmap` rejects cleanly. Outside a browser (tests, SSR) there is nothing to
+ * ask, so the bytes go straight to pdf-lib as before.
+ */
+async function decodablePng(bytes: Uint8Array): Promise<boolean> {
+  if (typeof createImageBitmap !== "function" || typeof Blob !== "function") return true;
+  try {
+    const bmp = await createImageBitmap(new Blob([bytes as BlobPart], { type: "image/png" }));
+    bmp.close?.();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function exportLayoutPdf(lid: PdfLid, items: LayoutItem[], assets: Record<string, StickerAsset>, options: PdfOptions): Promise<Uint8Array> {
-  const { fonts, text, ...rest } = options;
+  const { fonts, text, onSkippedAsset, ...rest } = options;
   const doc = await PDFDocument.create();
   doc.setTitle(`PeelPlan 1:1 - ${lid.modelName}`);
   doc.setCreator("PeelPlan");
@@ -439,7 +466,13 @@ export async function exportLayoutPdf(lid: PdfLid, items: LayoutItem[], assets: 
   if (opts.mode === "guide" && opts.includeImages) {
     for (const id of new Set(items.map((i) => i.assetId))) {
       const a = assets[id];
-      if (a?.src.startsWith("data:image/png")) images.set(id, await doc.embedPng(dataUrlToBytes(a.src)));
+      if (!a?.src.startsWith("data:image/png")) continue;
+      const bytes = dataUrlToBytes(a.src);
+      if (!(await decodablePng(bytes))) {
+        onSkippedAsset?.(id);
+        continue;
+      }
+      images.set(id, await doc.embedPng(bytes));
     }
   }
 

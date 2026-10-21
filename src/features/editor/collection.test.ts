@@ -53,6 +53,33 @@ describe("layout collection", () => {
     expect(listLayouts().map((e) => e.id)).toEqual([good.id]);
   });
 
+  it("keeps a damaged entry in storage when another layout autosaves over it", () => {
+    const a = createLayout();
+    const b = createLayout();
+    const stored = JSON.parse(localStorage.getItem("peelplan.collection.v1")!);
+    const broken = { ...stored.find((e: { id: string }) => e.id === a.id), layout: { version: 1, items: "not an array" } };
+    localStorage.setItem("peelplan.collection.v1", JSON.stringify([broken, stored.find((e: { id: string }) => e.id === b.id)]));
+    expect(listLayouts().map((e) => e.id)).toEqual([b.id]);
+    // The autosave that used to erase it.
+    expect(saveLayoutEntry(b.id, { ...b.layout, colorId: "midnight" })).toBe(true);
+    const after = JSON.parse(localStorage.getItem("peelplan.collection.v1")!);
+    expect(after).toHaveLength(2);
+    expect(after.find((e: { id: string }) => e.id === a.id)).toEqual(broken);
+  });
+
+  it("reports a refused write so the editor can say the edit isn't saved", () => {
+    const a = createLayout();
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = () => {
+      throw new DOMException("full", "QuotaExceededError");
+    };
+    try {
+      expect(saveLayoutEntry(a.id, a.layout)).toBe(false);
+    } finally {
+      Storage.prototype.setItem = setItem;
+    }
+  });
+
   it("survives an unreadable legacy save", () => {
     createLayout();
     localStorage.removeItem("peelplan.collection.migrated");

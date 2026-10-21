@@ -1,5 +1,6 @@
 "use client";
 
+import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { CSS_PX_PER_MM, ID1_CARD_MM, pxPerMmFromReference } from "@/lib/scale";
@@ -17,15 +18,24 @@ export function CalibrateDialog({ open, onClose }: { open: boolean; onClose: () 
   );
 }
 
+/**
+ * Plausible screen densities, in CSS px per mm. The CSS reference is 3.78; real screens land between
+ * a low-DPI TV and a dense phone. Outside this we warn — never block, because an unusual setup
+ * (a projector, a scaled external display) can legitimately sit near the edges.
+ */
+const PLAUSIBLE_PX_PER_MM = { min: 2.5, max: 8 };
+
 /** Mounted fresh on every open, so the slider starts from the saved calibration. */
 function CalibrateBody({ onClose }: { onClose: () => void }) {
   const t = useTranslations("calibrate");
+  const te = useTranslations("editor");
   const { calibratedPxPerMm, setCalibration } = useEditor();
   const [widthPx, setWidthPx] = useState(() => (calibratedPxPerMm ?? CSS_PX_PER_MM) * ID1_CARD_MM.width);
   const drag = useRef<{ startX: number; startW: number } | null>(null);
 
   const heightPx = widthPx * (ID1_CARD_MM.height / ID1_CARD_MM.width);
   const pxPerMm = pxPerMmFromReference(widthPx);
+  const odd = pxPerMm < PLAUSIBLE_PX_PER_MM.min || pxPerMm > PLAUSIBLE_PX_PER_MM.max;
 
   return (
     <>
@@ -82,6 +92,12 @@ function CalibrateBody({ onClose }: { onClose: () => void }) {
           className="accent-[var(--accent)]"
         />
       </label>
+      {odd && (
+        <p role="status" className="mt-4 flex items-start gap-2 rounded-xl bg-accent-soft p-3 text-sm">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
+          {te("calibrationOdd")}
+        </p>
+      )}
       <p className="mt-4 text-xs text-muted">{t("hint")}</p>
       <div className="mt-6 flex flex-wrap justify-end gap-2">
         {calibratedPxPerMm && (

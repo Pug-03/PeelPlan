@@ -18,6 +18,17 @@ describe("findFreeSpot", () => {
     }
   });
 
+  it("still respects rotated stickers, which skip the box-only fast path", () => {
+    const items: LayoutItem[] = [];
+    for (let i = 0; i < 10; i++) {
+      const size = { widthMm: 50, heightMm: 40 };
+      const p = findFreeSpot(size, items, lid, true);
+      const it: LayoutItem = { id: String(i), assetId: "a", label: "", locked: false, finish: "glossy", borderMm: 0, rotationDeg: 23, ...size, ...p };
+      expect(items.some((o) => rectsOverlap(o, it))).toBe(false);
+      items.push(it);
+    }
+  });
+
   it("never falls back onto the logo when the lid is full", () => {
     const full: LayoutItem = {
       id: "big",

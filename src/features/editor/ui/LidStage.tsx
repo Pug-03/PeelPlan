@@ -1,6 +1,7 @@
 "use client";
 
 import Konva from "konva";
+import { useTranslations } from "next-intl";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Group, Image as KImage, Layer, Line, Path, Rect, Stage, Text, Transformer } from "react-konva";
 import useImage from "use-image";
@@ -8,7 +9,7 @@ import { useShallow } from "zustand/react/shallow";
 import { DEMO_ASSETS, LOGO_PATH, logoTransform } from "@/config/demo";
 import { getLaptopModel, lidGeometry } from "@/config/laptops";
 import { boundingBox, corners } from "@/lib/geometry";
-import type { LayoutItem } from "@/lib/layout";
+import { MAX_SIZE_MM, MIN_SIZE_MM, type LayoutItem } from "@/lib/layout";
 import { DEFAULT_LIGHT, flatStops, lidLighting, type Light, type Radial } from "@/lib/lighting";
 import { fitPxPerMm, roundMm } from "@/lib/scale";
 import { computeSnap, type Box, type Guide } from "@/lib/snap";
@@ -105,6 +106,7 @@ const Rulers = memo(function Rulers({ widthMm, heightMm, strokePx }: { widthMm: 
 const guidesKey = (g: Guide[]) => g.map((x) => (x.kind === "line" ? `${x.axis}${x.at.toFixed(2)}` : `g${x.axis}${x.a.toFixed(2)}`)).join("|");
 
 export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
+  const t = useTranslations("editor");
   const wrapRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const layerRef = useRef<Konva.Layer>(null);
@@ -474,7 +476,15 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
   const logoT = logoTransform(lid.logo);
 
   return (
-    <div ref={wrapRef} className="absolute inset-0 overflow-auto overscroll-contain">
+    <div
+      ref={wrapRef}
+      // Konva renders a bare <canvas>, so the wrapper carries the tab stop, the accessible name and
+      // the focus ring: that is what makes arrow-key nudging reachable without a mouse.
+      tabIndex={0}
+      role="group"
+      aria-label={t("canvasFocus")}
+      className="absolute inset-0 overflow-auto overscroll-contain focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
+    >
       <Stage
         ref={stageRef}
         width={stageW}
@@ -630,7 +640,13 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
             rotateAnchorOffset={28}
             padding={4}
             flipEnabled={false}
-            boundBoxFunc={(oldBox, newBox) => (Math.abs(newBox.width) < 5 * k || Math.abs(newBox.height) < 5 * k ? oldBox : newBox)}
+            // Both ends matter: the store clamps sizes to MIN/MAX_SIZE_MM, so a drag past them would
+            // snap back on release instead of stopping under the finger.
+            boundBoxFunc={(oldBox, newBox) => {
+              const w = Math.abs(newBox.width) / k;
+              const h = Math.abs(newBox.height) / k;
+              return w < Math.max(5, MIN_SIZE_MM) || h < Math.max(5, MIN_SIZE_MM) || w > MAX_SIZE_MM || h > MAX_SIZE_MM ? oldBox : newBox;
+            }}
             onTransform={onTransform}
             onTransformEnd={onTransformEnd}
           />

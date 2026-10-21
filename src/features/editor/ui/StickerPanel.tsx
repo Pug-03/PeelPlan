@@ -55,7 +55,8 @@ const LibraryTile = memo(function LibraryTile({ sticker: s, locale, onAddFailed 
       <button
         type="button"
         aria-label={t("add", { name: s.name[locale] })}
-        onClick={() => void ensureLibraryAsset(s).then((asset) => addItem(asset, s.name[locale]), onAddFailed)}
+        // A refusal at MAX_ITEMS is reported by the shell (store.itemLimitHits), not here.
+        onClick={() => void ensureLibraryAsset(s).then((asset) => void addItem(asset, s.name[locale]), onAddFailed)}
         className="group flex w-full flex-col items-center gap-1.5 rounded-xl bg-surface p-3 transition-colors hover:bg-surface-2"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -230,7 +231,7 @@ export function StickerPanel({ onUpload, onAddFailed }: { onUpload: (f: File) =>
                     <button
                       type="button"
                       aria-label={t("add", { name: `${Math.round(a.defaultWidthMm)} mm` })}
-                      onClick={() => addItem(a, `${Math.round(a.defaultWidthMm)} mm`)}
+                      onClick={() => void addItem(a, `${Math.round(a.defaultWidthMm)} mm`)}
                       className="flex w-full flex-col items-center gap-1.5 rounded-xl bg-surface p-3 hover:bg-surface-2"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}

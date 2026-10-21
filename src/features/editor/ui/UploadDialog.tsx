@@ -17,6 +17,22 @@ type Pt = { x: number; y: number };
 
 const clone = (img: Rgba): Rgba => ({ width: img.width, height: img.height, data: new Uint8ClampedArray(img.data) });
 
+/**
+ * Biggest file we try to decode. `createImageBitmap` expands the whole image before the downscale,
+ * so a 50 MP phone photo wants ~200 MB of RGBA; refusing early beats an out-of-memory tab.
+ */
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+type UploadError = "generic" | "tooBig" | "svg";
+
+/** Why we won't even try this file, or null to go ahead. */
+function rejectReason(file: File): UploadError | null {
+  if (file.size > MAX_UPLOAD_BYTES) return "tooBig";
+  // The picker's accept="image/*" lets SVG through, but createImageBitmap refuses it.
+  if (file.type === "image/svg+xml" || /\.svgz?$/i.test(file.name)) return "svg";
+  return null;
+}
+
 /** Draws an RGBA buffer over a checkerboard, fitted into a canvas element. Returns image→canvas scale. */
 function paint(canvas: HTMLCanvasElement, img: Rgba, dimOthers?: { labels: Int32Array; keep: number }) {
   const maxW = canvas.parentElement?.clientWidth ?? 600;
@@ -45,8 +61,11 @@ export function UploadDialog({ file, onClose, onDone }: { file: File | null; onC
   const [step, setStep] = useState<Step>("clean");
   const [original, setOriginal] = useState<Rgba | null>(null);
   const [work, setWork] = useState<Rgba | null>(null);
-  const [error, setError] = useState(false);
-  const [busy, setBusy] = useState(!!file);
+  // A file we refuse outright is a pure function of the prop, so it needs no state and no effect.
+  const rejected = file ? rejectReason(file) : null;
+  const [error, setError] = useState<UploadError | null>(null);
+  const failure = rejected ?? error;
+  const [busy, setBusy] = useState(!!file && !rejected);
   const [bgOn, setBgOn] = useState(true);
   const [tolerance, setTolerance] = useState(42);
   // The slider shows the draft live; the expensive fill runs once the user lets go.
@@ -68,12 +87,12 @@ export function UploadDialog({ file, onClose, onDone }: { file: File | null; onC
 
   // Load the photo. The dialog is keyed by file, so state starts fresh for each upload.
   useEffect(() => {
-    if (!file) return;
+    if (!file || rejectReason(file)) return;
     fileToRgba(file, 1600)
       .then((img) => {
         setOriginal(img);
       })
-      .catch(() => setError(true))
+      .catch(() => setError("generic"))
       .finally(() => setBusy(false));
   }, [file]);
 
@@ -151,15 +170,19 @@ export function UploadDialog({ file, onClose, onDone }: { file: File | null; onC
   // In measure mode the width follows the marked reference.
   const effectiveWidthMm = sizeMode === "measure" && mmPerPx && isolated ? isolated.image.width * mmPerPx : widthMm;
   const heightMm = effectiveWidthMm / aspect;
-  /** The die-cut border adds to the artwork size; the result line shows the sticker as it will print. */
-  const borderTotal = dieCut ? 2 * dieCutMm : 0;
+  const pxPerMm = isolated ? isolated.image.width / effectiveWidthMm : 0;
+  /**
+   * The die-cut border adds to the artwork size, and `addDieCutBorder` rounds its radius to whole
+   * pixels. Measuring the rounded radius (not the typed mm) keeps the result line equal to what the
+   * PDF prints — on a small source image the two differ by over a millimetre.
+   */
+  const borderPx = dieCut && dieCutMm > 0 && pxPerMm > 0 ? Math.round(dieCutMm * pxPerMm) : 0;
+  const borderTotal = pxPerMm > 0 ? (2 * borderPx) / pxPerMm : 0;
 
   const finish = () => {
     if (!isolated) return;
     let img = isolated.image;
-    const widthMm = effectiveWidthMm;
-    const pxPerMm = img.width / widthMm;
-    if (dieCut && dieCutMm > 0) img = addDieCutBorder(img, dieCutMm * pxPerMm);
+    if (borderPx > 0) img = addDieCutBorder(img, borderPx);
     const asset: StickerAsset = {
       id: `up:${nanoid(10)}`,
       src: rgbaToPngDataUrl(img),
@@ -194,14 +217,14 @@ export function UploadDialog({ file, onClose, onDone }: { file: File | null; onC
         ))}
       </ol>
 
-      {error && (
+      {failure && (
         <p role="alert" className="rounded-lg bg-accent-soft p-3 text-sm">
-          {t("error")}
+          {t(failure === "tooBig" ? "tooBig" : failure === "svg" ? "svgUnsupported" : "error")}
         </p>
       )}
       {busy && <p className="text-sm text-muted">{t("processing")}</p>}
 
-      {!error && work && step === "clean" && (
+      {!failure && work && step === "clean" && (
         <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_16rem]">
           <div>
             <canvas
@@ -286,7 +309,7 @@ export function UploadDialog({ file, onClose, onDone }: { file: File | null; onC
         </div>
       )}
 
-      {!error && work && step === "size" && isolated && (
+      {!failure && work && step === "size" && isolated && (
         <div className="flex flex-col gap-5">
           <p className="text-sm text-muted">{t("sizeHow")}</p>
           <Segmented

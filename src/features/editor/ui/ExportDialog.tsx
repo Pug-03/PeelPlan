@@ -1,10 +1,10 @@
 "use client";
 
 import { Download, FileText, ImageDown, ImageIcon, TriangleAlert } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { getLaptopModel, lidGeometry } from "@/config/laptops";
+import { getLaptopModel, hasEstimatedGeometry, lidGeometry } from "@/config/laptops";
 import { downloadBlob } from "@/lib/image/browser";
 import { coordinateRows, csvCell } from "@/lib/layout";
 import type { PdfMode, PdfText } from "@/lib/pdf/exportPdf";
@@ -21,14 +21,16 @@ const PNG_PX_PER_MM = 8;
 export function ExportDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useTranslations("export");
   const te = useTranslations("editor");
-  const locale = useLocale();
   // Always mounted: subscribe only to what the export needs, not every zoom or selection change.
   const { modelId, colorId, items, assets } = useEditor(useShallow((s) => ({ modelId: s.modelId, colorId: s.colorId, items: s.items, assets: s.assets })));
-  const [paper, setPaper] = useState<"a4" | "letter">(locale === "en" ? "letter" : "a4");
+  // A4 everywhere: English is also the language of English-speaking Thailand, and Letter paper is
+  // the exception, not the default for a locale.
+  const [paper, setPaper] = useState<"a4" | "letter">("a4");
   const [mode, setMode] = useState<PdfMode>("guide");
   const [images, setImages] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  const [skipped, setSkipped] = useState(0);
   const [imageBusy, setImageBusy] = useState(false);
   const [imageError, setImageError] = useState(false);
   const model = getLaptopModel(modelId);
@@ -38,6 +40,7 @@ export function ExportDialog({ open, onClose }: { open: boolean; onClose: () => 
   const exportPdf = async () => {
     setBusy(true);
     setError(false);
+    setSkipped(0);
     try {
       const [{ exportLayoutPdf }, { loadPdfFonts }] = await Promise.all([import("@/lib/pdf/exportPdf"), import("@/lib/pdf/fonts")]);
       // The Thai-capable font carries the localised copy; if it fails to load the PDF falls back to ASCII English.
@@ -68,14 +71,18 @@ export function ExportDialog({ open, onClose }: { open: boolean; onClose: () => 
         colRotation: t("doc.colRotation"),
         rotationCw: (deg) => t("doc.rotationCw", { deg }),
         flipped: t("doc.flipped"),
+        estimateNote: t("doc.estimateNote"),
       };
-      const bytes = await exportLayoutPdf({ modelName: model.name, ...lidGeometry(model) }, items, assets, {
+      const unreadable = new Set<string>();
+      const bytes = await exportLayoutPdf({ modelName: model.name, ...lidGeometry(model), estimated: hasEstimatedGeometry(model) }, items, assets, {
         paper,
         mode,
         includeImages: images,
         text,
         fonts,
+        onSkippedAsset: (id) => unreadable.add(id),
       });
+      setSkipped(items.filter((i) => unreadable.has(i.assetId)).length);
       downloadBlob(new Blob([bytes as BlobPart], { type: "application/pdf" }), `peelplan-${model.id}-${mode}-${stamp}.pdf`);
     } catch {
       setError(true);
@@ -148,6 +155,7 @@ export function ExportDialog({ open, onClose }: { open: boolean; onClose: () => 
               <TriangleAlert className="mt-0.5 size-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
               {t("printWarning")}
             </p>
+            {hasEstimatedGeometry(model) && <p className="text-xs leading-relaxed text-muted">{te("estimateNote")}</p>}
             <Button variant="dark" onClick={exportPdf} disabled={busy}>
               <Download className="size-4" strokeWidth={2} aria-hidden="true" />
               {busy ? t("working") : t("download")}
@@ -155,6 +163,11 @@ export function ExportDialog({ open, onClose }: { open: boolean; onClose: () => 
             {error && (
               <p role="alert" className="text-sm text-[#C62F35]">
                 {t("failed")}
+              </p>
+            )}
+            {skipped > 0 && (
+              <p role="status" className="text-sm text-[#C62F35]">
+                {t("skippedAssets", { count: skipped })}
               </p>
             )}
 

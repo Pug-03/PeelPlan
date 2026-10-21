@@ -12,10 +12,17 @@ function safeLocal<T>(fn: () => T, fallback: T): T {
   }
 }
 
-/** Calibration is per physical screen; a laptop on an external monitor needs its own value. */
+/**
+ * Calibration is per physical screen; a laptop on an external monitor needs its own value.
+ * The zoom bucket is part of the key because Safari's page zoom changes how big a CSS px is
+ * without touching devicePixelRatio: a zoomed window must not reuse the 100% calibration and
+ * keep claiming actual size. Rounded to one decimal so window borders and scrollbars don't
+ * invalidate a good calibration.
+ */
 export function screenKey() {
   if (typeof window === "undefined") return "ssr";
-  return `${window.screen.width}x${window.screen.height}@${window.devicePixelRatio}`;
+  const zoom = window.innerWidth > 0 ? Math.round((window.outerWidth / window.innerWidth) * 10) / 10 : 1;
+  return `${window.screen.width}x${window.screen.height}@${window.devicePixelRatio}z${zoom}`;
 }
 
 export const loadCalibration = (): number | null =>

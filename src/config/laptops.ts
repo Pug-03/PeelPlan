@@ -183,6 +183,15 @@ export function getLaptopModel(id: string): LaptopModel {
   return LAPTOP_MODELS.find((m) => m.id === id) ?? LAPTOP_MODELS.find((m) => m.id === DEFAULT_MODEL_ID)!;
 }
 
+/**
+ * Whether anything PeelPlan actually draws for this model is an estimate rather than a published
+ * spec: the corner radius of the printed lid outline, or the logo box the keep-out area is built
+ * from. The width and height are published, so a `true` here never means the lid size is a guess.
+ */
+export function hasEstimatedGeometry(model: LaptopModel) {
+  return !model.lid.cornerRadiusMm.verified || Object.values(model.logo).some((f) => !f.verified);
+}
+
 /** Flattened numeric view for rendering. */
 export function lidGeometry(model: LaptopModel) {
   return {

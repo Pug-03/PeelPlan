@@ -4,21 +4,26 @@ import { ArrowDownToLine, ArrowUpToLine, ChevronDown, ChevronUp, Copy, FlipHoriz
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
-import type { Finish } from "@/lib/layout";
+import { getLaptopModel, lidGeometry } from "@/config/laptops";
+import { positionRange, type Finish } from "@/lib/layout";
 import { roundMm } from "@/lib/scale";
 import type { LayoutWarnings } from "@/lib/warnings";
 import { useEditor, useLiveReadout } from "../store";
 import { IconButton, NumberField, Segmented } from "./controls";
 
+/** Emoji and other pictographs have no glyph in the PDF font and print as "?". */
+const hasEmoji = (s: string) => /\p{Extended_Pictographic}/u.test(s);
+
 export function Inspector({ warnings }: { warnings: LayoutWarnings }) {
   const live = useLiveReadout((s) => s.live);
   const t = useTranslations("editor");
   const labelDirty = useRef(false);
-  const { checkpoint, items, selectedIds, updateItems, removeSelected, duplicateSelected, reorderSelected, select } = useEditor(
+  const { checkpoint, items, selectedIds, modelId, updateItems, removeSelected, duplicateSelected, reorderSelected, select } = useEditor(
     useShallow((s) => ({
       checkpoint: s.checkpoint,
       items: s.items,
       selectedIds: s.selectedIds,
+      modelId: s.modelId,
       updateItems: s.updateItems,
       removeSelected: s.removeSelected,
       duplicateSelected: s.duplicateSelected,
@@ -26,6 +31,8 @@ export function Inspector({ warnings }: { warnings: LayoutWarnings }) {
       select: s.select,
     })),
   );
+  // The store clamps to the same range; the fields advertise it so typing 5000 can't look accepted.
+  const range = positionRange(lidGeometry(getLaptopModel(modelId)));
   const selected = items.filter((i) => selectedIds.includes(i.id));
   const one = selected.length === 1 ? selected[0] : null;
   const ids = selected.map((s) => s.id);
@@ -55,6 +62,7 @@ export function Inspector({ warnings }: { warnings: LayoutWarnings }) {
                   }}
                   className="h-10 rounded-lg border border-hairline bg-bg px-3 text-sm outline-none focus:border-ink"
                 />
+                {hasEmoji(one.label) && <span className="text-xs text-muted">{t("emojiNote")}</span>}
               </label>
             ) : (
               <p className="text-sm font-medium">{t("multiSelected", { count: selected.length })}</p>
@@ -79,8 +87,22 @@ export function Inspector({ warnings }: { warnings: LayoutWarnings }) {
                     disabled={one.locked}
                     onCommit={(h) => updateItems([one.id], (it) => ({ heightMm: h, widthMm: (h * it.widthMm) / it.heightMm }))}
                   />
-                  <NumberField label={t("x")} value={one.xMm} disabled={one.locked} onCommit={(x) => updateItems([one.id], () => ({ xMm: x }))} />
-                  <NumberField label={t("y")} value={one.yMm} disabled={one.locked} onCommit={(y) => updateItems([one.id], () => ({ yMm: y }))} />
+                  <NumberField
+                    label={t("x")}
+                    value={one.xMm}
+                    min={range.minX}
+                    max={range.maxX}
+                    disabled={one.locked}
+                    onCommit={(x) => updateItems([one.id], () => ({ xMm: x }))}
+                  />
+                  <NumberField
+                    label={t("y")}
+                    value={one.yMm}
+                    min={range.minY}
+                    max={range.maxY}
+                    disabled={one.locked}
+                    onCommit={(y) => updateItems([one.id], () => ({ yMm: y }))}
+                  />
                   <NumberField
                     label={t("rotation")}
                     unit="°"

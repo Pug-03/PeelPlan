@@ -4,8 +4,9 @@ import { Download, ImageDown, LayoutGrid, Link2, Maximize2, Minus, Plus, Redo2, 
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useEffectEvent, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { LAPTOP_MODELS, getLaptopModel, lidGeometry } from "@/config/laptops";
+import { LAPTOP_MODELS, getLaptopModel, hasEstimatedGeometry, lidGeometry } from "@/config/laptops";
 import { Link } from "@/i18n/navigation";
+import { MAX_ITEMS, type LayoutItem } from "@/lib/layout";
 import { layoutWarnings } from "@/lib/warnings";
 import { ART_VERSION, VISIBLE_LIBRARY } from "@/stickers/library";
 import { AccountMenu } from "@/components/AccountMenu";
@@ -25,16 +26,23 @@ import { UploadDialog } from "./UploadDialog";
 
 /** Collection entry the editor is working on; autosave writes here. */
 let activeLayoutId: string | null = null;
+/**
+ * Items of the opened entry whose image isn't on this device (a share link's uploads, or an upload
+ * deleted since). They can't be drawn, so they stay out of the store — but autosave carries them
+ * back so opening a shared layout never quietly rewrites the link's stickers away.
+ */
+let unloadableItems: LayoutItem[] = [];
 
 /** Loads the layout to edit: ?layout=<id> from the collection, a share link (saved as a new entry), or the last one used. */
-function useHydrate(onSharedOpened: () => void) {
+function useHydrate(onOpened: (missing: number, shared: boolean) => void) {
   const hydrate = useEditor((s) => s.hydrate);
-  const sharedOpened = useEffectEvent(onSharedOpened);
+  const opened = useEffectEvent(onOpened);
   useEffect(() => {
     let cancelled = false;
     // The store outlives this page: until the new layout is loaded, hide the previous one and stop
     // autosave from writing into either entry.
     activeLayoutId = null;
+    unloadableItems = [];
     useEditor.setState({ hydrated: false });
     (async () => {
       const [assets, hash] = [await loadAssets(), window.location.hash.match(/#s=(.+)$/)?.[1]];
@@ -47,7 +55,6 @@ function useHydrate(onSharedOpened: () => void) {
           if (def) await ensureLibraryAsset(def).catch(() => undefined);
         }
         if (cancelled) return;
-        sharedOpened();
       }
       // Refresh cached library rasters that are out of date before showing the layout.
       for (const a of Object.values(assets)) {
@@ -65,7 +72,9 @@ function useHydrate(onSharedOpened: () => void) {
       url.searchParams.set("layout", entry.id);
       history.replaceState(null, "", url.pathname + url.search);
       const layout = entry.layout;
+      unloadableItems = layout ? layout.items.filter((i) => !known[i.assetId]) : [];
       hydrate(layout && { ...layout, items: layout.items.filter((i) => known[i.assetId]) }, assets, loadCalibration());
+      opened(unloadableItems.length, !!shared);
     })().catch(() => !cancelled && hydrate(null, {}, loadCalibration()));
     return () => {
       cancelled = true;
@@ -73,14 +82,21 @@ function useHydrate(onSharedOpened: () => void) {
   }, [hydrate]);
 }
 
-function useAutosave() {
+function useAutosave(onFailed: () => void) {
+  const failed = useEffectEvent(onFailed);
   useEffect(
     () =>
       useEditor.subscribe((s, prev) => {
         // Skip the hydrate itself: just opening a layout must not bump its "edited" time.
         if (!s.hydrated || !prev.hydrated) return;
         if (s.items !== prev.items || s.modelId !== prev.modelId || s.colorId !== prev.colorId || s.keepLogoClear !== prev.keepLogoClear)
-          if (activeLayoutId) saveLayoutEntry(activeLayoutId, currentLayout(s));
+          if (activeLayoutId) {
+            const layout = currentLayout(s);
+            // Items whose image isn't here ride along, so an edit can't drop a sharer's stickers.
+            // MAX_ITEMS still has to hold or the entry would stop parsing on the next load.
+            const items = unloadableItems.length ? [...layout.items, ...unloadableItems].slice(0, MAX_ITEMS) : layout.items;
+            if (!saveLayoutEntry(activeLayoutId, { ...layout, items })) failed();
+          }
       }),
     [],
   );
@@ -137,7 +153,8 @@ function useShortcuts() {
 export default function Editor() {
   const t = useTranslations("editor");
   const locale = useLocale() as "th" | "en";
-  useAutosave();
+  const [toast, setToast] = useState<string | null>(null);
+  useAutosave(() => setToast(t("saveFailed")));
   useShortcuts();
 
   // Everything except selection: selection changes shouldn't re-render the whole shell.
@@ -172,9 +189,8 @@ export default function Editor() {
   const [exportOpen, setExportOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [sheet, setSheet] = useState<"stickers" | "edit" | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const [sharedNotice, setSharedNotice] = useState(false);
-  useHydrate(() => setSharedNotice(true));
+  const [opened, setOpened] = useState<{ shared: boolean; missing: number } | null>(null);
+  useHydrate((missing, shared) => setOpened(shared || missing ? { shared, missing } : null));
   // Stable so the memoised library tiles don't all re-render with the shell.
   const addFailed = useCallback(() => setToast(t("addFailed")), [t]);
 
@@ -195,6 +211,27 @@ export default function Editor() {
     const id = setTimeout(() => setToast(null), 3200);
     return () => clearTimeout(id);
   }, [toast]);
+
+  // An add or duplicate refused for hitting the item cap has to say so, or the click looks broken.
+  const limitRefused = useEffectEvent(() => setToast(t("tooManyStickers")));
+  useEffect(
+    () =>
+      useEditor.subscribe((st, prev) => {
+        if (st.itemLimitHits !== prev.itemLimitHits) limitRefused();
+      }),
+    [],
+  );
+
+  // Safari's page zoom moves CSS pixels without touching devicePixelRatio, so the saved calibration
+  // for this screen stops applying: re-read it rather than let the badge keep claiming actual size.
+  useEffect(() => {
+    const onResize = () => {
+      const px = loadCalibration();
+      if (px !== useEditor.getState().calibratedPxPerMm) useEditor.getState().setCalibration(px);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const isActual = s.viewMode === "actual" && !!s.calibratedPxPerMm && Math.abs(s.zoom - 1) < 1e-6;
   const share = async () => {
@@ -369,16 +406,22 @@ export default function Editor() {
             </div>
           )}
 
-          {sharedNotice && (
+          {opened && (
             <div
               role="status"
-              className="toast-in absolute top-3 left-1/2 z-10 flex max-w-[92%] -translate-x-1/2 items-center gap-3 rounded-full bg-ink py-1.5 pr-1.5 pl-4 text-xs text-bg shadow-soft"
+              className="toast-in absolute top-3 left-1/2 z-10 flex max-w-[92%] -translate-x-1/2 items-center gap-3 rounded-2xl bg-ink py-1.5 pr-1.5 pl-4 text-xs text-bg shadow-soft"
             >
-              <span>{t("sharedOpened")}</span>
-              <Link href="/collection" className="rounded-full bg-bg px-3 py-1 font-medium text-ink">
-                {t("myCollection")}
-              </Link>
-              <button type="button" onClick={() => setSharedNotice(false)} aria-label={t("dismiss")} className="px-1.5 opacity-70 hover:opacity-100">
+              <span className="flex flex-col gap-1 py-1">
+                {opened.shared && <span>{t("sharedOpened")}</span>}
+                {/* The sharer is told uploads don't travel; until now the receiver was told nothing. */}
+                {opened.missing > 0 && <span>{t("sharedMissing", { count: opened.missing })}</span>}
+              </span>
+              {opened.shared && (
+                <Link href="/collection" className="shrink-0 rounded-full bg-bg px-3 py-1 font-medium text-ink">
+                  {t("myCollection")}
+                </Link>
+              )}
+              <button type="button" onClick={() => setOpened(null)} aria-label={t("dismiss")} className="self-start px-1.5 opacity-70 hover:opacity-100">
                 ×
               </button>
             </div>
@@ -416,6 +459,8 @@ export default function Editor() {
               ))}
             </div>
             <Toggle checked={s.keepLogoClear} onChange={s.setKeepLogoClear} label={t("logoClear")} />
+            {/* The lid size is a published spec; the corner radius and logo box usually are not. */}
+            {hasEstimatedGeometry(model) && <p className="text-xs leading-relaxed text-muted">{t("estimateNote")}</p>}
           </div>
           <Inspector warnings={warnings} />
           <details className="border-t border-hairline px-4 py-3 text-xs text-muted max-lg:hidden">
