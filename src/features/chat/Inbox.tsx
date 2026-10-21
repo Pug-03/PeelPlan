@@ -3,7 +3,8 @@
 import { MessageCircle, Store } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
-import { TEST_MODE, useMarket } from "@/features/market/store";
+import { TEST_MODE, useMarketQuery } from "@/features/market/store";
+import { LoadError } from "@/features/market/ui/buyer";
 import type { Shop, Thread } from "@/features/market/types";
 import { Link } from "@/i18n/navigation";
 import { initials, relativeTime } from "./format";
@@ -13,7 +14,7 @@ export type InboxRow = { thread: Thread; side: Side; name: string; logo?: string
 
 /** Threads where the user is the buyer, plus their shop's threads if they own one. Reloads on store changes. */
 export function useInbox(userId: string) {
-  return useMarket(
+  return useMarketQuery(
     async (s) => {
       const [bought, shop] = await Promise.all([s.buyerThreads(userId), s.myShop(userId)]);
       const shops = new Map<string, Shop | null>();
@@ -53,13 +54,20 @@ export function TestBanner() {
 export function Inbox({ userId, activeId }: { userId: string; activeId?: string }) {
   const t = useTranslations("chat");
   const locale = useLocale();
-  const data = useInbox(userId);
+  const { data, error, retry } = useInbox(userId);
   const [pickedTab, setTab] = useState<Side | null>(null);
 
+  if (!data && error)
+    return (
+      <div className="flex flex-1 flex-col p-4">
+        <LoadError onRetry={retry} />
+      </div>
+    );
   if (!data) return <div className="flex-1" aria-busy="true" />;
 
   // Open on the side the current conversation belongs to.
-  const activeSide: Side | undefined = data.selling.some((r) => r.thread.id === activeId) && !data.buying.some((r) => r.thread.id === activeId) ? "shop" : undefined;
+  const activeSide: Side | undefined =
+    data.selling.some((r) => r.thread.id === activeId) && !data.buying.some((r) => r.thread.id === activeId) ? "shop" : undefined;
   const tab: Side = data.shop ? (pickedTab ?? activeSide ?? "buyer") : "buyer";
   const rows = tab === "shop" ? data.selling : data.buying;
   const unread = (rs: InboxRow[]) => rs.reduce((n, r) => n + (r.side === "buyer" ? r.thread.unreadBuyer : r.thread.unreadShop), 0);

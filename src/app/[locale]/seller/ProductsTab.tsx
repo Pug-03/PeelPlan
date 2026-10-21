@@ -3,11 +3,12 @@
 import { ImagePlus, Pencil, Plus, Ruler, Search, Trash2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fileToDataUrl, getStore, useMarket } from "@/features/market/store";
+import { fileToDataUrl, getStore, useMarketQuery } from "@/features/market/store";
+import { LoadError } from "@/features/market/ui/buyer";
 import { FINISHES, type Product, type Shop } from "@/features/market/types";
 import { VISIBLE_LIBRARY, stickerThumb } from "@/stickers/library";
 import { validateProduct, type Errors, type ProductDraft, type ProductField } from "./validate";
-import { ariaFor, Field, fieldClass, primaryBtn, secondaryBtn, useMoney } from "./ui";
+import { ariaFor, Field, fieldClass, primaryBtn, secondaryBtn, useMoney, useUnsavedGuard } from "./ui";
 
 const EMPTY: ProductDraft = { name: "", image: "", widthMm: "", heightMm: "", priceThb: "", stock: "", madeToOrder: true, finish: "glossy", active: true };
 
@@ -29,11 +30,28 @@ const CHECKER = "bg-[conic-gradient(var(--surface-2)_25%,var(--bg)_0_50%,var(--s
 
 export function ProductsTab({ shop }: { shop: Shop }) {
   const t = useTranslations("seller.products");
+  const te = useTranslations("seller.errors");
   const money = useMoney();
-  const products = useMarket((s) => s.listProducts(shop.id, { includeInactive: true }), [shop.id]);
+  const { data: products, error, retry } = useMarketQuery((s) => s.listProducts(shop.id, { includeInactive: true }), [shop.id]);
   // null = closed, "new" = adding, otherwise the product being edited.
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const remove = async (id: string) => {
+    setDeleting(id);
+    setDeleteError(null);
+    try {
+      await (await getStore()).deleteProduct(id);
+      setConfirming(null);
+    } catch {
+      // Keep the confirmation open so the error sits next to the product and Delete can be retried.
+      setDeleteError(id);
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4 pt-2">
@@ -45,7 +63,9 @@ export function ProductsTab({ shop }: { shop: Shop }) {
         </button>
       </div>
 
-      {products === undefined ? (
+      {products === undefined && error ? (
+        <LoadError onRetry={retry} />
+      ) : products === undefined ? (
         <div className="h-48 animate-pulse rounded-2xl bg-surface" aria-busy="true" />
       ) : products.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-hairline px-5 py-12 text-center">
@@ -76,6 +96,7 @@ export function ProductsTab({ shop }: { shop: Shop }) {
                       autoFocus
                       onClick={() => {
                         setConfirming(null);
+                        setDeleteError(null);
                         requestAnimationFrame(() => document.getElementById(`del-${p.id}`)?.focus());
                       }}
                       className="rounded-full px-3 py-1.5 hover:bg-surface"
@@ -84,14 +105,18 @@ export function ProductsTab({ shop }: { shop: Shop }) {
                     </button>
                     <button
                       type="button"
-                      onClick={async () => {
-                        setConfirming(null);
-                        await (await getStore()).deleteProduct(p.id);
-                      }}
-                      className="rounded-full bg-[#c62f35] px-3 py-1.5 font-medium text-white"
+                      disabled={deleting === p.id}
+                      aria-busy={deleting === p.id}
+                      onClick={() => void remove(p.id)}
+                      className="rounded-full bg-[#c62f35] px-3 py-1.5 font-medium text-white disabled:opacity-50"
                     >
                       {t("delete")}
                     </button>
+                    {deleteError === p.id && (
+                      <p role="alert" className="w-full text-xs text-[#C62F35]">
+                        {te("delete")}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <div className="mt-auto flex items-center gap-1 pt-2">
@@ -106,7 +131,10 @@ export function ProductsTab({ shop }: { shop: Shop }) {
                     <button
                       type="button"
                       id={`del-${p.id}`}
-                      onClick={() => setConfirming(p.id)}
+                      onClick={() => {
+                        setConfirming(p.id);
+                        setDeleteError(null);
+                      }}
                       aria-label={`${t("delete")} ${p.name}`}
                       title={t("delete")}
                       className="grid size-8 place-items-center rounded-full text-muted hover:bg-surface hover:text-[#c62f35]"
@@ -131,7 +159,14 @@ function ProductDialog({ shop, product, onClose }: { shop: Shop; product: Produc
   const locale = useLocale() as "th" | "en";
   const te = useTranslations("seller.errors");
   const ref = useRef<HTMLDialogElement>(null);
-  const [d, setD] = useState<ProductDraft>(() => (product ? toDraft(product) : EMPTY));
+  const [initial] = useState<ProductDraft>(() => (product ? toDraft(product) : EMPTY));
+  const [d, setD] = useState<ProductDraft>(initial);
+  // Unsaved changes: Esc, ×, Cancel and closing the tab all ask first instead of dropping them.
+  const dirty = JSON.stringify(d) !== JSON.stringify(initial);
+  const [discarding, setDiscarding] = useState(false);
+  /** Set right before a close we mean (saved, or discard confirmed). */
+  const leaving = useRef(false);
+  useUnsavedGuard(dirty);
   const [errors, setErrors] = useState<Errors<ProductField>>({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -158,6 +193,7 @@ function ProductDialog({ shop, product, onClose }: { shop: Shop; product: Produc
     setSaveError(null);
     try {
       await (await getStore()).saveProduct(shop.id, data, product?.id);
+      leaving.current = true;
       ref.current?.close();
     } catch (e) {
       setSaveError(te(e instanceof Error && e.message === "storage-full" ? "storageFull" : "save"));
@@ -165,10 +201,34 @@ function ProductDialog({ shop, product, onClose }: { shop: Shop; product: Produc
     }
   };
 
+  const requestClose = () => {
+    if (dirty) return setDiscarding(true);
+    leaving.current = true;
+    ref.current?.close();
+  };
+  const discard = () => {
+    leaving.current = true;
+    ref.current?.close();
+  };
+
   return (
     <dialog
       ref={ref}
-      onClose={onClose}
+      onCancel={(e) => {
+        // Esc: ask in the page instead of dropping the draft.
+        if (!dirty) return;
+        e.preventDefault();
+        setDiscarding(true);
+      }}
+      onClose={() => {
+        // Some browsers close on a second Esc even when cancel was prevented: reopen and ask.
+        if (dirty && !leaving.current) {
+          ref.current?.showModal();
+          setDiscarding(true);
+          return;
+        }
+        onClose();
+      }}
       aria-labelledby="product-dialog-title"
       className="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-2xl overflow-y-auto rounded-2xl border border-hairline bg-bg p-0 text-ink shadow-soft backdrop:bg-black/40"
     >
@@ -184,7 +244,7 @@ function ProductDialog({ shop, product, onClose }: { shop: Shop; product: Produc
           <h2 id="product-dialog-title" className="text-xl font-semibold tracking-tight">
             {product ? t("editTitle") : t("addTitle")}
           </h2>
-          <button type="button" onClick={() => ref.current?.close()} aria-label={t("close")} className="grid size-9 place-items-center rounded-full hover:bg-surface">
+          <button type="button" onClick={requestClose} aria-label={t("close")} className="grid size-9 place-items-center rounded-full hover:bg-surface">
             <X className="size-5" strokeWidth={1.75} />
           </button>
         </div>
@@ -230,7 +290,14 @@ function ProductDialog({ shop, product, onClose }: { shop: Shop; product: Produc
                   error={err("image")}
                   onPick={(def) => {
                     const height = Math.round(((def.widthMm * def.viewBox[1]) / def.viewBox[0]) * 10) / 10;
-                    setD((x) => ({ ...x, image: stickerThumb(def), stickerId: def.id, name: x.name || def.name[locale], widthMm: String(def.widthMm), heightMm: String(height) }));
+                    setD((x) => ({
+                      ...x,
+                      image: stickerThumb(def),
+                      stickerId: def.id,
+                      name: x.name || def.name[locale],
+                      widthMm: String(def.widthMm),
+                      heightMm: String(height),
+                    }));
                     setErrors((e) => ({ ...e, image: undefined }));
                   }}
                 />
@@ -240,7 +307,14 @@ function ProductDialog({ shop, product, onClose }: { shop: Shop; product: Produc
         </fieldset>
 
         <Field id="p-name" label={t("name")} error={err("name")}>
-          <input id="p-name" value={d.name} onChange={(e) => set("name", e.target.value)} maxLength={80} className={fieldClass} {...ariaFor("p-name", err("name"))} />
+          <input
+            id="p-name"
+            value={d.name}
+            onChange={(e) => set("name", e.target.value)}
+            maxLength={80}
+            className={fieldClass}
+            {...ariaFor("p-name", err("name"))}
+          />
         </Field>
 
         <div className="flex flex-col gap-2 rounded-xl bg-surface p-4">
@@ -330,8 +404,23 @@ function ProductDialog({ shop, product, onClose }: { shop: Shop; product: Produc
             {saveError}
           </p>
         )}
+        {discarding && (
+          <div role="alertdialog" aria-labelledby="discard-title" className="flex flex-col gap-3 rounded-xl border border-ink bg-surface p-4">
+            <p id="discard-title" className="text-sm font-medium">
+              {t("discardTitle")}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" autoFocus onClick={() => setDiscarding(false)} className={`${secondaryBtn} h-10 bg-bg`}>
+                {t("keepEditing")}
+              </button>
+              <button type="button" onClick={discard} className="inline-flex h-10 items-center rounded-full bg-[#c62f35] px-4 text-sm font-medium text-white">
+                {t("discard")}
+              </button>
+            </div>
+          </div>
+        )}
         <div className="flex flex-col-reverse gap-2 border-t border-hairline pt-5 sm:flex-row sm:justify-end">
-          <button type="button" onClick={() => ref.current?.close()} className={secondaryBtn}>
+          <button type="button" onClick={requestClose} className={secondaryBtn}>
             {t("cancel")}
           </button>
           <button type="submit" disabled={saving} className={primaryBtn}>

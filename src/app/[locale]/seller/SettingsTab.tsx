@@ -7,7 +7,7 @@ import { fileToDataUrl, getStore } from "@/features/market/store";
 import { normalizePromptPayId } from "@/features/market/promptpay";
 import { LINK_KINDS, type Shop } from "@/features/market/types";
 import { PromptPayQr } from "@/features/market/ui/PromptPayQr";
-import { ariaFor, cardClass, Field, fieldClass, primaryBtn, TypeChips } from "./ui";
+import { ariaFor, cardClass, Field, fieldClass, primaryBtn, TypeChips, useUnsavedGuard } from "./ui";
 import { validateSettings, type Errors, type SettingsDraft, type SettingsField } from "./validate";
 
 const TINTS = [
@@ -48,6 +48,9 @@ export function SettingsTab({ shop }: { shop: Shop }) {
   };
   const err = (k: SettingsField) => (errors[k] ? te(errors[k]!) : undefined);
   const renaming = shop.status === "approved" && d.name.trim() !== shop.name;
+  // Compared with what was last saved (not the reloaded shop: the store normalises some fields).
+  const [saved, setSaved] = useState(() => JSON.stringify(toDraft(shop)));
+  useUnsavedGuard(JSON.stringify(d) !== saved);
   const ppValid = !!normalizePromptPayId(d.promptpayId);
 
   const submit = async () => {
@@ -60,6 +63,7 @@ export function SettingsTab({ shop }: { shop: Shop }) {
     setState("saving");
     try {
       await (await getStore()).saveMyShop(shop.ownerId, patch);
+      setSaved(JSON.stringify(d));
       setState("saved");
     } catch (e) {
       setState(e instanceof Error && e.message === "storage-full" ? "full" : "error");
@@ -82,7 +86,15 @@ export function SettingsTab({ shop }: { shop: Shop }) {
           {t("identity")}
         </h2>
         <Field id="s-name" label={t("name")} hint={shop.status === "approved" ? t("renameNote") : undefined} error={err("name")}>
-          <input id="s-name" value={d.name} onChange={(e) => set("name", e.target.value)} maxLength={80} autoComplete="organization" className={fieldClass} {...ariaFor("s-name", err("name"))} />
+          <input
+            id="s-name"
+            value={d.name}
+            onChange={(e) => set("name", e.target.value)}
+            maxLength={80}
+            autoComplete="organization"
+            className={fieldClass}
+            {...ariaFor("s-name", err("name"))}
+          />
         </Field>
         {renaming && (
           <p role="status" className="-mt-3 rounded-xl bg-[#FFF1C9] px-3 py-2 text-sm text-[#6B4E00]">
@@ -90,10 +102,26 @@ export function SettingsTab({ shop }: { shop: Shop }) {
           </p>
         )}
         <Field id="s-about" label={t("about")} hint={t("aboutHint")} error={err("about")}>
-          <textarea id="s-about" value={d.about} onChange={(e) => set("about", e.target.value)} maxLength={1000} rows={4} className={`${fieldClass} h-auto py-3`} {...ariaFor("s-about", err("about"))} />
+          <textarea
+            id="s-about"
+            value={d.about}
+            onChange={(e) => set("about", e.target.value)}
+            maxLength={1000}
+            rows={4}
+            className={`${fieldClass} h-auto py-3`}
+            {...ariaFor("s-about", err("about"))}
+          />
         </Field>
         <Field id="s-city" label={t("city")} hint={t("cityHint")} error={err("city")}>
-          <input id="s-city" value={d.city} onChange={(e) => set("city", e.target.value)} maxLength={80} autoComplete="address-level1" className={fieldClass} {...ariaFor("s-city", err("city"))} />
+          <input
+            id="s-city"
+            value={d.city}
+            onChange={(e) => set("city", e.target.value)}
+            maxLength={80}
+            autoComplete="address-level1"
+            className={fieldClass}
+            {...ariaFor("s-city", err("city"))}
+          />
         </Field>
         <TypeChips value={d.productTypes} onChange={(v) => set("productTypes", v)} error={err("productTypes")} />
       </section>
@@ -107,8 +135,19 @@ export function SettingsTab({ shop }: { shop: Shop }) {
           <legend className="mb-2 text-sm font-medium">{t("tint")}</legend>
           <div className="flex flex-wrap gap-2">
             {TINTS.map(([tn, c]) => (
-              <label key={c} className="relative cursor-pointer rounded-full has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--focus)]">
-                <input type="radio" name="tint" value={c} checked={d.tint === c} onChange={() => set("tint", c)} className="sr-only" aria-label={t(`tints.${tn}`)} />
+              <label
+                key={c}
+                className="relative cursor-pointer rounded-full has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--focus)]"
+              >
+                <input
+                  type="radio"
+                  name="tint"
+                  value={c}
+                  checked={d.tint === c}
+                  onChange={() => set("tint", c)}
+                  className="sr-only"
+                  aria-label={t(`tints.${tn}`)}
+                />
                 <span
                   className={`grid size-10 place-items-center rounded-full border ${d.tint === c ? "border-ink" : "border-hairline"}`}
                   style={{ background: c }}
@@ -133,7 +172,14 @@ export function SettingsTab({ shop }: { shop: Shop }) {
         </h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field id="s-fee" label={t("shippingFee")} hint={t("shippingFeeHint")} error={err("shippingThb")}>
-            <input id="s-fee" inputMode="numeric" value={d.shippingThb} onChange={(e) => set("shippingThb", e.target.value)} className={fieldClass} {...ariaFor("s-fee", err("shippingThb"))} />
+            <input
+              id="s-fee"
+              inputMode="numeric"
+              value={d.shippingThb}
+              onChange={(e) => set("shippingThb", e.target.value)}
+              className={fieldClass}
+              {...ariaFor("s-fee", err("shippingThb"))}
+            />
           </Field>
           <Field id="s-free" label={t("freeFrom")} hint={t("freeFromHint")} error={err("freeShippingFromThb")}>
             <input
@@ -219,10 +265,12 @@ export function SettingsTab({ shop }: { shop: Shop }) {
           {state === "saving" ? t("saving") : t("save")}
         </button>
         <p role="status" aria-live="polite" className="text-sm">
-          {state === "saved" && <span className="inline-flex items-center gap-1.5 text-ink">
+          {state === "saved" && (
+            <span className="inline-flex items-center gap-1.5 text-ink">
               <Check className="size-4" strokeWidth={2} aria-hidden="true" />
               {t("saved")}
-            </span>}
+            </span>
+          )}
           {state === "error" && <span className="text-[#C62F35]">{te("save")}</span>}
           {state === "full" && <span className="text-[#C62F35]">{te("storageFull")}</span>}
           {Object.keys(errors).length > 0 && state === "idle" && <span className="text-[#C62F35]">{te("fixFields")}</span>}
@@ -255,7 +303,10 @@ function ImageField({
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <Field id={id} label={label} hint={hint} error={bad ? te("badImage") : undefined}>
-        <div className={`grid place-items-center overflow-hidden rounded-xl border border-hairline ${square ? "size-24" : "aspect-[3/1] w-full"}`} style={{ background: tint }}>
+        <div
+          className={`grid place-items-center overflow-hidden rounded-xl border border-hairline ${square ? "size-24" : "aspect-[3/1] w-full"}`}
+          style={{ background: tint }}
+        >
           {value ? (
             // eslint-disable-next-line @next/next/no-img-element -- data URLs in test mode
             <img src={value} alt="" className="size-full object-cover" />
@@ -282,7 +333,11 @@ function ImageField({
         />
       </Field>
       {value && (
-        <button type="button" onClick={() => onChange(undefined)} className="inline-flex items-center gap-1.5 self-start text-sm text-muted hover:text-[#C62F35]">
+        <button
+          type="button"
+          onClick={() => onChange(undefined)}
+          className="inline-flex items-center gap-1.5 self-start text-sm text-muted hover:text-[#C62F35]"
+        >
           <Trash2 className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
           {t("removeImage")}
         </button>

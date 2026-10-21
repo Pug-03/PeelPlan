@@ -41,6 +41,11 @@ export type Shop = {
   createdAt: string;
   /** Built-in example shop: read-only, cannot receive real payments. */
   example?: boolean;
+  /**
+   * Approved and has PromptPay, so orders can be placed (Supabase 0004 `shops_public.accepts_payment`).
+   * Missing = unknown (older database, test mode): treat as accepting.
+   */
+  acceptsPayment?: boolean;
 };
 
 /** A shop as the admin sees it: owner's name and a few counts for review. */
@@ -110,6 +115,8 @@ export type Order = {
   slip?: string;
   tracking?: { carrier: string; number: string };
   cancelReason?: string;
+  /** PromptPay the shop had when the order was placed (Supabase 0004); falls back to the shop's current one. */
+  promptpay?: PromptPay;
   history: { status: OrderStatus; at: string }[];
   createdAt: string;
 };

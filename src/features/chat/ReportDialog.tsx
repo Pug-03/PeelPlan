@@ -3,7 +3,7 @@
 import { CheckCircle2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { TEST_MODE } from "@/features/market/store";
+import { getStore, TEST_MODE, type ReportReason } from "@/features/market/store";
 import { Modal } from "./Modal";
 
 const REASONS = ["scam", "spam", "harassment", "inappropriate", "other"] as const;
@@ -12,8 +12,8 @@ const KEY = "peelplan.reports.v1";
 
 export type ChatReport = { id: string; threadId: string; reporterId: string; side: "buyer" | "shop"; reason: Reason; note: string; at: string };
 
-/** No reports backend yet: reports are kept on this device (test mode) so the flow can be tried end to end. */
-function saveReport(r: ChatReport) {
+/** Test mode has no staff backend: reports are kept on this device (the admin page reads them). */
+function saveLocalReport(r: ChatReport) {
   try {
     const list = JSON.parse(localStorage.getItem(KEY) || "[]") as ChatReport[];
     localStorage.setItem(KEY, JSON.stringify([...list, r].slice(-100)));
@@ -22,15 +22,36 @@ function saveReport(r: ChatReport) {
   }
 }
 
-export function ReportDialog({ open, onClose, threadId, reporterId, side }: { open: boolean; onClose: () => void; threadId: string; reporterId: string; side: "buyer" | "shop" }) {
+/** The database has no "inappropriate" reason (0002 `reports.reason`): file it as "other", tagged in the note. */
+function toStored(reason: Reason, note: string): { reason: ReportReason; note: string } {
+  if (reason !== "inappropriate") return { reason, note };
+  return { reason: "other", note: `[inappropriate] ${note}`.trim().slice(0, 1000) };
+}
+
+export function ReportDialog({
+  open,
+  onClose,
+  threadId,
+  reporterId,
+  side,
+}: {
+  open: boolean;
+  onClose: () => void;
+  threadId: string;
+  reporterId: string;
+  side: "buyer" | "shop";
+}) {
   const t = useTranslations("chat.report");
   const [reason, setReason] = useState<Reason>("scam");
   const [note, setNote] = useState("");
   const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const close = () => {
     onClose();
     setDone(false);
+    setFailed(false);
     setNote("");
     setReason("scam");
   };
@@ -50,10 +71,27 @@ export function ReportDialog({ open, onClose, threadId, reporterId, side }: { op
       ) : (
         <form
           className="flex flex-col gap-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            saveReport({ id: crypto.randomUUID(), threadId, reporterId, side, reason, note: note.trim().slice(0, 1000), at: new Date().toISOString() });
-            setDone(true);
+            if (busy) return;
+            setBusy(true);
+            setFailed(false);
+            const clean = note.trim().slice(0, 1000);
+            try {
+              if (TEST_MODE) {
+                saveLocalReport({ id: crypto.randomUUID(), threadId, reporterId, side, reason, note: clean, at: new Date().toISOString() });
+              } else {
+                const s = await getStore();
+                if (!s.reportThread) throw new Error("unsupported");
+                const r = toStored(reason, clean);
+                await s.reportThread(threadId, r.reason, r.note);
+              }
+              setDone(true);
+            } catch {
+              setFailed(true);
+            } finally {
+              setBusy(false);
+            }
           }}
         >
           <div className="pr-10">
@@ -63,7 +101,10 @@ export function ReportDialog({ open, onClose, threadId, reporterId, side }: { op
           <fieldset className="flex flex-col gap-1.5">
             <legend className="mb-1.5 text-sm font-medium">{t("reasonLabel")}</legend>
             {REASONS.map((r) => (
-              <label key={r} className="flex cursor-pointer items-center gap-3 rounded-xl border border-hairline px-3 py-2.5 text-sm has-checked:border-ink has-checked:bg-surface">
+              <label
+                key={r}
+                className="flex cursor-pointer items-center gap-3 rounded-xl border border-hairline px-3 py-2.5 text-sm has-checked:border-ink has-checked:bg-surface"
+              >
                 <input type="radio" name="reason" value={r} checked={reason === r} onChange={() => setReason(r)} className="size-4 accent-[var(--text)]" />
                 {t(`reasons.${r}`)}
               </label>
@@ -80,12 +121,22 @@ export function ReportDialog({ open, onClose, threadId, reporterId, side }: { op
               className="resize-none rounded-xl border border-hairline bg-surface px-3 py-2 text-base font-normal placeholder:text-muted"
             />
           </label>
+          {failed && (
+            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              {t("failed")}
+            </p>
+          )}
           <div className="flex justify-end gap-2">
             <button type="button" onClick={close} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-surface hover:text-ink">
               {t("cancel")}
             </button>
-            <button type="submit" className="h-10 rounded-full bg-accent px-5 text-sm font-medium text-accent-ink">
-              {t("submit")}
+            <button
+              type="submit"
+              disabled={busy}
+              aria-busy={busy}
+              className="h-10 rounded-full bg-accent px-5 text-sm font-medium text-accent-ink disabled:opacity-60"
+            >
+              {busy ? t("sending") : t("submit")}
             </button>
           </div>
         </form>

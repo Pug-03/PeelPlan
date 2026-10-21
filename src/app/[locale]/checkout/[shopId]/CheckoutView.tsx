@@ -4,13 +4,15 @@ import { ArrowLeft, Lock, QrCode } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useId, useState, type FormEvent } from "react";
 import { AuthGate } from "@/components/AuthGate";
-import { cart, getStore, shippingFor, TEST_MODE, useCart, useMarket } from "@/features/market/store";
-import { ExampleBadge, inputCls, primaryBtn, TestModeBanner, useHydrated, useProductName, useThb } from "@/features/market/ui/buyer";
+import { canCheckout, cart, getStore, isReadOnlyExample, shippingFor, TEST_MODE, useCart, useCartReady, useMarketQuery } from "@/features/market/store";
+import { ExampleBadge, inputCls, LoadError, primaryBtn, TestModeBanner, useHydrated, useProductName, useThb } from "@/features/market/ui/buyer";
 import type { Address } from "@/features/market/types";
 import { Link, useRouter } from "@/i18n/navigation";
 import type { Session } from "@/lib/session";
 
+/** Saved per account (`peelplan.address.v1:<userId>`): the next person on this device must not get it. */
 const ADDRESS_KEY = "peelplan.address.v1";
+const addressKey = (userId: string) => `${ADDRESS_KEY}:${userId}`;
 const EMPTY_ADDRESS: Address = { name: "", phone: "", line1: "", district: "", province: "", postcode: "" };
 const FIELDS: { key: keyof Address; auto: string; wide?: boolean; inputMode?: "tel" | "numeric"; max: number }[] = [
   { key: "name", auto: "name", max: 80 },
@@ -21,9 +23,11 @@ const FIELDS: { key: keyof Address; auto: string; wide?: boolean; inputMode?: "t
   { key: "postcode", auto: "postal-code", inputMode: "numeric", max: 5 },
 ];
 
-function loadAddress(): Address {
+function loadAddress(userId: string): Address {
   try {
-    const raw = localStorage.getItem(ADDRESS_KEY);
+    // Older builds kept one device-wide address; it can't be told apart from another account's, so drop it.
+    localStorage.removeItem(ADDRESS_KEY);
+    const raw = localStorage.getItem(addressKey(userId));
     return raw ? { ...EMPTY_ADDRESS, ...(JSON.parse(raw) as Partial<Address>) } : EMPTY_ADDRESS;
   } catch {
     return EMPTY_ADDRESS;
@@ -31,6 +35,26 @@ function loadAddress(): Address {
 }
 
 const digits = (s: string) => s.replace(/\D/g, "");
+
+/** Codes place_order / the test store raise that have their own message; anything else is "generic". */
+const SUBMIT_ERRORS = [
+  "out-of-stock",
+  "shop-unavailable",
+  "product-unavailable",
+  "storage-full",
+  "own-shop",
+  "too-many-open-orders",
+  "too-many-units",
+  "bad-lines",
+  "bad-address",
+  "not-onboarded",
+  "not-signed-in",
+  "rate-limited",
+] as const;
+type SubmitError = (typeof SUBMIT_ERRORS)[number] | "generic";
+const toSubmitError = (code: string): SubmitError => ((SUBMIT_ERRORS as readonly string[]).includes(code) ? (code as SubmitError) : "generic");
+/** Errors fixed by changing the cart, so offer the way back to it. */
+const CART_FIXABLE: SubmitError[] = ["out-of-stock", "product-unavailable", "bad-lines", "too-many-units"];
 
 function validate(a: Address): Partial<Record<keyof Address, "required" | "phone" | "postcode">> {
   const e: Partial<Record<keyof Address, "required" | "phone" | "postcode">> = {};
@@ -55,16 +79,20 @@ function CheckoutView({ session, shopId }: { session: Session; shopId: string })
   const hydrated = useHydrated();
   const formId = useId();
   const lines = useCart().filter((l) => l.shopId === shopId);
+  const cartReady = useCartReady();
   const key = lines.map((l) => l.productId).join(",");
-  const data = useMarket(async (s) => ({ shop: await s.getShopById(shopId), products: await s.getProducts(key ? key.split(",") : []) }), [shopId, key]);
+  const { data, error, retry } = useMarketQuery(
+    async (s) => ({ shop: await s.getShopById(shopId), products: await s.getProducts(key ? key.split(",") : []) }),
+    [shopId, key],
+  );
 
-  // AuthGate renders this on the client only, so this device's saved address is available on first render.
-  const [address, setAddress] = useState<Address>(loadAddress);
+  // AuthGate renders this on the client only, so this account's saved address is available on first render.
+  const [address, setAddress] = useState<Address>(() => loadAddress(session.user.id));
   const [note, setNote] = useState("");
   const [agree, setAgree] = useState(false);
   const [errors, setErrors] = useState<ReturnType<typeof validate>>({});
   const [agreeError, setAgreeError] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<SubmitError | null>(null);
   const [busy, setBusy] = useState(false);
   const [placed, setPlaced] = useState(false);
 
@@ -76,7 +104,16 @@ function CheckoutView({ session, shopId }: { session: Session; shopId: string })
   );
   const wrap = "mx-auto flex max-w-5xl flex-col gap-8 px-5 pt-6 pb-24 sm:px-8";
 
-  if (!hydrated || !data || placed) {
+  if (hydrated && !data && error && !placed) {
+    return (
+      <div className={wrap}>
+        {back}
+        <LoadError onRetry={retry} />
+      </div>
+    );
+  }
+
+  if (!hydrated || !cartReady || !data || placed) {
     return (
       <div className={wrap} aria-busy="true">
         <div className="h-10 w-48 animate-pulse rounded-full bg-surface" />
@@ -94,6 +131,24 @@ function CheckoutView({ session, shopId }: { session: Session; shopId: string })
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-hairline px-6 py-16 text-center">
           <p className="text-lg font-semibold">{t("nothingTitle")}</p>
           <p className="max-w-[44ch] text-sm text-muted">{t("nothingBody")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Examples on the real site, unapproved shops and shops without PromptPay (0004) can't take orders.
+  if (!canCheckout(shop)) {
+    return (
+      <div className={wrap}>
+        {back}
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-hairline px-6 py-16 text-center">
+          <p className="flex flex-wrap items-center justify-center gap-2 text-lg font-semibold">
+            {shop.name}
+            {shop.example && <ExampleBadge />}
+          </p>
+          <p className="max-w-[44ch] text-sm text-muted">
+            {isReadOnlyExample(shop) ? t("blocked.example") : shop.status === "approved" ? t("blocked.noPayment") : t("blocked.closed")}
+          </p>
         </div>
       </div>
     );
@@ -134,7 +189,7 @@ function CheckoutView({ session, shopId }: { session: Session; shopId: string })
         note: note.trim(),
       });
       try {
-        localStorage.setItem(ADDRESS_KEY, JSON.stringify(clean));
+        localStorage.setItem(addressKey(session.user.id), JSON.stringify(clean));
       } catch {
         /* storage unavailable */
       }
@@ -142,8 +197,7 @@ function CheckoutView({ session, shopId }: { session: Session; shopId: string })
       cart.clearShop(shopId);
       router.push(`/orders/${order.id}`);
     } catch (err) {
-      const code = err instanceof Error ? err.message : "";
-      setSubmitError(["out-of-stock", "shop-unavailable", "product-unavailable", "storage-full"].includes(code) ? code : "generic");
+      setSubmitError(toSubmitError(err instanceof Error ? err.message : ""));
       setBusy(false);
     }
   };
@@ -306,7 +360,7 @@ function CheckoutView({ session, shopId }: { session: Session; shopId: string })
           {submitError && (
             <p role="alert" className="rounded-xl bg-[#FDECEA] p-3 text-sm text-[#8C1D18] dark:bg-[#3B1714] dark:text-[#FFB4AB]">
               {t(`submitErrors.${submitError}`)}{" "}
-              {(submitError === "out-of-stock" || submitError === "product-unavailable") && (
+              {CART_FIXABLE.includes(submitError) && (
                 <Link href="/cart" className="font-medium underline underline-offset-4">
                   {t("backToCart")}
                 </Link>

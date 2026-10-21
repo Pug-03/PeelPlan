@@ -3,8 +3,8 @@
 import { Info, Minus, Plus, ShoppingCart, Store, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
-import { cart, shippingFor, useCart, useMarket } from "@/features/market/store";
-import { ExampleBadge, primaryBtn, useHydrated, useProductName, useThb } from "@/features/market/ui/buyer";
+import { canCheckout, cart, isReadOnlyExample, shippingFor, useCart, useCartReady, useMarketQuery } from "@/features/market/store";
+import { ExampleBadge, LoadError, primaryBtn, useHydrated, useProductName, useThb } from "@/features/market/ui/buyer";
 import type { Product, Shop } from "@/features/market/types";
 import { Link } from "@/i18n/navigation";
 
@@ -19,8 +19,9 @@ export function CartView() {
   const nameOf = useProductName();
   const hydrated = useHydrated();
   const lines = useCart();
+  const cartReady = useCartReady();
   const key = lines.map((l) => l.productId).join(",");
-  const data = useMarket(
+  const { data, error, retry } = useMarketQuery(
     async (s) => {
       const ids = key ? key.split(",") : [];
       const products = await s.getProducts(ids);
@@ -40,7 +41,9 @@ export function CartView() {
     </div>
   );
 
-  if (!hydrated || (lines.length > 0 && !data)) {
+  if (hydrated && lines.length > 0 && !data && error) return shell(<LoadError onRetry={retry} />);
+
+  if (!hydrated || !cartReady || (lines.length > 0 && !data)) {
     return shell(
       <div className="flex flex-col gap-4" aria-busy="true">
         <div className="h-40 animate-pulse rounded-2xl bg-surface" />
@@ -78,7 +81,9 @@ export function CartView() {
         const shop = data!.shops.get(shopId);
         const rows = group.map((l) => ({ line: l, product: data!.products.get(l.productId) as Product | undefined }));
         const unavailable = (p?: Product) => !p || !p.active || (p.stock !== null && p.stock <= 0);
-        const blocked = !shop || shop.status !== "approved" || rows.some((r) => (fresh ? unavailable(r.product) : false) || (r.product?.stock != null && r.line.qty > r.product.stock));
+        // Shops that can't take orders: not approved, no PromptPay yet (0004), or an example shop on the real site.
+        const closed = !shop || !canCheckout(shop);
+        const blocked = closed || rows.some((r) => (fresh ? unavailable(r.product) : false) || (r.product?.stock != null && r.line.qty > r.product.stock));
         const subtotal = rows.reduce((n, r) => n + (r.product && !unavailable(r.product) ? r.product.priceThb * r.line.qty : 0), 0);
         const shipping = shop ? shippingFor(shop, subtotal) : 0;
         const headingId = `shop-${shopId.replace(/[^a-z0-9-]/gi, "")}`;
@@ -187,7 +192,15 @@ export function CartView() {
                     <button type="button" disabled className={`${primaryBtn} h-12 w-full sm:w-auto sm:px-7`}>
                       {t("checkout")}
                     </button>
-                    <p className="text-xs text-muted">{shop && shop.status === "approved" ? t("fixFirst") : t("shopClosed")}</p>
+                    <p className="max-w-[40ch] text-xs text-muted sm:text-right">
+                      {!closed
+                        ? t("fixFirst")
+                        : isReadOnlyExample(shop)
+                          ? t("exampleClosed")
+                          : shop && shop.status === "approved"
+                            ? t("noPayment")
+                            : t("shopClosed")}
+                    </p>
                   </>
                 ) : (
                   <Link href={`/checkout/${encodeURIComponent(shopId)}`} className={`${primaryBtn} h-12 w-full sm:w-auto sm:px-7`}>

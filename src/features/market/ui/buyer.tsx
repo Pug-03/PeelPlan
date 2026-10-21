@@ -1,7 +1,7 @@
 "use client";
 
 /** Small pieces shared by the buyer pages (shop, cart, checkout, orders). */
-import { Camera, CircleCheck, FlaskConical, MessageCircle, Music2, ShoppingBag, ShoppingCart, ThumbsUp } from "lucide-react";
+import { Camera, CircleAlert, CircleCheck, FlaskConical, MessageCircle, Music2, RotateCw, ShoppingBag, ShoppingCart, ThumbsUp } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { VISIBLE_LIBRARY } from "@/stickers/library";
@@ -59,7 +59,9 @@ const PILL: Record<OrderStatus, string> = {
 
 export function StatusPill({ status }: { status: OrderStatus }) {
   const t = useTranslations("market.status");
-  return <span className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap ${PILL[status]}`}>{t(status)}</span>;
+  return (
+    <span className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap ${PILL[status]}`}>{t(status)}</span>
+  );
 }
 
 export function TestModeBanner({ children }: { children?: ReactNode }) {
@@ -77,7 +79,25 @@ export function TestModeBanner({ children }: { children?: ReactNode }) {
 
 export function ExampleBadge() {
   const t = useTranslations("market");
-  return <span className="inline-flex items-center rounded-full border border-dashed border-ink/40 px-2.5 py-0.5 text-xs font-medium">{t("exampleBadge")}</span>;
+  return (
+    <span className="inline-flex items-center rounded-full border border-dashed border-ink/40 px-2.5 py-0.5 text-xs font-medium">{t("exampleBadge")}</span>
+  );
+}
+
+/** A load from the store failed (offline, server error): say so instead of loading forever. */
+export function LoadError({ onRetry, className = "" }: { onRetry: () => void; className?: string }) {
+  const t = useTranslations("market.loadError");
+  return (
+    <div role="alert" className={`flex flex-col items-center gap-3 rounded-2xl border border-dashed border-hairline px-6 py-12 text-center ${className}`}>
+      <CircleAlert className="size-7 text-muted" strokeWidth={1.5} aria-hidden="true" />
+      <p className="font-semibold">{t("title")}</p>
+      <p className="max-w-[44ch] text-sm text-muted">{t("body")}</p>
+      <button type="button" onClick={onRetry} className={`${secondaryBtn} mt-1 h-10`}>
+        <RotateCw className="size-4" strokeWidth={1.75} aria-hidden="true" />
+        {t("retry")}
+      </button>
+    </div>
+  );
 }
 
 /** A short confirmation at the bottom of the screen, announced politely. */
@@ -93,7 +113,11 @@ export function useToast(): [ReactNode, (msg: ReactNode) => void] {
   }, []);
   useEffect(() => () => clearTimeout(timer.current), []);
   const node = (
-    <div aria-live="polite" className="pointer-events-none fixed inset-x-0 z-[60] flex justify-center px-4" style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)" }}>
+    <div
+      aria-live="polite"
+      className="pointer-events-none fixed inset-x-0 z-[60] flex justify-center px-4"
+      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)" }}
+    >
       {msg && (
         <div key={key} className="pointer-events-auto flex items-center gap-3 rounded-full bg-ink py-2.5 pr-3 pl-4 text-sm text-bg shadow-soft">
           <CircleCheck className="size-4 shrink-0 text-[#D7FF3A]" strokeWidth={2} aria-hidden="true" />

@@ -3,8 +3,8 @@
 import { ChevronRight, Receipt, Store } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AuthGate } from "@/components/AuthGate";
-import { useMarket } from "@/features/market/store";
-import { StatusPill, useDateFmt, useThb } from "@/features/market/ui/buyer";
+import { useMarketQuery } from "@/features/market/store";
+import { LoadError, StatusPill, useDateFmt, useThb } from "@/features/market/ui/buyer";
 import type { Shop } from "@/features/market/types";
 import { Link } from "@/i18n/navigation";
 import type { Session } from "@/lib/session";
@@ -19,7 +19,7 @@ function OrdersView({ session }: { session: Session }) {
   const thb = useThb();
   const date = useDateFmt();
   const userId = session.user.id;
-  const data = useMarket(
+  const { data, error, retry } = useMarketQuery(
     async (s) => {
       const orders = (await s.buyerOrders(userId)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
       const shops = await Promise.all([...new Set(orders.map((o) => o.shopId))].map((id) => s.getShopById(id)));
@@ -45,7 +45,9 @@ function OrdersView({ session }: { session: Session }) {
         </p>
       )}
 
-      {!data ? (
+      {!data && error ? (
+        <LoadError onRetry={retry} />
+      ) : !data ? (
         <div className="flex flex-col gap-3" aria-busy="true">
           {[0, 1, 2].map((i) => (
             <div key={i} className="h-20 animate-pulse rounded-2xl bg-surface" />

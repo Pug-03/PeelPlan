@@ -4,9 +4,21 @@ import { ArrowLeft, Check, CircleAlert, ImageUp, MapPin, MessageCircle, PackageC
 import { useTranslations } from "next-intl";
 import { useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { AuthGate } from "@/components/AuthGate";
-import { fileToDataUrl, getStore, NEXT_STATUS, TEST_MODE, useMarket, type MarketStore } from "@/features/market/store";
+import { fileToDataUrl, getStore, isReadOnlyExample, NEXT_STATUS, TEST_MODE, useMarketQuery, type MarketStore } from "@/features/market/store";
 import { PromptPayQr } from "@/features/market/ui/PromptPayQr";
-import { ExampleBadge, inputCls, openChat, primaryBtn, secondaryBtn, StatusPill, TestModeBanner, useDateFmt, useProductName, useThb } from "@/features/market/ui/buyer";
+import {
+  ExampleBadge,
+  inputCls,
+  LoadError,
+  openChat,
+  primaryBtn,
+  secondaryBtn,
+  StatusPill,
+  TestModeBanner,
+  useDateFmt,
+  useProductName,
+  useThb,
+} from "@/features/market/ui/buyer";
 import { CARRIERS, ORDER_FLOW, type Order, type OrderStatus, type Shop } from "@/features/market/types";
 import { Link, useRouter } from "@/i18n/navigation";
 import type { Session } from "@/lib/session";
@@ -30,7 +42,11 @@ function OrderView({ session, id }: { session: Session; id: string }) {
   const nameOf = useProductName();
   const router = useRouter();
   const uid = session.user.id;
-  const data = useMarket(
+  const {
+    data,
+    error: loadError,
+    retry,
+  } = useMarketQuery(
     async (s) => {
       const order = await s.getOrder(id);
       if (!order) return { order: null, shop: null, myShop: null };
@@ -43,8 +59,16 @@ function OrderView({ session, id }: { session: Session; id: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chatBusy, setChatBusy] = useState(false);
+  const [chatError, setChatError] = useState(false);
 
   const wrap = "mx-auto flex max-w-5xl flex-col gap-6 px-5 pt-6 pb-24 sm:px-8";
+  if (data === undefined && loadError) {
+    return (
+      <div className={wrap}>
+        <LoadError onRetry={retry} />
+      </div>
+    );
+  }
   if (data === undefined) {
     return (
       <div className={wrap} aria-busy="true">
@@ -82,7 +106,8 @@ function OrderView({ session, id }: { session: Session; id: string }) {
       await fn(await getStore());
     } catch (e) {
       const code = e instanceof Error ? e.message : "";
-      setError(code === "storage-full" || code === "bad-image" ? code : "generic");
+      // bad-state: the order moved on meanwhile (e.g. a slip after it was cancelled or expired).
+      setError(code === "storage-full" || code === "bad-image" || code === "bad-state" ? code : "generic");
     } finally {
       setBusy(false);
     }
@@ -91,6 +116,7 @@ function OrderView({ session, id }: { session: Session; id: string }) {
 
   const chat = async () => {
     setChatBusy(true);
+    setChatError(false);
     try {
       router.push(
         role === "buyer"
@@ -98,9 +124,12 @@ function OrderView({ session, id }: { session: Session; id: string }) {
           : await openChat(order.shopId, order.buyerId, order.address.name),
       );
     } catch {
+      setChatError(true);
       setChatBusy(false);
     }
   };
+  // Example shops exist only in this browser: on the real site there is nobody to chat with.
+  const chatBlocked = isReadOnlyExample(shop);
 
   const count = order.items.reduce((n, it) => n + it.qty, 0);
 
@@ -133,10 +162,18 @@ function OrderView({ session, id }: { session: Session; id: string }) {
             <span>· {date(order.createdAt)}</span>
           </p>
         </div>
-        <button type="button" onClick={chat} disabled={chatBusy} aria-busy={chatBusy} className={`${secondaryBtn} h-10 self-start sm:self-auto`}>
-          <MessageCircle className="size-4" strokeWidth={1.75} aria-hidden="true" />
-          {role === "buyer" ? t("chatShop") : t("chatBuyer")}
-        </button>
+        <div className="flex flex-col gap-1.5 self-start sm:items-end sm:self-auto">
+          <button type="button" onClick={chat} disabled={chatBusy || chatBlocked} aria-busy={chatBusy} className={`${secondaryBtn} h-10`}>
+            <MessageCircle className="size-4" strokeWidth={1.75} aria-hidden="true" />
+            {role === "buyer" ? t("chatShop") : t("chatBuyer")}
+          </button>
+          {chatBlocked && <p className="text-xs text-muted">{tm("exampleNoChat")}</p>}
+          {chatError && (
+            <p role="alert" className="text-xs text-[#B3261E] dark:text-[#FF8A80]">
+              {t("chatFailed")}
+            </p>
+          )}
+        </div>
       </header>
 
       {isBuyer && isSeller && (
@@ -290,7 +327,15 @@ function Timeline({ order }: { order: Order }) {
             {order.cancelReason && (
               <>
                 <br />
-                <span className="text-muted">{t("order.reason", { reason: order.cancelReason })}</span>
+                <span className="text-muted">
+                  {t("order.reason", {
+                    // Reasons the system sets (expiry, shop closed by staff) are codes: say them in words.
+                    reason:
+                      order.cancelReason === "expired" || order.cancelReason === "shop-unavailable"
+                        ? t(`order.cancelReasons.${order.cancelReason}`)
+                        : order.cancelReason,
+                  })}
+                </span>
               </>
             )}
           </span>
@@ -325,7 +370,8 @@ function BuyerPanel({
 
   if (order.status === "awaiting_payment") {
     const example = !!shop?.example;
-    const pp = shop?.promptpay;
+    // The PromptPay captured when the order was placed (0004) wins over the shop's current one.
+    const pp = order.promptpay ?? shop?.promptpay;
     const pick = async (f: File | undefined) => {
       setSlipError(false);
       if (!f) return;
@@ -378,7 +424,15 @@ function BuyerPanel({
             {!pp && !example && <p className="text-sm text-muted">{t("pay.noQrHint")}</p>}
 
             <div className="flex flex-col gap-3 border-t border-hairline pt-4">
-              <input ref={fileRef} type="file" accept="image/*" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => void pick(e.target.files?.[0])} />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                tabIndex={-1}
+                aria-hidden="true"
+                onChange={(e) => void pick(e.target.files?.[0])}
+              />
               {slip ? (
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -407,7 +461,9 @@ function BuyerPanel({
             </div>
           </div>
         </div>
-        {allowed.includes("cancelled") && <CancelBox busy={busy} onCancel={(reason) => setStatus("cancelled", reason ? { cancelReason: reason } : undefined)} />}
+        {allowed.includes("cancelled") && (
+          <CancelBox busy={busy} onCancel={(reason) => setStatus("cancelled", reason ? { cancelReason: reason } : undefined)} />
+        )}
       </section>
     );
   }
@@ -419,7 +475,8 @@ function BuyerPanel({
       </Notice>
     );
   }
-  if (order.status === "paid") return <Notice icon={<PackageCheck className="size-5" strokeWidth={1.75} aria-hidden="true" />} title={t("buyer.paidTitle")} body={t("buyer.paidBody")} />;
+  if (order.status === "paid")
+    return <Notice icon={<PackageCheck className="size-5" strokeWidth={1.75} aria-hidden="true" />} title={t("buyer.paidTitle")} body={t("buyer.paidBody")} />;
   if (order.status === "shipped") {
     return (
       <Notice icon={<Truck className="size-5" strokeWidth={1.75} aria-hidden="true" />} title={t("buyer.shippedTitle")} body={t("buyer.shippedBody")}>
@@ -433,7 +490,8 @@ function BuyerPanel({
       </Notice>
     );
   }
-  if (order.status === "completed") return <Notice icon={<Check className="size-5" strokeWidth={2} aria-hidden="true" />} title={t("buyer.doneTitle")} body={t("buyer.doneBody")} />;
+  if (order.status === "completed")
+    return <Notice icon={<Check className="size-5" strokeWidth={2} aria-hidden="true" />} title={t("buyer.doneTitle")} body={t("buyer.doneBody")} />;
   return null;
 }
 
@@ -457,11 +515,17 @@ function SellerPanel({
   const [carrier, setCarrier] = useState<string>(CARRIERS[0]);
   const [tracking, setTracking] = useState("");
   const [trackingError, setTrackingError] = useState(false);
-  const cancel = allowed.includes("cancelled") && <CancelBox busy={busy} requireReason onCancel={(reason) => setStatus("cancelled", { cancelReason: reason })} />;
+  const cancel = allowed.includes("cancelled") && (
+    <CancelBox busy={busy} requireReason onCancel={(reason) => setStatus("cancelled", { cancelReason: reason })} />
+  );
 
   if (order.status === "awaiting_payment") {
     return (
-      <Notice icon={<ImageUp className="size-5" strokeWidth={1.75} aria-hidden="true" />} title={t("seller.waitingTitle")} body={t("seller.waitingBody", { amount: thb(order.totalThb) })}>
+      <Notice
+        icon={<ImageUp className="size-5" strokeWidth={1.75} aria-hidden="true" />}
+        title={t("seller.waitingTitle")}
+        body={t("seller.waitingBody", { amount: thb(order.totalThb) })}
+      >
         {cancel}
       </Notice>
     );
@@ -566,7 +630,8 @@ function SellerPanel({
       </Notice>
     );
   }
-  if (order.status === "completed") return <Notice icon={<Check className="size-5" strokeWidth={2} aria-hidden="true" />} title={t("seller.doneTitle")} body={t("seller.doneBody")} />;
+  if (order.status === "completed")
+    return <Notice icon={<Check className="size-5" strokeWidth={2} aria-hidden="true" />} title={t("seller.doneTitle")} body={t("seller.doneBody")} />;
   return null;
 }
 
@@ -654,7 +719,11 @@ function CancelBox({ busy, requireReason = false, onCancel }: { busy: boolean; r
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="self-start rounded-full px-1 py-1 text-sm text-muted underline underline-offset-4 hover:text-ink">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="self-start rounded-full px-1 py-1 text-sm text-muted underline underline-offset-4 hover:text-ink"
+      >
         {t("open")}
       </button>
     );

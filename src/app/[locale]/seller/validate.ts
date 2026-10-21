@@ -66,15 +66,33 @@ export function validateProduct(d: ProductDraft): { errors: Errors<ProductField>
   };
 }
 
-/** https URL, or null. A missing scheme gets https:// (people paste "line.me/ti/p/…" or "shopee.co.th/…"). */
-export function normalizeLink(raw: string): string | null {
+/**
+ * Each link must stay on its own platform (same rule as the database, 0004 `shop_links_hosts_valid`):
+ * the platform's domain or a subdomain, then '/', '?', '#' or the end. That rejects userinfo tricks
+ * (`https://shopee.co.th@evil.example`) and ports. LINE also has its short-link host lin.ee.
+ */
+const LINK_HOSTS: Record<LinkKind, RegExp> = {
+  tiktok: /^https:\/\/([a-z0-9-]+\.)*tiktok\.com([/?#]|$)/i,
+  shopee: /^https:\/\/([a-z0-9-]+\.)*shopee\.co\.th([/?#]|$)/i,
+  lazada: /^https:\/\/([a-z0-9-]+\.)*lazada\.co\.th([/?#]|$)/i,
+  instagram: /^https:\/\/([a-z0-9-]+\.)*instagram\.com([/?#]|$)/i,
+  facebook: /^https:\/\/([a-z0-9-]+\.)*facebook\.com([/?#]|$)/i,
+  line: /^https:\/\/(([a-z0-9-]+\.)*line\.me|lin\.ee)([/?#]|$)/i,
+};
+
+/**
+ * https URL, or null. A missing scheme gets https:// (people paste "line.me/ti/p/…" or "shopee.co.th/…").
+ * With `kind`, the URL must also be on that platform (see LINK_HOSTS).
+ */
+export function normalizeLink(raw: string, kind?: LinkKind): string | null {
   const s = raw.trim();
   if (!s) return null;
   const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(s) ? s : `https://${s.replace(/^\/+/, "")}`;
   try {
     const u = new URL(withScheme);
     if (u.protocol !== "https:" || !u.hostname.includes(".")) return null;
-    return u.toString();
+    const out = u.toString();
+    return kind && !LINK_HOSTS[kind].test(out) ? null : out;
   } catch {
     return null;
   }
@@ -95,7 +113,8 @@ export type SettingsDraft = {
   links: Record<LinkKind, string>;
 };
 
-export type SettingsField = "name" | "about" | "city" | "shippingThb" | "freeShippingFromThb" | "productTypes" | "promptpayId" | "promptpayName" | `link_${LinkKind}`;
+export type SettingsField =
+  "name" | "about" | "city" | "shippingThb" | "freeShippingFromThb" | "productTypes" | "promptpayId" | "promptpayName" | `link_${LinkKind}`;
 
 export function validateSettings(d: SettingsDraft): { errors: Errors<SettingsField>; patch: (ShopPatch & { name: string }) | null } {
   const errors: Errors<SettingsField> = {};
@@ -130,8 +149,9 @@ export function validateSettings(d: SettingsDraft): { errors: Errors<SettingsFie
   const links: ShopPatch["links"] = {};
   for (const k of LINK_KINDS) {
     if (!d.links[k].trim()) continue;
-    const url = normalizeLink(d.links[k]);
-    if (!url) errors[`link_${k}`] = "link";
+    const url = normalizeLink(d.links[k], k);
+    // A valid https link on the wrong site gets the platform-specific message.
+    if (!url) errors[`link_${k}`] = normalizeLink(d.links[k]) ? `linkHost.${k}` : "link";
     else links[k] = url;
   }
 

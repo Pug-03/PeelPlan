@@ -3,7 +3,8 @@
 import { Store } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
-import { useMarket } from "@/features/market/store";
+import { useMarketQuery } from "@/features/market/store";
+import { LoadError } from "@/features/market/ui/buyer";
 import { Link } from "@/i18n/navigation";
 import { useSession } from "@/lib/session";
 import { ShopView, profileFromShop } from "./ShopView";
@@ -12,13 +13,21 @@ import { ShopView, profileFromShop } from "./ShopView";
 export function ShopLoader({ slug }: { slug: string }) {
   const t = useTranslations("market.shopPage");
   const session = useSession();
-  const shop = useMarket((s) => s.getShop(slug), [slug]);
+  const { data: shop, error, retry } = useMarketQuery((s) => s.getShop(slug), [slug]);
   const userId = session.status === "signed-in" ? session.session.user.id : null;
   const title = shop?.name;
   // The server can't name a shop that only exists on this device; set the tab title once it loads.
   useEffect(() => {
     if (title) document.title = `${title} - PeelPlan`;
   }, [title]);
+
+  if (shop === undefined && error) {
+    return (
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-5 pt-6 pb-20 sm:px-8">
+        <LoadError onRetry={retry} />
+      </div>
+    );
+  }
 
   if (shop === undefined || session.status === "loading") {
     return (

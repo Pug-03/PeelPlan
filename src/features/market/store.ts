@@ -7,12 +7,13 @@
  *   answer chats with a canned reply; they never show a payable QR.
  * - Supabase: see ./supabaseStore.ts (same interface, backed by migration 0002).
  */
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { DEMO_SHOPS } from "@/config/demoShops";
 import { AUTH_ENABLED } from "@/lib/supabase/config";
 import { VISIBLE_LIBRARY, stickerThumb } from "@/stickers/library";
 import type { Address, AdminShop, Message, Order, OrderStatus, Product, Shop, ShopStatus, Thread } from "./types";
 
+export type ReportReason = "spam" | "scam" | "harassment" | "counterfeit" | "other";
 export type NewProduct = Omit<Product, "id" | "shopId" | "createdAt">;
 export type ShopPatch = Partial<Omit<Shop, "id" | "ownerId" | "status" | "statusReason" | "createdAt" | "example">>;
 
@@ -43,6 +44,9 @@ export interface MarketStore {
   send(threadId: string, from: "buyer" | "shop", body: { text?: string; image?: string; orderId?: string }): Promise<Message>;
   markRead(threadId: string, side: "buyer" | "shop"): Promise<void>;
 
+  /** Supabase only: report a chat to staff. Reasons are the database's (0002 `reports.reason`). */
+  reportThread?(threadId: string, reason: ReportReason, note: string): Promise<void>;
+
   /** Test mode only: let the tester approve their own pending shop. */
   approveForTesting?(shopId: string): Promise<void>;
 
@@ -57,12 +61,26 @@ export interface MarketStore {
 
 /* ---------- helpers shared by both backends ---------- */
 
+/**
+ * URL slug that keeps letters in any script (Thai shop names stay readable, Latin accents are
+ * dropped). A name with no letters or digits at all gets a short random slug instead of "shop".
+ */
 export const slugify = (s: string) =>
   s
     .toLowerCase()
     .normalize("NFKD")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "") || "shop";
+    .replace(/[\u0300-\u036f]/g, "")
+    .normalize("NFC")
+    .replace(/[^\p{L}\p{M}\p{N}]+/gu, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 60)
+    .replace(/-$/, "") || `shop-${Math.random().toString(36).slice(2, 8)}`;
+
+/** Example shops are client-only: with a real backend they can't take orders or chats. */
+export const isReadOnlyExample = (shop: Pick<Shop, "example"> | null | undefined) => !!shop?.example && !AUTH_ENABLED;
+/** Whether checkout can go ahead for this shop. `acceptsPayment` missing (older database) counts as yes. */
+export const canCheckout = (shop: Pick<Shop, "status" | "example" | "acceptsPayment">) =>
+  shop.status === "approved" && shop.acceptsPayment !== false && !isReadOnlyExample(shop);
 
 const ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 export const orderCode = () => `PP-${Array.from({ length: 6 }, () => ALPHABET[Math.floor(Math.random() * ALPHABET.length)]).join("")}`;
@@ -183,8 +201,7 @@ function localOwnerNames(): Map<string, string> {
   }
 }
 
-const EXAMPLE_REPLY =
-  "ร้านนี้เป็นร้านตัวอย่างสำหรับทดลองระบบ ข้อความนี้ตอบกลับอัตโนมัติ / This is an example shop for testing; this reply is automatic.";
+const EXAMPLE_REPLY = "ร้านนี้เป็นร้านตัวอย่างสำหรับทดลองระบบ ข้อความนี้ตอบกลับอัตโนมัติ / This is an example shop for testing; this reply is automatic.";
 
 export const localStore: MarketStore = {
   async listShops() {
@@ -201,7 +218,8 @@ export const localStore: MarketStore = {
   },
   async saveMyShop(userId, patch) {
     return mutate((d) => {
-      const taken = new Set(allShops(d).map((s) => s.slug));
+      // "preview" is the seller preview route (/shops/preview), not a shop.
+      const taken = new Set([...allShops(d).map((s) => s.slug), "preview"]);
       const i = d.shops.findIndex((s) => s.ownerId === userId);
       if (i >= 0) {
         // Changing the public face of an approved shop sends it back for review, as in the database.
@@ -265,6 +283,8 @@ export const localStore: MarketStore = {
         if (p.stock !== null && p.stock < l.qty) throw new Error("out-of-stock");
         return { productId: p.id, name: p.name, image: p.image, priceThb: p.priceThb, qty: l.qty, widthMm: p.widthMm, heightMm: p.heightMm };
       });
+      // Same cap as the database (0004): one order can't reserve a shop's whole stock.
+      if (items.reduce((n, it) => n + it.qty, 0) > 200) throw new Error("too-many-units");
       // Reserve stock now; a cancelled order puts it back.
       for (const it of items) {
         const p = d.products.find((x) => x.id === it.productId);
@@ -447,53 +467,149 @@ export async function getStore(): Promise<MarketStore> {
 
 export const TEST_MODE = !AUTH_ENABLED;
 
+export type MarketQuery<T> = {
+  /** Last loaded value; undefined until the first load succeeds. */
+  data: T | undefined;
+  /** The last load failed (data, if any, is from an earlier load). */
+  error: boolean;
+  retry: () => void;
+};
+
 /**
  * Load something from the store and reload whenever the store changes.
- * `deps` re-run the loader (e.g. a different id). Returns undefined while loading.
+ * `deps` re-run the loader (e.g. a different id). Failures surface as `error` with a `retry`.
  */
-export function useMarket<T>(load: (s: MarketStore) => Promise<T>, deps: unknown[]): T | undefined {
+export function useMarketQuery<T>(load: (s: MarketStore) => Promise<T>, deps: unknown[]): MarketQuery<T> {
   const [value, setValue] = useState<T | undefined>(undefined);
+  const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let alive = true;
     let unsub = () => {};
-    void getStore().then((s) => {
+    const fail = () => alive && setError(true);
+    getStore().then((s) => {
+      // Unmounted while the store module loaded: don't leave a listener (and realtime channel) behind.
+      if (!alive) return;
       const run = () =>
-        load(s).then(
-          (v) => alive && setValue(v),
-          () => alive && setValue(undefined),
-        );
+        load(s).then((v) => {
+          if (!alive) return;
+          setValue(v);
+          setError(false);
+        }, fail);
       void run();
       unsub = s.subscribe(() => void run());
-    });
+    }, fail);
     return () => {
       alive = false;
       unsub();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-  return value;
+  }, [...deps, attempt]);
+  const retry = useCallback(() => {
+    setError(false);
+    setAttempt((n) => n + 1);
+  }, []);
+  return { data: value, error, retry };
 }
 
-/* ---------- cart (this device only, both modes) ---------- */
+/** Like useMarketQuery, value only: undefined while loading (and after a failed first load). */
+export function useMarket<T>(load: (s: MarketStore) => Promise<T>, deps: unknown[]): T | undefined {
+  return useMarketQuery(load, deps).data;
+}
+
+/* ---------- cart (this device, per signed-in account; both modes) ---------- */
 
 const CART_KEY = "peelplan.cart.v1";
 const CART_EVENT = "peelplan:cart";
 type CartState = { productId: string; shopId: string; qty: number }[];
 let cartCache: CartState | null = null;
 
-function readCart(): CartState {
-  if (cartCache) return cartCache;
+/**
+ * Whose cart is showing. Signed in: `peelplan.cart.v1:<userId>`, so the next person on this device
+ * doesn't see (or check out) it. Signed out: the unkeyed cart, merged into the account on sign-in so
+ * items picked before signing in survive the trip through /login.
+ * `undefined` until the session is known (Supabase reads it asynchronously).
+ */
+let cartOwner: string | null | undefined;
+let watchingOwner = false;
+const cartKey = () => (cartOwner ? `${CART_KEY}:${cartOwner}` : CART_KEY);
+
+function readKey(key: string): CartState {
   try {
-    cartCache = JSON.parse(localStorage.getItem(CART_KEY) || "[]") as CartState;
+    const v = JSON.parse(localStorage.getItem(key) || "[]") as unknown;
+    return Array.isArray(v) ? (v as CartState) : [];
   } catch {
-    cartCache = [];
+    return [];
   }
+}
+
+function setCartOwner(id: string | null, notify = true) {
+  if (id === cartOwner) return;
+  const was = cartOwner;
+  cartOwner = id;
+  cartCache = null;
+  if (id && !was) {
+    const anon = readKey(CART_KEY);
+    if (anon.length) {
+      const mine = readKey(cartKey());
+      for (const l of anon) {
+        const hit = mine.find((m) => m.productId === l.productId);
+        if (hit) hit.qty = Math.min(99, Math.max(hit.qty, l.qty));
+        else mine.push(l);
+      }
+      try {
+        localStorage.setItem(cartKey(), JSON.stringify(mine));
+        localStorage.removeItem(CART_KEY);
+      } catch {
+        /* storage unavailable */
+      }
+    }
+  }
+  if (notify) window.dispatchEvent(new Event(CART_EVENT));
+}
+
+/** Follow sign-in / sign-out without depending on any component being mounted. */
+function watchCartOwner() {
+  if (watchingOwner || typeof window === "undefined") return;
+  watchingOwner = true;
+  if (!AUTH_ENABLED) {
+    // Test mode: the simulated account lives in localStorage (see src/lib/session.ts). The first
+    // read is synchronous and silent, since it can happen while React reads the snapshot.
+    const fromDemo = (notify = true) => {
+      let id: string | null = null;
+      try {
+        id = (JSON.parse(localStorage.getItem("peelplan.session.v1") || "null") as { user?: { id?: string } } | null)?.user?.id ?? null;
+      } catch {
+        /* storage unavailable: signed out */
+      }
+      setCartOwner(id, notify);
+    };
+    fromDemo(false);
+    window.addEventListener("peelplan:session", () => fromDemo());
+    window.addEventListener("storage", (e) => e.key === "peelplan.session.v1" && fromDemo());
+    return;
+  }
+  void import("@/lib/supabase/client")
+    .then(async ({ createSupabaseBrowser }) => {
+      const sb = createSupabaseBrowser();
+      if (!sb) return setCartOwner(null);
+      const { data } = await sb.auth.getSession();
+      setCartOwner(data.session?.user.id ?? null);
+      sb.auth.onAuthStateChange((_e, session) => setCartOwner(session?.user.id ?? null));
+    })
+    .catch(() => setCartOwner(null));
+}
+
+function readCart(): CartState {
+  watchCartOwner();
+  if (cartOwner === undefined) return EMPTY;
+  cartCache ??= readKey(cartKey());
   return cartCache;
 }
 function writeCart(c: CartState) {
   cartCache = c;
   try {
-    localStorage.setItem(CART_KEY, JSON.stringify(c));
+    localStorage.setItem(cartKey(), JSON.stringify(c));
   } catch {
     /* storage unavailable */
   }
@@ -501,38 +617,54 @@ function writeCart(c: CartState) {
 }
 const EMPTY: CartState = [];
 
+/** For changes: before the owner is known, edit the signed-out cart (it merges in on sign-in). */
+const currentCart = () => {
+  watchCartOwner();
+  return cartOwner === undefined ? readKey(CART_KEY) : readCart();
+};
+
 export const cart = {
   add(productId: string, shopId: string, qty = 1) {
-    const c = readCart();
+    const c = currentCart();
     const line = c.find((l) => l.productId === productId);
     writeCart(line ? c.map((l) => (l === line ? { ...l, qty: Math.min(99, l.qty + qty) } : l)) : [...c, { productId, shopId, qty }]);
   },
   setQty(productId: string, qty: number) {
-    writeCart(qty <= 0 ? readCart().filter((l) => l.productId !== productId) : readCart().map((l) => (l.productId === productId ? { ...l, qty: Math.min(99, qty) } : l)));
+    const c = currentCart();
+    writeCart(qty <= 0 ? c.filter((l) => l.productId !== productId) : c.map((l) => (l.productId === productId ? { ...l, qty: Math.min(99, qty) } : l)));
   },
   clearShop(shopId: string) {
-    writeCart(readCart().filter((l) => l.shopId !== shopId));
+    writeCart(currentCart().filter((l) => l.shopId !== shopId));
   },
 };
 
+const subscribeCart = (cb: () => void) => {
+  watchCartOwner();
+  const on = (e?: Event) => {
+    if (e instanceof StorageEvent && e.key !== cartKey()) return;
+    cartCache = null;
+    cb();
+  };
+  window.addEventListener(CART_EVENT, cb);
+  window.addEventListener("storage", on);
+  return () => {
+    window.removeEventListener(CART_EVENT, cb);
+    window.removeEventListener("storage", on);
+  };
+};
+
+function cartReadySnapshot() {
+  watchCartOwner();
+  return cartOwner !== undefined;
+}
+
 export function useCart(): CartState {
-  return useSyncExternalStore(
-    (cb) => {
-      const on = (e?: Event) => {
-        if (e instanceof StorageEvent && e.key !== CART_KEY) return;
-        cartCache = null;
-        cb();
-      };
-      window.addEventListener(CART_EVENT, cb);
-      window.addEventListener("storage", on);
-      return () => {
-        window.removeEventListener(CART_EVENT, cb);
-        window.removeEventListener("storage", on);
-      };
-    },
-    readCart,
-    () => EMPTY,
-  );
+  return useSyncExternalStore(subscribeCart, readCart, () => EMPTY);
+}
+
+/** False until we know whose cart to show (pages show a skeleton instead of a flash of "empty"). */
+export function useCartReady(): boolean {
+  return useSyncExternalStore(subscribeCart, cartReadySnapshot, () => false);
 }
 
 /* ---------- images (test mode keeps them inline, downscaled) ---------- */

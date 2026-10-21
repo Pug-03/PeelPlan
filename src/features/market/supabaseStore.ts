@@ -16,7 +16,20 @@
  */
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 import { EXAMPLE_PRODUCTS, EXAMPLE_SHOPS, type MarketStore } from "./store";
-import { LINK_KINDS, type Address, type AdminShop, type Finish, type Message, type Order, type OrderStatus, type Product, type Shop, type ShopLinks, type ShopStatus, type Thread } from "./types";
+import {
+  LINK_KINDS,
+  type Address,
+  type AdminShop,
+  type Finish,
+  type Message,
+  type Order,
+  type OrderStatus,
+  type Product,
+  type Shop,
+  type ShopLinks,
+  type ShopStatus,
+  type Thread,
+} from "./types";
 
 /* ---------- client, errors, events ---------- */
 
@@ -151,8 +164,11 @@ type ShopRow = {
   status_reason?: string | null;
   created_at: string;
 };
-/** shops_public: no owner identity, no PromptPay. */
-type PublicShopRow = Omit<ShopRow, "owner_id" | "description" | "promptpay_id" | "promptpay_name" | "status" | "status_reason"> & { about: string };
+/** shops_public: no owner identity, no PromptPay. `accepts_payment` arrives with 0004. */
+type PublicShopRow = Omit<ShopRow, "owner_id" | "description" | "promptpay_id" | "promptpay_name" | "status" | "status_reason"> & {
+  about: string;
+  accepts_payment?: boolean | null;
+};
 
 const SHOP_COLS =
   "id, owner_id, slug, name, description, city, tint, logo_url, cover_url, links, promptpay_id, promptpay_name, shipping_thb, free_shipping_from_thb, product_types, status, status_reason, created_at";
@@ -177,6 +193,8 @@ function toShop(r: ShopRow | PublicShopRow): Shop {
     status: own ? own.status : "approved",
     statusReason: own?.status_reason ?? undefined,
     createdAt: r.created_at,
+    // Before 0004 the view has no such column: leave it unknown (treated as accepting).
+    acceptsPayment: own ? own.status === "approved" && !!own.promptpay_id : ((r as PublicShopRow).accepts_payment ?? undefined),
   };
 }
 
@@ -224,6 +242,9 @@ type OrderRow = {
   slip_path: string | null;
   tracking: Order["tracking"] | null;
   cancel_reason: string | null;
+  /** Captured by place_order from 0004 on; absent / null on older rows. */
+  promptpay_id?: string | null;
+  promptpay_name?: string | null;
   created_at: string;
   order_items: {
     id: number;
@@ -265,13 +286,17 @@ function toOrder(r: OrderRow, slips: Map<string, string>): Order {
     slip: r.slip_path ? slips.get(r.slip_path) : undefined,
     tracking: r.tracking ?? undefined,
     cancelReason: r.cancel_reason ?? undefined,
+    promptpay: r.promptpay_id ? { id: r.promptpay_id, name: r.promptpay_name ?? "" } : undefined,
     history: [...r.order_events].sort((a, b) => a.id - b.id).map((e) => ({ status: e.status, at: e.at })),
     createdAt: r.created_at,
   };
 }
 
 async function toOrders(rows: OrderRow[]): Promise<Order[]> {
-  const slips = await sign("slips", rows.map((r) => r.slip_path));
+  const slips = await sign(
+    "slips",
+    rows.map((r) => r.slip_path),
+  );
   return rows.map((r) => toOrder(r, slips));
 }
 
@@ -306,7 +331,10 @@ type MessageRow = {
   created_at: string;
 };
 async function toMessages(rows: MessageRow[]): Promise<Message[]> {
-  const images = await sign("chat-images", rows.map((r) => r.image_path));
+  const images = await sign(
+    "chat-images",
+    rows.map((r) => r.image_path),
+  );
   return rows.map((r) => ({
     id: r.id,
     threadId: r.thread_id,
@@ -343,8 +371,7 @@ async function publicShop(col: "id" | "slug", value: string): Promise<Shop | nul
   return shop;
 }
 
-const cleanLinks = (links: ShopLinks) =>
-  Object.fromEntries(LINK_KINDS.flatMap((k) => (links[k]?.trim() ? [[k, links[k]!.trim()]] : [])));
+const cleanLinks = (links: ShopLinks) => Object.fromEntries(LINK_KINDS.flatMap((k) => (links[k]?.trim() ? [[k, links[k]!.trim()]] : [])));
 
 const sameList = (a: string[], b: string[]) => a.length === b.length && a.every((x, i) => x === b[i]);
 
@@ -420,7 +447,13 @@ export const supabaseStore: MarketStore = {
     };
     const row = id
       ? check(await db().from("products").update(fields).eq("id", id).eq("shop_id", shopId).select("*").maybeSingle())
-      : check(await db().from("products").insert({ ...fields, shop_id: shopId }).select("*").single());
+      : check(
+          await db()
+            .from("products")
+            .insert({ ...fields, shop_id: shopId })
+            .select("*")
+            .single(),
+        );
     if (!row) throw new Error("not-found");
     emit();
     return toProduct(row as ProductRow);
@@ -455,7 +488,16 @@ export const supabaseStore: MarketStore = {
   },
   async submitSlip(orderId, slip) {
     if (!isUuid(orderId)) throw new Error("not-found");
-    const path = isRasterDataUrl(slip) ? await upload("slips", orderId, slip) : slip;
+    let path = slip;
+    if (isRasterDataUrl(slip)) {
+      try {
+        path = await upload("slips", orderId, slip);
+      } catch (e) {
+        // 0004: storage only takes a slip while the order awaits payment; RLS refuses it otherwise.
+        const msg = e instanceof Error ? e.message : "";
+        throw new Error(/row-level security|security policy|unauthorized|403/i.test(msg) ? "bad-state" : msg);
+      }
+    }
     check(await db().rpc("submit_slip", { p_order_id: orderId, p_slip_path: path }));
     emit();
     const order = await this.getOrder(orderId);
@@ -520,6 +562,16 @@ export const supabaseStore: MarketStore = {
     if (!isUuid(threadId)) return;
     check(await db().rpc("mark_thread_read", { p_thread_id: threadId, p_side: side }));
     emit();
+  },
+
+  async reportThread(threadId, reason, note) {
+    if (!isUuid(threadId)) throw new Error("not-found");
+    // Insert only (no .select()): reporters have no read access to reports.
+    check(
+      await db()
+        .from("reports")
+        .insert({ thread_id: threadId, reason, note: note.slice(0, 1000) }),
+    );
   },
 
   // approveForTesting: intentionally absent. Shops are approved by staff (admin page / service role).

@@ -5,17 +5,22 @@ import { FeedbackFooter } from "@/features/feedback/FeedbackFooter";
 import { DEMO_SHOPS, getDemoShop, type DemoShop } from "@/config/demoShops";
 import { PRODUCT_TYPES } from "@/config/onboarding";
 import { ShopLoader } from "./ShopLoader";
+import { ShopPreview } from "./ShopPreview";
 import { ShopView } from "./ShopView";
 
 export function generateStaticParams() {
   return DEMO_SHOPS.map((s) => ({ slug: s.slug }));
 }
 
-/** `/shops/preview?name=…` shows a brand-new seller their own (empty, pending) page. */
+/**
+ * `/shops/preview?name=…` shows a brand-new seller their own (empty, pending) page. Only the name and
+ * the product types (checked against a fixed list) come from the URL, so a link can't put arbitrary
+ * text on the site; the signed-in seller's own shop replaces it on the client (ShopPreview).
+ */
 function previewShop(sp: Record<string, string | string[] | undefined>, fallbackName: string): DemoShop {
-  const str = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string).slice(0, 1000) : "");
-  const name = str("name").slice(0, 80) || fallbackName;
-  const types = str("types")
+  const str = (k: string, max: number) => (typeof sp[k] === "string" ? (sp[k] as string).slice(0, max) : "");
+  const name = str("name", 80).trim() || fallbackName;
+  const types = str("types", 200)
     .split(",")
     .filter((t) => (PRODUCT_TYPES as readonly string[]).includes(t));
   return {
@@ -32,7 +37,7 @@ function previewShop(sp: Record<string, string | string[] | undefined>, fallback
     joined: new Date().toISOString().slice(0, 7),
     verified: false,
     stats: { sold: 0, rating: 0, reviews: 0, followers: 0, responseHours: 1 },
-    about: { en: str("about"), th: str("about") },
+    about: { en: "", th: "" },
     productTypes: types.length ? types : ["die-cut"],
     products: [],
     reviews: [],
@@ -58,7 +63,7 @@ export default async function ShopPage({ params, searchParams }: PageProps<"/[lo
   return (
     <>
       <SiteHeader />
-      <main id="main">{shop ? <ShopView demo={shop} preview={preview} /> : <ShopLoader slug={slug} />}</main>
+      <main id="main">{preview && shop ? <ShopPreview fallback={shop} /> : shop ? <ShopView demo={shop} /> : <ShopLoader slug={slug} />}</main>
       <FeedbackFooter />
     </>
   );

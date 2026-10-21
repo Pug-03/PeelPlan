@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { PRODUCT_TYPES } from "@/config/onboarding";
 import type { OrderStatus } from "@/features/market/types";
 
@@ -40,6 +40,20 @@ export const ariaFor = (id: string, error?: string) => ({
   "aria-invalid": error ? true : undefined,
   "aria-describedby": error ? `${id}-error` : `${id}-hint`,
 });
+
+/** While `dirty`, closing or reloading the tab asks first (the browser shows its own wording). */
+export function useUnsavedGuard(dirty: boolean) {
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Older browsers still need returnValue set.
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+}
 
 export function useMoney() {
   const locale = useLocale();

@@ -2,10 +2,10 @@
 
 import { ArrowLeft, BadgeCheck, Clock, ExternalLink, MapPin, MessageCircle, Package, Plus, ShoppingCart, Star, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import type { DemoShop, ShopReview } from "@/config/demoShops";
-import { cart, useMarket } from "@/features/market/store";
-import { ExampleBadge, LINK_META, openChat, primaryBtn, useThb, useToast } from "@/features/market/ui/buyer";
+import { canCheckout, cart, TEST_MODE, useMarket, useMarketQuery } from "@/features/market/store";
+import { ExampleBadge, LINK_META, LoadError, openChat, primaryBtn, useThb, useToast } from "@/features/market/ui/buyer";
 import { LINK_KINDS, type Product, type Shop } from "@/features/market/types";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { useSession } from "@/lib/session";
@@ -33,6 +33,45 @@ export type ShopProfile = {
   stats?: DemoShop["stats"];
   reviews?: ShopReview[];
 };
+
+/**
+ * Follow is a preference kept in this browser only (there are no followers on the server yet), one
+ * key per shop: `peelplan.follow.v1:<slug>`.
+ */
+const FOLLOW_KEY = "peelplan.follow.v1";
+const FOLLOW_EVENT = "peelplan:follow";
+function useFollow(slug: string): [boolean, () => void] {
+  const key = `${FOLLOW_KEY}:${slug}`;
+  const following = useSyncExternalStore(
+    (cb) => {
+      const onStorage = (e: StorageEvent) => e.key === key && cb();
+      window.addEventListener(FOLLOW_EVENT, cb);
+      window.addEventListener("storage", onStorage);
+      return () => {
+        window.removeEventListener(FOLLOW_EVENT, cb);
+        window.removeEventListener("storage", onStorage);
+      };
+    },
+    () => {
+      try {
+        return localStorage.getItem(key) === "1";
+      } catch {
+        return false;
+      }
+    },
+    () => false,
+  );
+  const toggle = () => {
+    try {
+      if (following) localStorage.removeItem(key);
+      else localStorage.setItem(key, "1");
+    } catch {
+      /* storage unavailable: nothing to remember it in */
+    }
+    window.dispatchEvent(new Event(FOLLOW_EVENT));
+  };
+  return [following, toggle];
+}
 
 const initialsOf = (name: string) =>
   name
@@ -130,14 +169,23 @@ export function ShopView({
   const shop = profile ?? profileFromDemo(demo!, locale, !preview);
   const initialProducts = demo && !preview ? demoProducts(demo) : [];
   const [tab, setTab] = useState<Tab>("products");
-  const [following, setFollowing] = useState(false);
+  const [following, toggleFollow] = useFollow(shop.slug);
   const [chatBusy, setChatBusy] = useState(false);
+  const [chatError, setChatError] = useState(false);
   const [toast, showToast] = useToast();
 
   const loaded = useMarket((s) => (preview || marketProp ? Promise.resolve(null) : s.getShop(shop.slug)), [shop.slug, preview, !!marketProp]);
   const market = marketProp ?? loaded ?? undefined;
-  const storeProducts = useMarket((s) => (market ? s.listProducts(market.id) : Promise.resolve(undefined)), [market?.id]);
+  const {
+    data: storeProducts,
+    error: productsError,
+    retry: retryProducts,
+  } = useMarketQuery((s) => (market ? s.listProducts(market.id) : Promise.resolve(undefined)), [market?.id]);
   const products = preview ? [] : (storeProducts ?? initialProducts);
+  // Example shops live only in the browser: on the real site they can't take orders or chats.
+  const readOnly = shop.example && !TEST_MODE;
+  // Real shops that can't take orders yet (pending, or no PromptPay: 0004 `accepts_payment`).
+  const notTaking = !readOnly && !!market && !canCheckout(market);
 
   const fmt = new Intl.NumberFormat(locale === "th" ? "th-TH" : "en-US");
   // `joined` is a UTC month; format it in UTC so server and browser agree in every time zone.
@@ -150,11 +198,14 @@ export function ShopView({
   const nameOf = (p: Product) => (shop.example && p.stickerId ? (byId.get(p.stickerId)?.name[locale] ?? p.name) : p.name);
 
   const chat = async () => {
-    if (session.status !== "signed-in" || !market) return;
+    if (session.status !== "signed-in" || !market || readOnly) return;
     setChatBusy(true);
+    setChatError(false);
     try {
       const u = session.session;
       router.push(await openChat(market.id, u.user.id, u.profile?.displayName || u.user.name));
+    } catch {
+      setChatError(true);
     } finally {
       setChatBusy(false);
     }
@@ -270,12 +321,22 @@ export function ShopView({
             <button
               type="button"
               aria-pressed={following}
-              onClick={() => setFollowing((f) => !f)}
+              onClick={toggleFollow}
               className="h-10 rounded-full bg-accent px-5 text-sm font-medium text-accent-ink transition-transform active:scale-[0.97] aria-pressed:bg-surface aria-pressed:text-ink"
             >
               {following ? t("following") : t("follow")}
             </button>
-            {session.status === "signed-out" ? (
+            {readOnly ? (
+              <button
+                type="button"
+                disabled
+                aria-describedby="shop-readonly"
+                className="inline-flex h-10 items-center gap-2 rounded-full border border-hairline px-4 text-sm font-medium opacity-60"
+              >
+                <MessageCircle className="size-4" strokeWidth={1.75} aria-hidden="true" />
+                {t("chat")}
+              </button>
+            ) : session.status === "signed-out" ? (
               <Link
                 href={`/login?next=${encodeURIComponent(pathname)}`}
                 className="inline-flex h-10 items-center gap-2 rounded-full border border-hairline px-4 text-sm font-medium transition-colors hover:border-ink"
@@ -298,6 +359,21 @@ export function ShopView({
           </div>
         )}
       </div>
+      {!preview && (readOnly || notTaking || chatError) && (
+        <div className="-mt-4 flex flex-col gap-2">
+          {readOnly && (
+            <p id="shop-readonly" className="rounded-xl border border-dashed border-ink/40 px-4 py-3 text-sm">
+              {tm("shopPage.exampleReadOnly")}
+            </p>
+          )}
+          {notTaking && <p className="rounded-xl bg-surface px-4 py-3 text-sm text-muted">{tm("shopPage.notTaking")}</p>}
+          {chatError && (
+            <p role="alert" className="rounded-xl bg-[#FDECEA] px-4 py-3 text-sm text-[#8C1D18] dark:bg-[#3B1714] dark:text-[#FFB4AB]">
+              {tm("shopPage.chatFailed")}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Other places to buy from this shop */}
       {!preview && links.length > 0 && market && (
@@ -378,7 +454,9 @@ export function ShopView({
 
         {tab === "products" && (
           <div role="tabpanel" id="panel-products" aria-labelledby="tab-products">
-            {products.length === 0 ? (
+            {!preview && !storeProducts && productsError && products.length === 0 ? (
+              <LoadError onRetry={retryProducts} />
+            ) : products.length === 0 ? (
               <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-hairline px-6 py-14 text-center">
                 <Package className="size-7 text-muted" strokeWidth={1.5} aria-hidden="true" />
                 <p className="font-semibold">{t("emptyTitle")}</p>
@@ -402,6 +480,7 @@ export function ShopView({
               <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
                 {products.map((p) => {
                   const soldOut = p.stock !== null && p.stock <= 0;
+                  const cantAdd = soldOut || readOnly || notTaking;
                   const name = nameOf(p);
                   return (
                     <li key={p.id} className="group flex flex-col overflow-hidden rounded-2xl border border-hairline bg-bg transition-shadow hover:shadow-soft">
@@ -413,7 +492,9 @@ export function ShopView({
                           className={`max-h-full max-w-full object-contain drop-shadow-md transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105 ${soldOut ? "opacity-40 grayscale" : ""}`}
                         />
                         {soldOut && (
-                          <span className="absolute top-2.5 left-2.5 rounded-full bg-ink px-2.5 py-1 text-xs font-medium text-bg">{tm("shopPage.soldOut")}</span>
+                          <span className="absolute top-2.5 left-2.5 rounded-full bg-ink px-2.5 py-1 text-xs font-medium text-bg">
+                            {tm("shopPage.soldOut")}
+                          </span>
                         )}
                       </div>
                       <div className="flex flex-1 flex-col gap-1 p-3 sm:p-4">
@@ -423,7 +504,9 @@ export function ShopView({
                         <p className="text-xs text-muted tabular-nums">
                           {t("size", { w: p.widthMm, h: p.heightMm })} · {t(`finish.${p.finish}`)}
                         </p>
-                        {!soldOut && p.stock !== null && p.stock <= 5 && <p className="text-xs font-medium text-[#B25E00] dark:text-[#FFB25E]">{tm("shopPage.left", { n: p.stock })}</p>}
+                        {!soldOut && p.stock !== null && p.stock <= 5 && (
+                          <p className="text-xs font-medium text-[#B25E00] dark:text-[#FFB25E]">{tm("shopPage.left", { n: p.stock })}</p>
+                        )}
                         <div className="mt-auto flex items-center justify-between gap-2 pt-2">
                           <span className="font-semibold tabular-nums">{thb(p.priceThb)}</span>
                           {p.stickerId && (
@@ -438,8 +521,9 @@ export function ShopView({
                         <button
                           type="button"
                           onClick={() => add(p)}
-                          disabled={soldOut}
+                          disabled={cantAdd}
                           aria-label={soldOut ? `${name}: ${tm("shopPage.soldOut")}` : tm("shopPage.addAria", { name })}
+                          aria-describedby={readOnly ? "shop-readonly" : undefined}
                           className={`${primaryBtn} mt-2 h-10 w-full`}
                         >
                           <ShoppingCart className="size-4" strokeWidth={2} aria-hidden="true" />

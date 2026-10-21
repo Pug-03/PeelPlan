@@ -3,7 +3,8 @@
 import { ArrowLeft, ArrowUp, Flag, ImagePlus, Package, ShieldCheck, Store, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { fileToDataUrl, getStore, useMarket } from "@/features/market/store";
+import { fileToDataUrl, getStore, useMarketQuery } from "@/features/market/store";
+import { LoadError } from "@/features/market/ui/buyer";
 import type { Message, Order } from "@/features/market/types";
 import { Link } from "@/i18n/navigation";
 import type { Session } from "@/lib/session";
@@ -16,7 +17,7 @@ import { ReportDialog } from "./ReportDialog";
 const MAX = 2000;
 
 function useConversation(id: string, userId: string) {
-  return useMarket(
+  return useMarketQuery(
     async (s) => {
       const thread = await s.getThread(id);
       if (!thread) return { thread: null } as const;
@@ -87,7 +88,7 @@ function OrderCard({ order, mine }: { order: Order | undefined; mine: boolean })
 export function Conversation({ id, session }: { id: string; session: Session }) {
   const t = useTranslations("chat");
   const locale = useLocale();
-  const data = useConversation(id, session.user.id);
+  const { data, error: loadError, retry } = useConversation(id, session.user.id);
 
   const [text, setText] = useState("");
   const [image, setImage] = useState<string | null>(null);
@@ -95,6 +96,7 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
   const [sending, setSending] = useState(false);
   const [zoom, setZoom] = useState<string | null>(null);
   const [picker, setPicker] = useState(false);
+  const [pickerError, setPickerError] = useState<string | null>(null);
   const [reporting, setReporting] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -105,10 +107,26 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
   const side = ready?.side;
   const unread = ready ? (ready.side === "buyer" ? ready.thread.unreadBuyer : ready.thread.unreadShop) : 0;
 
-  // Stick to the newest message.
+  // Stick to the newest message. Photos load after the first paint and push the list down, so
+  // follow each one as it loads, unless the reader has scrolled up meanwhile.
   useEffect(() => {
     const el = listRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+    let pinned = true;
+    const onScroll = () => {
+      pinned = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+    };
+    const onLoad = () => {
+      if (pinned) el.scrollTop = el.scrollHeight;
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    // `load` doesn't bubble; capture it from every <img> in the list.
+    el.addEventListener("load", onLoad, true);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      el.removeEventListener("load", onLoad, true);
+    };
   }, [count]);
 
   // Opening the chat, or a message arriving while it is open, marks it read.
@@ -122,6 +140,12 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
     if (side) inputRef.current?.focus({ preventScroll: true });
   }, [id, side]);
 
+  if (data === undefined && loadError)
+    return (
+      <div className="flex flex-1 flex-col p-6">
+        <LoadError onRetry={retry} />
+      </div>
+    );
   if (data === undefined) return <div className="flex-1" aria-busy="true" />;
   if (!ready)
     return (
@@ -138,15 +162,17 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
   const role = ready.side;
   const otherName = role === "buyer" ? (shop?.name ?? "…") : thread.buyerName;
 
-  const send = async (body: { text?: string; image?: string; orderId?: string }) => {
+  /** `report` shows the error where the person is looking: the composer, or the open order picker. */
+  const send = async (body: { text?: string; image?: string; orderId?: string }, report: (msg: string | null) => void = setError) => {
     setSending(true);
-    setError(null);
+    report(null);
     try {
       const s = await getStore();
       await s.send(thread.id, role, body);
       return true;
     } catch (e) {
-      setError(e instanceof Error && e.message === "storage-full" ? t("composer.full") : t("composer.failed"));
+      const code = e instanceof Error ? e.message : "";
+      report(code === "storage-full" ? t("composer.full") : code === "rate-limited" ? t("composer.rateLimited") : t("composer.failed"));
       return false;
     } finally {
       setSending(false);
@@ -189,7 +215,11 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-hairline px-3 py-2.5 sm:px-4">
-        <Link href="/messages" aria-label={t("back")} className="grid size-10 shrink-0 place-items-center rounded-full text-muted hover:bg-surface hover:text-ink lg:hidden">
+        <Link
+          href="/messages"
+          aria-label={t("back")}
+          className="grid size-10 shrink-0 place-items-center rounded-full text-muted hover:bg-surface hover:text-ink lg:hidden"
+        >
           <ArrowLeft className="size-5" strokeWidth={1.75} aria-hidden="true" />
         </Link>
         <Avatar name={otherName} logo={role === "buyer" ? shop?.logo : undefined} tint={role === "buyer" ? shop?.tint : undefined} size="size-10" />
@@ -238,9 +268,16 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
                   </li>
                 ) : (
                   <li className={`flex max-w-[85%] flex-col gap-1 sm:max-w-[70%] ${mine ? "items-end self-end" : "items-start self-start"}`}>
-                    <div className={`flex flex-col gap-2 rounded-2xl px-3.5 py-2 ${mine ? "rounded-br-md bg-ink text-bg" : "rounded-bl-md bg-surface text-ink"}`}>
+                    <div
+                      className={`flex flex-col gap-2 rounded-2xl px-3.5 py-2 ${mine ? "rounded-br-md bg-ink text-bg" : "rounded-bl-md bg-surface text-ink"}`}
+                    >
                       {m.image && (
-                        <button type="button" onClick={() => setZoom(m.image!)} className="-mx-1.5 mt-0.5 overflow-hidden rounded-xl" aria-label={t("lightbox.alt")}>
+                        <button
+                          type="button"
+                          onClick={() => setZoom(m.image!)}
+                          className="-mx-1.5 mt-0.5 overflow-hidden rounded-xl"
+                          aria-label={t("lightbox.alt")}
+                        >
                           {/* eslint-disable-next-line @next/next/no-img-element -- data URLs in test mode */}
                           <img src={m.image} alt="" className="max-h-64 w-auto max-w-full object-cover" />
                         </button>
@@ -370,9 +407,22 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
       </Modal>
 
       {/* Order picker */}
-      <Modal open={picker} onClose={() => setPicker(false)} label={t("orders.title")} closeLabel={t("orders.cancel")}>
+      <Modal
+        open={picker}
+        onClose={() => {
+          setPicker(false);
+          setPickerError(null);
+        }}
+        label={t("orders.title")}
+        closeLabel={t("orders.cancel")}
+      >
         <h2 className="pr-10 text-lg font-semibold">{t("orders.title")}</h2>
         <p className="mt-1 text-sm text-muted">{t("orders.body")}</p>
+        {pickerError && (
+          <p role="alert" className="mt-3 rounded-xl bg-[#FDECEA] px-3 py-2 text-sm text-[#8C1D18] dark:bg-[#3B1714] dark:text-[#FFB4AB]">
+            {pickerError}
+          </p>
+        )}
         {pairOrders.length === 0 ? (
           <p className="mt-5 rounded-xl bg-surface px-4 py-3 text-sm text-muted">{t("orders.empty")}</p>
         ) : (
@@ -383,7 +433,7 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
                   type="button"
                   disabled={sending}
                   onClick={async () => {
-                    if (await send({ orderId: o.id })) setPicker(false);
+                    if (await send({ orderId: o.id }, setPickerError)) setPicker(false);
                   }}
                   className="flex w-full items-center gap-3 rounded-xl border border-hairline px-3 py-2.5 text-left transition-colors hover:bg-surface"
                 >

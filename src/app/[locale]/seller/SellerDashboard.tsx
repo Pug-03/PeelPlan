@@ -3,7 +3,8 @@
 import { CheckCircle2, Clock, ExternalLink, FlaskConical, MessageCircle, Package, Store, Truck, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRef, useState, type KeyboardEvent } from "react";
-import { getStore, TEST_MODE, useMarket } from "@/features/market/store";
+import { getStore, TEST_MODE, useMarketQuery } from "@/features/market/store";
+import { LoadError } from "@/features/market/ui/buyer";
 import type { Order, Shop } from "@/features/market/types";
 import { AuthGate } from "@/components/AuthGate";
 import { Link } from "@/i18n/navigation";
@@ -21,7 +22,7 @@ export function SellerGate() {
 function SellerDashboard({ session }: { session: Session }) {
   const t = useTranslations("seller");
   const userId = session.user.id;
-  const shop = useMarket((s) => s.myShop(userId), [userId]);
+  const { data: shop, error, retry } = useMarketQuery((s) => s.myShop(userId), [userId]);
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-5 pt-6 pb-20 sm:px-8">
@@ -31,7 +32,9 @@ function SellerDashboard({ session }: { session: Session }) {
           {t("testMode")}
         </p>
       )}
-      {shop === undefined ? (
+      {shop === undefined && error ? (
+        <LoadError onRetry={retry} />
+      ) : shop === undefined ? (
         <div className="h-64 animate-pulse rounded-2xl bg-surface" aria-busy="true" aria-label={t("loading")} />
       ) : shop === null ? (
         <CreateShop session={session} />
@@ -101,11 +104,24 @@ function CreateShop({ session }: { session: Session }) {
             const name = String(f.get("name") ?? "").trim();
             if (name.length < 2 || name.length > 80) return setError("name");
             if (!types.length) return setError("types");
-            void create(name, String(f.get("about") ?? "").trim().slice(0, 1000), types);
+            void create(
+              name,
+              String(f.get("about") ?? "")
+                .trim()
+                .slice(0, 1000),
+              types,
+            );
           }}
         >
           <Field id="create-name" label={t("settings.name")} error={error === "name" ? t("errors.shopName") : undefined}>
-            <input id="create-name" name="name" maxLength={80} autoComplete="organization" className={fieldClass} {...ariaFor("create-name", error === "name" ? "x" : undefined)} />
+            <input
+              id="create-name"
+              name="name"
+              maxLength={80}
+              autoComplete="organization"
+              className={fieldClass}
+              {...ariaFor("create-name", error === "name" ? "x" : undefined)}
+            />
           </Field>
           <Field id="create-about" label={t("settings.about")} hint={t("settings.aboutHint")}>
             <textarea id="create-about" name="about" maxLength={1000} rows={3} className={`${fieldClass} h-auto py-3`} aria-describedby="create-about-hint" />
@@ -128,7 +144,9 @@ function CreateShop({ session }: { session: Session }) {
 
 function StatusBanner({ shop }: { shop: Shop }) {
   const t = useTranslations("seller.banner");
+  const te = useTranslations("seller.errors");
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
   if (shop.status === "approved")
     return (
       <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-[#DDF5E6] px-4 py-3 text-sm text-[#15603A]">
@@ -168,23 +186,39 @@ function StatusBanner({ shop }: { shop: Shop }) {
         </span>
       </div>
       {TEST_MODE && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={async () => {
-            setBusy(true);
-            await (await getStore()).approveForTesting?.(shop.id);
-            setBusy(false);
-          }}
-          className="inline-flex h-9 shrink-0 items-center gap-2 self-start rounded-full bg-[#111] px-4 text-sm font-medium text-white disabled:opacity-50 sm:self-auto"
-        >
-          <FlaskConical className="size-4" strokeWidth={1.75} aria-hidden="true" />
-          {t("approveForTesting")}
-        </button>
+        <div className="flex flex-col gap-1.5 self-start sm:items-end sm:self-auto">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setFailed(false);
+              try {
+                await (await getStore()).approveForTesting?.(shop.id);
+              } catch {
+                setFailed(true);
+              } finally {
+                setBusy(false);
+              }
+            }}
+            className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-[#111] px-4 text-sm font-medium text-white disabled:opacity-50"
+          >
+            <FlaskConical className="size-4" strokeWidth={1.75} aria-hidden="true" />
+            {t("approveForTesting")}
+          </button>
+          {failed && (
+            <p role="alert" className="text-xs text-[#8A1F24]">
+              {te("save")}
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
 }
+
+/** YYYY-MM in Thailand (UTC+7, no daylight saving), so "this month" turns over at Thai midnight. */
+const bangkokMonth = (iso: string) => new Date(Date.parse(iso) + 7 * 3_600_000).toISOString().slice(0, 7);
 
 const TABS = ["overview", "products", "orders", "settings"] as const;
 type Tab = (typeof TABS)[number];
@@ -193,7 +227,7 @@ function Dashboard({ shop }: { shop: Shop }) {
   const t = useTranslations("seller");
   const [tab, setTab] = useState<Tab>("overview");
   const [filter, setFilter] = useState<OrderFilter>("all");
-  const orders = useMarket((s) => s.shopOrders(shop.id), [shop.id]);
+  const { data: orders, error: ordersError, retry: retryOrders } = useMarketQuery((s) => s.shopOrders(shop.id), [shop.id]);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const onKey = (e: KeyboardEvent, i: number) => {
@@ -250,12 +284,16 @@ function Dashboard({ shop }: { shop: Shop }) {
         ))}
       </div>
 
-      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-        {tab === "overview" && <Overview shop={shop} orders={orders} goOrders={goOrders} goProducts={() => setTab("products")} />}
-        {tab === "products" && <ProductsTab shop={shop} />}
-        {tab === "orders" && <OrdersTab orders={orders} filter={filter} setFilter={setFilter} />}
-        {tab === "settings" && <SettingsTab shop={shop} />}
-      </div>
+      {/* Every panel stays mounted (hidden when not selected) so a half-edited form survives a tab switch. */}
+      {TABS.map((k) => (
+        <div key={k} role="tabpanel" id={`panel-${k}`} aria-labelledby={`tab-${k}`} hidden={tab !== k}>
+          {k !== "products" && k !== "settings" && !orders && ordersError && <LoadError onRetry={retryOrders} className="mt-2 mb-4" />}
+          {k === "overview" && <Overview shop={shop} orders={orders} goOrders={goOrders} goProducts={() => setTab("products")} />}
+          {k === "products" && <ProductsTab shop={shop} />}
+          {k === "orders" && <OrdersTab orders={orders} filter={filter} setFilter={setFilter} />}
+          {k === "settings" && <SettingsTab shop={shop} />}
+        </div>
+      ))}
     </>
   );
 }
@@ -263,14 +301,16 @@ function Dashboard({ shop }: { shop: Shop }) {
 function Overview({ shop, orders, goOrders, goProducts }: { shop: Shop; orders?: Order[]; goOrders: (f: OrderFilter) => void; goProducts: () => void }) {
   const t = useTranslations("seller.overview");
   const money = useMoney();
-  const products = useMarket((s) => s.listProducts(shop.id, { includeInactive: true }), [shop.id]);
-  const threads = useMarket((s) => s.shopThreads(shop.id), [shop.id]);
+  const { data: products, error: productsError, retry: retryProducts } = useMarketQuery((s) => s.listProducts(shop.id, { includeInactive: true }), [shop.id]);
+  const { data: threads, error: threadsError, retry: retryThreads } = useMarketQuery((s) => s.shopThreads(shop.id), [shop.id]);
   const list = orders ?? [];
   const toCheck = list.filter((o) => o.status === "slip_submitted").length;
   const toShip = list.filter((o) => o.status === "paid").length;
-  const month = new Date().toISOString().slice(0, 7);
-  // Money the shop has confirmed receiving (slip checked) for orders placed this month.
-  const revenue = list.filter((o) => ["paid", "shipped", "completed"].includes(o.status) && o.createdAt.slice(0, 7) === month).reduce((s, o) => s + o.totalThb, 0);
+  const month = bangkokMonth(new Date().toISOString());
+  // Money the shop has confirmed receiving (slip checked) for orders placed this month, Thai time.
+  const revenue = list
+    .filter((o) => ["paid", "shipped", "completed"].includes(o.status) && bangkokMonth(o.createdAt) === month)
+    .reduce((s, o) => s + o.totalThb, 0);
   const unread = (threads ?? []).reduce((s, x) => s + x.unreadShop, 0);
   const activeCount = (products ?? []).filter((p) => p.active).length;
 
@@ -281,6 +321,14 @@ function Overview({ shop, orders, goOrders, goProducts }: { shop: Shop; orders?:
 
   return (
     <div className="flex flex-col gap-6 pt-2">
+      {((!products && productsError) || (!threads && threadsError)) && (
+        <LoadError
+          onRetry={() => {
+            retryProducts();
+            retryThreads();
+          }}
+        />
+      )}
       <section aria-labelledby="needs-title" className="flex flex-col gap-3">
         <h2 id="needs-title" className="text-sm font-medium text-muted">
           {t("needsAction")}
@@ -293,7 +341,10 @@ function Overview({ shop, orders, goOrders, goProducts }: { shop: Shop; orders?:
               onClick={onClick}
               className={`flex items-center gap-4 rounded-2xl border p-5 text-left transition-shadow hover:shadow-soft ${n ? "border-ink bg-bg" : "border-hairline bg-bg"}`}
             >
-              <span className={`grid size-11 shrink-0 place-items-center rounded-full ${n ? "bg-[#D7FF3A] text-[#111]" : "bg-surface text-muted"}`} aria-hidden="true">
+              <span
+                className={`grid size-11 shrink-0 place-items-center rounded-full ${n ? "bg-[#D7FF3A] text-[#111]" : "bg-surface text-muted"}`}
+                aria-hidden="true"
+              >
                 <Icon className="size-5" strokeWidth={1.75} />
               </span>
               <span className="flex min-w-0 flex-col">
@@ -323,9 +374,7 @@ function Overview({ shop, orders, goOrders, goProducts }: { shop: Shop; orders?:
         </Link>
       </section>
 
-      {!shop.promptpay && (
-        <p className="rounded-2xl border border-dashed border-hairline p-4 text-sm text-muted">{t("noPromptPay")}</p>
-      )}
+      {!shop.promptpay && <p className="rounded-2xl border border-dashed border-hairline p-4 text-sm text-muted">{t("noPromptPay")}</p>}
     </div>
   );
 }
