@@ -14,7 +14,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
  * - `data-fx="drift"` + `data-speed` (%, may be negative): slides sideways while in view.
  * - `data-fx="parallax"` + `data-speed` (px): floats up or down while in view.
  * - `data-fx="draw"`: `[data-fx-path]` strokes draw one after another.
- * - `data-fx="print"`: `[data-fx-paper]` feeds out of the printer.
  * - `data-fx="hscroll"`: holds the sticky `[data-fx-frame]` and moves `[data-fx-track]` sideways as you scroll down.
  * - `data-fx="sheet"`: the section slides up over the one before it like a sheet being laid down.
  * - `data-tilt`: a card that tilts in 3D under the pointer with a glare that follows it.
@@ -153,15 +152,6 @@ export function ScrollFx() {
         });
       });
 
-      all('[data-fx="print"]').forEach((el) => {
-        const tl = gsap.timeline({ scrollTrigger: { trigger: el, start: "top 85%", end: "bottom 50%", scrub: 0.8 } });
-        tl.fromTo(
-          el.querySelectorAll("[data-fx-paper]"),
-          { attr: { transform: "translate(0 -96)" } },
-          { attr: { transform: "translate(0 0)" }, ease: "none", duration: 1 },
-        );
-        tl.fromTo(el.querySelectorAll("[data-fx-ink]"), { opacity: 0 }, { opacity: 1, stagger: 0.12, duration: 0.3 }, 0.25);
-      });
       return () => undo.forEach((f) => f());
     });
     // Pointer toys (fine pointers only): tilting cards with a moving glare.

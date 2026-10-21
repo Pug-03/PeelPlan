@@ -277,57 +277,50 @@
     "reviewsNote": "These reviews show how the section will look. They'll be replaced with reviews from real users at launch.",
     "stars": "{n} out of 5 stars",
     "priceTitleA": "Free to plan,",
-    "priceTitleB": "fair for shops",
+    "priceTitleB": "simple for shops",
     "priceFreeName": "For decorating your laptop",
     "priceFreeValue": "Free",
     "priceFreeUnit": "forever",
     "priceFreeItems": ["Every supported MacBook at real size", "Library stickers and your own uploads", "1:1 PDF print guide", "Auto-saved collection"],
+    "priceLead": "Planning your lid is always free. Shops pick a monthly plan, and every new shop gets its first month free to try it out.",
+    "priceTrial": "1 month free",
+    "priceMonth": "/ month",
+    "priceBasicName": "Shop · Starter",
+    "priceBasicValue": "฿149",
+    "priceBasicItems": ["Up to 20 products", "Shop page with a try-on button", "Paid straight to your PromptPay, no commission", "Chat with buyers, plus links to TikTok Shop and Shopee"],
+    "pricePlusName": "Shop · Plus",
+    "pricePlusValue": "฿299",
+    "pricePlusItems": ["Up to 50 products", "Everything in Starter", "Shop stats: views, try-ons and sales", "Your own shop link and a Plus badge"],
+    "priceBoostName": "Featured shop",
+    "priceBoostBody": "Your shop shows first when people open the shop list, with a Featured label. Add it to either plan, and stop any time.",
+    "priceBoostTag": "Add-on",
+    "priceBoostValue": "฿149",
+    "priceNote": "No commission on sales, ever. Cancel any time; nothing is charged during the free month.",
     "priceFreeCta": "Start a layout",
-    "priceShopName": "Shop · Free",
-    "priceShopValue": "฿0",
-    "priceShopItems": ["Up to 20 products", "Shop page with a try-on button", "Paid straight to your PromptPay, no fees", "Chat with buyers, plus links to TikTok Shop and Shopee"],
-    "priceShopUnit": "/ month",
-    "priceProName": "Shop · Pro",
-    "priceProBadge": "First 50 shops free",
-    "priceProValue": "฿149",
-    "priceProUnit": "/ month",
-    "priceProYearly": "or ฿1,490 a year (2 months free)",
-    "priceProItems": ["Unlimited products", "Featured on the home page and shop list", "Shop stats: views, try-ons and sales", "Your own shop link and a Pro badge"],
-    "priceProCta": "Go Pro",
-    "priceProNote": "No commission on sales, ever. Cancel any time.",
-    "priceShopCta": "Open your shop",
-    "printTitleA": "Print it",
-    "printTitleB": "anywhere",
-    "printBody": "PeelPlan PDFs print on any ordinary printer on A4 or Letter. Set the scale to 100%, and use the 100 mm reference line on every sheet to check accuracy.",
-    "printYou": "Your print shop",
-    "printNote": "These are kinds of places you can print, not partners we work with.",
-    "print": {
-      "home": {
-        "title": "Home printer",
-        "meta": "A4 / Letter · 100% scale"
+    "priceShopCta": "Start your free month",
+    "buyTitleA": "From cart",
+    "buyTitleB": "to your lid",
+    "buyLead": "Every sticker here is sold by an independent shop. Plan it at real size, pay the shop directly, and it comes to your door.",
+    "buyCta": "Browse shops",
+    "buyNote": "Questions about sizes or shipping? Chat with the shop from its page.",
+    "buy": {
+      "pick": {
+        "title": "Pick from a shop",
+        "body": "Browse stickers from shops and add the ones you like to your cart."
       },
-      "copy": {
-        "title": "Copy shop",
-        "meta": "Ask them not to resize"
+      "try": {
+        "title": "Try them on your lid",
+        "body": "Tap “Try on my MacBook” to see them at real size on your model, before you pay."
       },
-      "digital": {
-        "title": "Digital print shop",
-        "meta": "Thicker paper, crisper lines"
+      "pay": {
+        "title": "Pay the shop directly",
+        "body": "Scan the shop's PromptPay QR and upload your slip. The shop checks it and ships to you."
       },
-      "diecut": {
-        "title": "Die-cut sticker shop",
-        "meta": "Use the mm sizes in the file"
-      },
-      "campus": {
-        "title": "Library or campus",
-        "meta": "Public A4 printers"
-      },
-      "online": {
-        "title": "Online print service",
-        "meta": "Upload the PDF, get it delivered"
+      "stick": {
+        "title": "Stick it right",
+        "body": "Print the 1:1 guide, lay it on your MacBook and stick through the outlines."
       }
     },
-    "printYouBody": "Print or sticker shops that want to take PeelPlan files can join as partners.",
     "storm": {
       "lineA": "Stick it",
       "lineB": "right",

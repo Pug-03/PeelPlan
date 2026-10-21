@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Globe, GraduationCap, Home, Plus, Printer, Scissors, Star, Store } from "lucide-react";
+import { ArrowRight, Check, Laptop, QrCode, Ruler, Star, Store } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { LidArt, type ArtSticker } from "@/components/LidArt";
 import { PACKED_DEV_LID } from "./packedLid";
@@ -442,46 +442,57 @@ export async function Reviews() {
 export async function Pricing() {
   const t = await getTranslations("more");
   const free = t.raw("priceFreeItems") as string[];
-  const shop = t.raw("priceShopItems") as string[];
-  const pro = t.raw("priceProItems") as string[];
-  const list = (items: string[], muted = false) => (
-    <ul className={`mt-6 flex flex-1 flex-col gap-3 ${muted ? "text-muted" : ""}`}>
+  const basic = t.raw("priceBasicItems") as string[];
+  const plus = t.raw("pricePlusItems") as string[];
+  // Ticks sit in small round chips; the top plan's are lime.
+  const list = (items: string[], top = false) => (
+    <ul className="mt-6 flex flex-1 flex-col gap-3 border-t border-hairline pt-6">
       {items.map((f) => (
         <li key={f} className="flex gap-3">
-          <Check className="mt-0.5 size-5 shrink-0" strokeWidth={2.25} aria-hidden="true" />
+          <span
+            className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full ${top ? "bg-[#D7FF3A] text-[#111]" : "bg-ink/[0.08]"}`}
+            aria-hidden="true"
+          >
+            <Check className="size-3" strokeWidth={3} />
+          </span>
           {f}
         </li>
       ))}
     </ul>
   );
+  const price = (value: string, unit: string) => (
+    <p className="mt-3 flex items-baseline gap-2">
+      <span className="text-5xl font-semibold tracking-tight">{value}</span>
+      <span className="text-muted">{unit}</span>
+    </p>
+  );
+  const trial = <span className="rounded-full bg-[#D7FF3A] px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap text-[#111]">{t("priceTrial")}</span>;
   return (
     <section id="pricing" data-fx="sheet" className="bg-surface">
       <div className="mx-auto max-w-6xl scroll-mt-20 px-5 py-24 sm:px-8 sm:py-28">
         <h2 className={`reveal text-center ${heading}`}>
           {t("priceTitleA")} <span className="editorial-italic text-muted">{t("priceTitleB")}</span>
         </h2>
+        <p className="reveal mx-auto mt-4 max-w-[52ch] text-center text-muted">{t("priceLead")}</p>
         <div className="mt-12 grid gap-5 md:grid-cols-3">
           {/* Planners: always free. */}
           <div className="flex flex-col rounded-[var(--radius-card)] border border-hairline bg-bg p-7">
             <p className="font-medium">{t("priceFreeName")}</p>
-            <p className="mt-3 flex items-baseline gap-2">
-              <span className="text-5xl font-semibold tracking-tight">{t("priceFreeValue")}</span>
-              <span className="text-muted">{t("priceFreeUnit")}</span>
-            </p>
+            {price(t("priceFreeValue"), t("priceFreeUnit"))}
             {list(free)}
-            <Link href="/editor" className="mt-8 rounded-full bg-accent px-5 py-3 text-center font-semibold text-accent-ink">
+            <Link href="/editor" className="mt-8 rounded-full bg-[#D7FF3A] px-5 py-3 text-center font-semibold text-[#111] transition-opacity hover:opacity-90">
               {t("priceFreeCta")}
             </Link>
           </div>
 
-          {/* Shops: free to start. */}
+          {/* Shops: two monthly plans, both start with a free trial month. */}
           <div className="flex flex-col rounded-[var(--radius-card)] border border-hairline bg-bg p-7">
-            <p className="font-medium">{t("priceShopName")}</p>
-            <p className="mt-3 flex items-baseline gap-2">
-              <span className="text-5xl font-semibold tracking-tight">{t("priceShopValue")}</span>
-              <span className="text-muted">{t("priceShopUnit")}</span>
-            </p>
-            {list(shop)}
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-medium">{t("priceBasicName")}</p>
+              {trial}
+            </div>
+            {price(t("priceBasicValue"), t("priceMonth"))}
+            {list(basic)}
             <Link
               href="/seller"
               className="mt-8 rounded-full border border-ink px-5 py-3 text-center font-semibold transition-colors hover:bg-ink hover:text-bg"
@@ -490,123 +501,113 @@ export async function Pricing() {
             </Link>
           </div>
 
-          {/* Shops that want reach: monthly Pro. */}
-          <div className="relative flex flex-col rounded-[var(--radius-card)] border-2 border-ink bg-bg p-7 shadow-soft">
+          <div className="flex flex-col rounded-[var(--radius-card)] border-2 border-ink bg-bg bg-[radial-gradient(120%_70%_at_100%_0%,rgb(215_255_58/0.16),transparent_60%)] p-7 shadow-soft">
             <div className="flex items-center justify-between gap-3">
-              <p className="font-medium">{t("priceProName")}</p>
-              <span className="rounded-full bg-[#D7FF3A] px-2.5 py-0.5 text-xs font-semibold text-[#111]">{t("priceProBadge")}</span>
+              <p className="font-medium">{t("pricePlusName")}</p>
+              {trial}
             </div>
-            <p className="mt-3 flex items-baseline gap-2">
-              <span className="text-5xl font-semibold tracking-tight">{t("priceProValue")}</span>
-              <span className="text-muted">{t("priceProUnit")}</span>
-            </p>
-            <p className="mt-1 text-sm text-muted">{t("priceProYearly")}</p>
-            {list(pro)}
+            {price(t("pricePlusValue"), t("priceMonth"))}
+            {list(plus, true)}
             <Link href="/seller" className="mt-8 rounded-full bg-ink px-5 py-3 text-center font-semibold text-bg transition-opacity hover:opacity-90">
-              {t("priceProCta")}
+              {t("priceShopCta")}
             </Link>
-            <p className="mt-3 text-center text-xs text-muted">{t("priceProNote")}</p>
           </div>
         </div>
+
+        {/* Add-on for either shop plan: be the first shop people see. The little shop row shows what you get. */}
+        <div className="mt-5 grid items-center gap-6 rounded-[var(--radius-card)] border border-hairline bg-bg bg-[radial-gradient(90%_160%_at_72%_50%,rgb(215_255_58/0.16),transparent_60%)] p-7 md:grid-cols-[minmax(0,1fr)_auto_auto] md:gap-10">
+          <div>
+            <span className="rounded-full border border-ink/15 px-2.5 py-0.5 text-xs font-medium text-muted">{t("priceBoostTag")}</span>
+            <p className="mt-3 text-lg font-semibold">{t("priceBoostName")}</p>
+            <p className="mt-1 max-w-[52ch] text-sm leading-relaxed text-muted">{t("priceBoostBody")}</p>
+          </div>
+          <div aria-hidden="true" className="hidden w-64 -rotate-2 flex-col gap-2 sm:flex">
+            <div className="flex items-center gap-3 rounded-2xl border border-hairline bg-bg p-3 shadow-soft">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#D7FF3A]">
+                <Store className="size-4 text-[#111]" strokeWidth={2} />
+              </span>
+              <span className="flex flex-1 flex-col gap-1.5">
+                <span className="h-2 w-20 rounded-full bg-ink/70" />
+                <span className="h-1.5 w-12 rounded-full bg-ink/20" />
+              </span>
+              <span className="flex items-center gap-1 rounded-full bg-[#D7FF3A] px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap text-[#111]">
+                <Star className="size-3 fill-current" strokeWidth={2} />
+                {t("priceBoostName")}
+              </span>
+            </div>
+            <div className="mx-2 flex items-center gap-3 rounded-2xl border border-hairline p-3 opacity-50">
+              <span className="size-9 shrink-0 rounded-xl bg-ink/10" />
+              <span className="flex flex-1 flex-col gap-1.5">
+                <span className="h-2 w-16 rounded-full bg-ink/30" />
+                <span className="h-1.5 w-10 rounded-full bg-ink/15" />
+              </span>
+            </div>
+          </div>
+          <p className="flex items-baseline gap-1.5 md:flex-col md:items-end md:gap-0">
+            <span className="text-4xl font-semibold tracking-tight">+{t("priceBoostValue")}</span>
+            <span className="text-muted">{t("priceMonth")}</span>
+          </p>
+        </div>
+        <p className="mt-6 text-center text-sm text-muted">{t("priceNote")}</p>
       </div>
     </section>
   );
 }
 
-const PRINT_PLACES = [
-  { key: "home", icon: Home, tint: "#FFE7A3" },
-  { key: "copy", icon: Printer, tint: "#D4F0FF" },
-  { key: "digital", icon: Store, tint: "#E2DBFF" },
-  { key: "diecut", icon: Scissors, tint: "#FFD4CC" },
-  { key: "campus", icon: GraduationCap, tint: "#C9F2D2" },
-  { key: "online", icon: Globe, tint: "#F4F6F8" },
+const BUY_STEPS = [
+  { key: "pick", icon: Store, tint: "#FFE7A3" },
+  { key: "try", icon: Laptop, tint: "#D4F0FF" },
+  { key: "pay", icon: QrCode, tint: "#E2DBFF" },
+  { key: "stick", icon: Ruler, tint: "#C9F2D2" },
 ] as const;
 
-/** A printer feeding out a PeelPlan guide sheet as the page scrolls. */
-function PrinterArt() {
-  const ink = "#2B2320";
-  return (
-    <svg data-fx="print" viewBox="0 0 220 172" className="mt-10 h-auto w-full max-w-sm" aria-hidden="true">
-      <defs>
-        <clipPath id="print-out">
-          <rect x="0" y="88" width="220" height="84" />
-        </clipPath>
-      </defs>
-      <g clipPath="url(#print-out)">
-        <g data-fx-paper>
-          <rect x="52" y="86" width="116" height="82" rx="2" fill="#fff" stroke="#D9D9DE" strokeWidth="1.2" />
-          <g fill="none" stroke="#FF7A59" strokeWidth="1.3" strokeDasharray="3 2.4">
-            <rect data-fx-ink x="62" y="96" width="34" height="24" rx="6" />
-            <circle data-fx-ink cx="125" cy="109" r="13" />
-            <rect data-fx-ink x="104" y="128" width="52" height="16" rx="8" />
-            <path data-fx-ink d="M74 128l8 16H66z" strokeLinejoin="round" />
-          </g>
-          <g data-fx-ink stroke={ink} strokeWidth="0.8">
-            <path d="M62 156h96M62 153v6M158 153v6" />
-            {Array.from({ length: 9 }, (_, i) => (
-              <path key={i} d={`M${62 + (i + 1) * 9.6} 154.5v3`} />
-            ))}
-          </g>
-          <text data-fx-ink x="110" y="165" textAnchor="middle" fontSize="6" fill={ink} fontFamily="var(--font-sans)">
-            100 mm
-          </text>
-        </g>
-      </g>
-      <rect x="22" y="22" width="176" height="20" rx="8" fill="#F4F4F6" stroke={ink} strokeWidth="2.2" />
-      <rect x="14" y="38" width="192" height="52" rx="12" fill="#E9E9EC" stroke={ink} strokeWidth="2.5" />
-      <path d="M46 88h128" stroke={ink} strokeWidth="4" strokeLinecap="round" />
-      <circle cx="184" cy="54" r="3.5" fill="#30a46c" />
-      <rect x="30" y="50" width="40" height="8" rx="4" fill="#fff" stroke={ink} strokeWidth="1.5" />
-      <path d="M26 46q6-4 14-4" stroke="#fff" strokeWidth="3" fill="none" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-export async function PrintPartners() {
+/** How buying works, from a shop's cart to stickers on the lid. */
+export async function BuyFlow() {
   const t = await getTranslations("more");
   return (
     <section className="mx-auto max-w-7xl px-5 py-24 sm:px-8 sm:py-28">
-      <div className="grid items-center gap-10 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <div className="reveal">
+      <div className="reveal flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <div>
           <h2 className={heading}>
-            {t("printTitleA")} <span className="editorial-italic text-muted">{t("printTitleB")}</span>
+            {t("buyTitleA")} <span className="editorial-italic text-muted">{t("buyTitleB")}</span>
           </h2>
-          <p className="mt-5 max-w-[44ch] text-lg leading-relaxed text-muted">{t("printBody")}</p>
-          <PrinterArt />
+          <p className="mt-5 max-w-[48ch] text-lg leading-relaxed text-muted">{t("buyLead")}</p>
         </div>
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {PRINT_PLACES.map(({ key, icon: Icon, tint }, i) => (
-            // The reveal (and its stagger delay) lives on the <li>; the hover lift is on the card inside, so the
-            // two transitions never fight and hovering isn't delayed.
-            <li key={key} className="reveal" style={{ transitionDelay: `${i * 60}ms` }}>
-              <div className="group flex h-full flex-col justify-between gap-6 rounded-2xl border border-hairline bg-bg p-4 transition-[translate,box-shadow,border-color] duration-300 ease-[var(--ease-out-soft)] hover:-translate-y-1 hover:border-ink/15 hover:shadow-soft">
+        <Link
+          href="/shops"
+          className="group inline-flex shrink-0 items-center gap-2 self-start rounded-full border border-ink px-5 py-3 font-semibold transition-colors hover:bg-ink hover:text-bg md:self-auto"
+        >
+          {t("buyCta")}
+          <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" strokeWidth={2} aria-hidden="true" />
+        </Link>
+      </div>
+      <ol className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {BUY_STEPS.map(({ key, icon: Icon, tint }, i) => (
+          // The reveal (and its stagger delay) lives on the <li>; the hover lift is on the card inside, so the
+          // two transitions never fight and hovering isn't delayed.
+          <li key={key} className="reveal" style={{ transitionDelay: `${i * 80}ms` }}>
+            <div className="group flex h-full flex-col gap-8 rounded-2xl border border-hairline bg-bg p-5 transition-[translate,box-shadow,border-color] duration-300 ease-[var(--ease-out-soft)] hover:-translate-y-1 hover:border-ink/15 hover:shadow-soft">
+              <div className="flex items-center justify-between">
                 <span
-                  className="grid size-10 place-items-center rounded-xl transition-transform duration-300 ease-[var(--ease-out-soft)] group-hover:scale-110 group-hover:-rotate-6"
+                  className="grid size-11 place-items-center rounded-xl transition-transform duration-300 ease-[var(--ease-out-soft)] group-hover:scale-110 group-hover:-rotate-6"
                   style={{ background: tint }}
                   aria-hidden="true"
                 >
                   <Icon className="size-5 text-[#2B2320]" strokeWidth={1.75} />
                 </span>
-                <div>
-                  <p className="font-medium">{t(`print.${key}.title`)}</p>
-                  <p className="mt-1 text-xs tabular-nums text-muted">{t(`print.${key}.meta`)}</p>
-                </div>
+                <span className="text-sm tabular-nums text-muted" aria-hidden="true">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
               </div>
-            </li>
-          ))}
-          <li
-            className="reveal col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-dashed border-hairline p-4 sm:col-span-3"
-            style={{ transitionDelay: "360ms" }}
-          >
-            <div>
-              <p className="font-medium">{t("printYou")}</p>
-              <p className="mt-1 text-xs text-muted">{t("printYouBody")}</p>
+              <div>
+                <h3 className="text-lg font-semibold tracking-tight">{t(`buy.${key}.title`)}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{t(`buy.${key}.body`)}</p>
+              </div>
             </div>
-            <Plus className="size-5 shrink-0 text-muted" strokeWidth={1.75} aria-hidden="true" />
           </li>
-        </ul>
-      </div>
-      <p className="reveal mt-8 text-sm text-muted">{t("printNote")}</p>
+        ))}
+      </ol>
+      <p className="reveal mt-8 text-sm text-muted">{t("buyNote")}</p>
     </section>
   );
 }

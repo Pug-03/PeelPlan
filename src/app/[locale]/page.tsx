@@ -7,7 +7,7 @@ import { Wordmark } from "@/components/Wordmark";
 import { HeroPlayground } from "@/components/landing/HeroPlayground";
 import { Intro } from "@/components/landing/Intro";
 import { Marquee } from "@/components/landing/Marquee";
-import { ForSellers, Gallery, Pricing, PrintPartners, Reviews, SizeTable, UseCases } from "@/components/landing/MoreSections";
+import { BuyFlow, ForSellers, Gallery, Pricing, Reviews, SizeTable, UseCases } from "@/components/landing/MoreSections";
 import { EXAMPLE_LAYOUTS } from "@/components/landing/layouts";
 import "@/components/landing/landing-extras.css";
 import { RevealOnScroll } from "@/components/landing/Reveal";
@@ -224,7 +224,7 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
         <ForSellers />
         <Reviews />
         <Pricing />
-        <PrintPartners />
+        <BuyFlow />
 
         <KineticBand words={tm.raw("bandB") as string[]} wordsB={tm.raw("bandA") as string[]} />
 
