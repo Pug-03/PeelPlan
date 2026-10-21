@@ -86,6 +86,9 @@
   transform-origin: top right;
   animation: menu-pop 380ms var(--spring);
 }
+.site-header-menu[data-resumed] {
+  animation: none;
+}
 @keyframes menu-pop {
   from {
     opacity: 0;

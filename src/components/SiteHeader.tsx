@@ -44,12 +44,12 @@ const HeaderMarket = dynamic(() => import("./HeaderMarket"), { ssr: false });
  * Only read on the client-side navigation that follows, never during hydration.
  */
 const KEEP_KEY = "peelplan.langswap";
-function consumeLangSwap(): { menu: boolean } | null {
+// Read-only so a double-invoked initializer (StrictMode in dev) gets the same answer; SiteHeader clears it after mount.
+function readLangSwap(): { menu: boolean } | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = sessionStorage.getItem(KEEP_KEY);
     if (!raw) return null;
-    sessionStorage.removeItem(KEEP_KEY);
     const v = JSON.parse(raw) as { menu: boolean; at: number };
     return Date.now() - v.at < 5000 ? v : null;
   } catch {
@@ -203,9 +203,22 @@ const UNFOLD_AT = 60;
 export function SiteHeader() {
   const t = useTranslations("nav");
   // After a language switch the header remounts: come back folded / with the menu open, as it was.
-  const [resume] = useState(consumeLangSwap);
+  const [resume] = useState(readLangSwap);
   const [folded, setFolded] = useState(() => !!resume && window.scrollY > FOLD_AT);
   const [open, setOpen] = useState(() => !!resume?.menu);
+  // A menu carried over from the other language is already open: don't pop it in again.
+  const [resumed, setResumed] = useState(() => !!resume?.menu);
+  const toggleMenu = () => {
+    setResumed(false);
+    setOpen((o) => !o);
+  };
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem(KEEP_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
   const panel = useRef<HTMLDivElement>(null);
 
   // Two invisible markers from the top of the page down to FOLD_AT and UNFOLD_AT; watching them leave and
@@ -275,7 +288,7 @@ export function SiteHeader() {
                 className="grid size-10 place-items-center rounded-full text-ink transition-colors hover:bg-surface md:hidden"
                 aria-label={t("menu")}
                 aria-expanded={menuOpen}
-                onClick={() => setOpen((o) => !o)}
+                onClick={toggleMenu}
               >
                 <Menu className="size-5" strokeWidth={1.75} aria-hidden="true" />
               </button>
@@ -296,14 +309,14 @@ export function SiteHeader() {
             aria-expanded={menuOpen}
             aria-hidden={!folded}
             tabIndex={folded ? 0 : -1}
-            onClick={() => setOpen((o) => !o)}
+            onClick={toggleMenu}
           >
             <RulerMark className="size-7" />
           </button>
         </header>
 
         {menuOpen && (
-          <nav className="site-header-menu" aria-label={t("menu")}>
+          <nav className="site-header-menu" data-resumed={resumed || undefined} aria-label={t("menu")}>
             <Link href="/" className="mb-1 rounded-lg px-2 py-1" onClick={() => setOpen(false)}>
               <Wordmark />
             </Link>
