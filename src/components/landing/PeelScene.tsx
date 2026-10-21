@@ -10,7 +10,7 @@ import { VISIBLE_LIBRARY, stickerSrc } from "@/stickers/library";
  * real size draws in around it. The glow and sparks are CSS; no 3D library.
  */
 
-const STICKER_ID = "peel-star";
+const STICKER_ID = "code-coder";
 
 /** Deterministic sparks around the ring. */
 const SPARKS = Array.from({ length: 56 }, (_, i) => {
@@ -75,11 +75,11 @@ export function PeelScene({ title, titleB, body, peelLabel }: { title: string; t
         {/* Glow ring and sparks */}
         <div data-ring aria-hidden="true" className="absolute top-1/2 left-1/2 aspect-square w-[min(82vh,92vw)] -translate-x-1/2 -translate-y-1/2">
           <div className="peel-ring absolute inset-[14%] rounded-full" />
-          <div className="absolute inset-[24%] rounded-full bg-[radial-gradient(circle,rgb(80_200_255/0.14),transparent_70%)]" />
+          <div className="absolute inset-[24%] rounded-full bg-[radial-gradient(circle,rgb(215_255_58/0.16),transparent_70%)]" />
           {SPARKS.map((s, i) => (
             <span
               key={i}
-              className="peel-spark absolute rounded-full bg-[#4FB8E8]"
+              className="peel-spark absolute rounded-full bg-[#A8D41E]"
               style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.s, height: s.s, animationDelay: `${s.delay}s`, animationDuration: `${s.dur}s` }}
             />
           ))}
@@ -87,14 +87,14 @@ export function PeelScene({ title, titleB, body, peelLabel }: { title: string; t
 
         <div data-title className="absolute top-[9vh] left-0 w-full px-6 text-center sm:top-[11vh]">
           <h2 className="text-[clamp(2.6rem,7vw,6rem)] leading-[0.95] font-extrabold tracking-[-0.045em]">
-            {title} <span className="editorial-italic block font-normal text-[#2E9BD6] sm:inline">{titleB}</span>
+            {title} <span className="editorial-italic block font-normal text-muted sm:inline">{titleB}</span>
           </h2>
         </div>
 
         {/* The sticker: front art with a backing liner, back face is the printed liner */}
         <div className="absolute inset-0 grid place-items-center [perspective:1000px]">
           <div className="relative">
-            <div data-card className="relative w-[min(34vh,300px)] [transform-style:preserve-3d]">
+            <div data-card className="relative w-[min(58vh,86vw,540px)] [transform-style:preserve-3d]">
               <div className="relative [backface-visibility:hidden]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -110,7 +110,7 @@ export function PeelScene({ title, titleB, body, peelLabel }: { title: string; t
                 <div
                   data-glow
                   aria-hidden="true"
-                  className="absolute -inset-6 -z-10 rounded-full bg-[radial-gradient(circle,rgb(255_210_80/0.35),transparent_65%)] blur-xl"
+                  className="absolute -inset-6 -z-10 rounded-full bg-[radial-gradient(circle,rgb(215_255_58/0.4),transparent_65%)] blur-xl"
                 />
                 <div
                   data-liner

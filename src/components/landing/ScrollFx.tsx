@@ -136,11 +136,20 @@ export function ScrollFx() {
 
       all('[data-fx="draw"]').forEach((el) => {
         const paths = gsap.utils.toArray<SVGGeometryElement>(el.querySelectorAll("[data-fx-path]"));
-        const tl = gsap.timeline({ scrollTrigger: { trigger: el, start: "top 80%", end: "center 45%", scrub: 0.8 } });
+        // Plays once when it comes into view, then the dash is removed. A scrubbed draw could be left
+        // half-drawn wherever the scroll stopped, and a dash leaves gaps once a hover thickens the stroke.
+        const clear = () => gsap.set(paths, { clearProps: "strokeDasharray,strokeDashoffset" });
+        const tl = gsap.timeline({ paused: true, onComplete: clear });
         paths.forEach((p, i) => {
           const len = p.getTotalLength() + 4;
           gsap.set(p, { strokeDasharray: `${len} ${len}`, strokeDashoffset: len });
-          tl.to(p, { strokeDashoffset: 0, duration: 1, ease: "power1.inOut" }, i * 0.55);
+          tl.to(p, { strokeDashoffset: 0, duration: 0.9, ease: "power2.inOut" }, i * 0.18);
+        });
+        const st = ScrollTrigger.create({ trigger: el, start: "top 85%", once: true, onEnter: () => tl.play() });
+        undo.push(() => {
+          st.kill();
+          tl.kill();
+          clear();
         });
       });
 

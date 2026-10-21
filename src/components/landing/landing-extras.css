@@ -157,20 +157,32 @@
 
 /* Size outlines: hovering a table row highlights that lid. */
 .size-outline {
-  fill-opacity: 0.14;
-  animation: tint-wave 5s ease-in-out infinite;
+  fill: var(--text);
+  fill-opacity: 0.035;
+  stroke: var(--text);
+  stroke-opacity: 0.55;
+  stroke-width: 1.2;
   transition:
-    opacity 300ms var(--ease-out-soft),
-    stroke-width 300ms var(--ease-out-soft),
-    fill-opacity 300ms var(--ease-out-soft);
+    fill 300ms var(--ease-out-soft),
+    fill-opacity 300ms var(--ease-out-soft),
+    stroke-opacity 300ms var(--ease-out-soft),
+    stroke-width 300ms var(--ease-out-soft);
 }
-@keyframes tint-wave {
-  50% {
-    fill-opacity: 0.3;
-  }
+.size-label {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 8px;
+  letter-spacing: 0.02em;
+  fill: var(--muted);
+  transition:
+    fill 300ms var(--ease-out-soft),
+    opacity 300ms var(--ease-out-soft);
 }
-.sizes-fx:has(tr[data-m]:hover) .size-outline {
-  opacity: 0.18;
+.size-lid {
+  transition: opacity 300ms var(--ease-out-soft);
+}
+/* Hovering a row in the table: that lid darkens and thickens, the rest step back. Ink only, no colour. */
+.sizes-fx:has(tr[data-m]:hover) .size-lid {
+  opacity: 0.35;
 }
 .sizes-fx:has(tr[data-m="macbook-neo-13"]:hover) [data-o="macbook-neo-13"],
 .sizes-fx:has(tr[data-m="macbook-air-13-m5"]:hover) [data-o="macbook-air-13-m5"],
@@ -178,15 +190,16 @@
 .sizes-fx:has(tr[data-m="macbook-pro-14-m5"]:hover) [data-o="macbook-pro-14-m5"],
 .sizes-fx:has(tr[data-m="macbook-pro-16-m5"]:hover) [data-o="macbook-pro-16-m5"] {
   opacity: 1;
-  stroke-width: 3.2;
-  fill-opacity: 0.35;
-  animation: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .size-outline {
-    animation: none;
+  & .size-outline {
+    fill-opacity: 0.1;
+    stroke-opacity: 1;
+    stroke-width: 2.4;
   }
+  & .size-label {
+    fill: var(--text);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
   .review-track {
     animation: none;
   }
@@ -197,14 +210,15 @@
 
 /* Peel scene: glowing ring and twinkling sparks. */
 .peel-ring {
-  background: conic-gradient(from 0deg, #4fd1ff, #7c5cff, #d7ff3a, #4fd1ff);
-  mask: radial-gradient(circle, transparent 62%, #000 63%, #000 66%, transparent 67%);
-  filter: blur(6px) drop-shadow(0 0 30px rgb(79 209 255 / 0.6));
+  /* Brand lime fading through a soft mint to clear, so the ring reads as one glowing stroke, not a rainbow. */
+  background: conic-gradient(from 0deg, #d7ff3a, #b6f05a 25%, rgb(215 255 58 / 0.15) 50%, #b6f05a 75%, #d7ff3a);
+  mask: radial-gradient(circle, transparent 62.5%, #000 63.5%, #000 65.5%, transparent 66.5%);
+  filter: blur(3px) drop-shadow(0 0 18px rgb(190 240 40 / 0.55));
   animation: peel-spin 14s linear infinite;
 }
 .peel-spark {
   opacity: 0.2;
-  box-shadow: 0 0 6px #9be7ff;
+  box-shadow: 0 0 6px rgb(215 255 58 / 0.9);
   animation: peel-twinkle 3s ease-in-out infinite;
 }
 /* Set by PeelScene while the scene is off screen. */
