@@ -22,7 +22,9 @@ export default async function proxy(request: NextRequest) {
       },
     },
   });
-  await supabase.auth.getUser();
+  // getClaims refreshes an expired session like getUser, but checks the JWT locally (cached JWKS) when the
+  // project signs with asymmetric keys, instead of a round trip to Supabase Auth on every page and language switch.
+  await supabase.auth.getClaims();
   return response;
 }
 
