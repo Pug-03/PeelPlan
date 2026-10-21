@@ -1,9 +1,9 @@
 "use client";
 
-import { Bug, Check, Copy, Lightbulb, Mail, MessageSquare, Monitor, RotateCcw, Smartphone, Tablet } from "lucide-react";
+import { Bug, Check, Copy, Lightbulb, Mail, MessageSquare, Monitor, RotateCcw, Smartphone, Store, Tablet } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { listReports, setReportStatus, useAdminQuery, type AdminReport, type ReportStatus } from "@/features/admin/data";
+import { listReportMessages, listReports, setReportStatus, useAdminQuery, type AdminReport, type ReportMessage, type ReportStatus } from "@/features/admin/data";
 import { FEEDBACK_EVENT, listFeedback, setFeedbackStatus } from "@/features/feedback/client";
 import { FEEDBACK_KINDS, FEEDBACK_STATUSES, type Feedback, type FeedbackKind, type FeedbackStatus } from "@/features/feedback/validate";
 import { Link } from "@/i18n/navigation";
@@ -198,7 +198,17 @@ export function ReportsTab() {
                   <Pill tone={r.status === "open" ? "bad" : "good"}>{t(`filters.${r.status}`)}</Pill>
                   {r.side && <span className="text-xs text-muted">{t(`by.${r.side}`)}</span>}
                 </div>
+                {/* Who the conversation is between, so the queue is readable without opening each thread. */}
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Store className="size-3.5 shrink-0 text-muted" strokeWidth={1.75} aria-hidden="true" />
+                    <span className="font-medium">{r.shopName ?? t("unknownShop")}</span>
+                  </span>
+                  <span className="text-muted">·</span>
+                  <span className="text-muted">{t("buyerIs", { name: r.buyerName ?? t("unknownBuyer") })}</span>
+                </p>
                 {r.note ? <p className="text-sm leading-relaxed break-words whitespace-pre-line text-muted">{r.note}</p> : <p className="text-sm text-muted italic">{t("noNote")}</p>}
+                <Evidence reportId={r.id} />
                 <p className="text-xs text-muted tabular-nums">{date(r.at)}</p>
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -223,6 +233,66 @@ export function ReportsTab() {
             </li>
           ))}
         </ul>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The messages as they were when the report was filed (0005 snapshots them, so they outlive the
+ * reported account). Loaded on demand: a queue of 500 reports shouldn't fetch every conversation.
+ */
+function Evidence({ reportId }: { reportId: string }) {
+  const t = useTranslations("admin.reports");
+  const ta = useTranslations("admin");
+  const tc = useTranslations("chat");
+  const date = useDate();
+  const [open, setOpen] = useState(false);
+  const [state, setState] = useState<{ rows?: ReportMessage[]; error?: boolean }>({});
+
+  const show = async () => {
+    setOpen(true);
+    if (state.rows) return;
+    setState({});
+    try {
+      setState({ rows: await listReportMessages(reportId) });
+    } catch {
+      setState({ error: true });
+    }
+  };
+
+  if (!open)
+    return (
+      <button type="button" onClick={() => void show()} className="self-start text-sm font-medium text-muted underline underline-offset-2 hover:text-ink">
+        {t("showEvidence")}
+      </button>
+    );
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button type="button" onClick={() => setOpen(false)} className="self-start text-sm font-medium text-muted underline underline-offset-2 hover:text-ink">
+        {t("hideEvidence")}
+      </button>
+      {state.error ? (
+        <p className="text-sm text-muted">{ta("loadError")}</p>
+      ) : !state.rows ? (
+        <p className="text-sm text-muted">{t("loadingEvidence")}</p>
+      ) : state.rows.length === 0 ? (
+        <p className="text-sm text-muted">{t("noEvidence")}</p>
+      ) : (
+        <ol className="flex flex-col gap-1.5 rounded-xl bg-surface p-3">
+          {state.rows.map((m) => (
+            <li key={m.id} className="flex flex-col text-sm">
+              <span className="text-xs text-muted">
+                {m.from === "buyer" ? tc("buyer") : m.from === "shop" ? tc("admin.fromShop") : tc("system")} · <span className="tabular-nums">{date(m.at)}</span>
+              </span>
+              <span className="break-words whitespace-pre-line">
+                {m.text}
+                {m.hasImage && <span className="text-muted"> {t("evidencePhoto")}</span>}
+              </span>
+            </li>
+          ))}
+        </ol>
       )}
     </div>
   );

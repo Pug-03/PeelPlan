@@ -22,7 +22,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, doc } = await params;
   if (!isDoc(doc)) return {};
   const t = await getTranslations({ locale, namespace: "legal" });
-  return { title: `${t(`${doc}.title`)} - PeelPlan`, alternates: { canonical: `/${locale}/legal/${doc}` } };
+  return { title: `${t(`${doc}.title`)} - PeelPlan`, alternates: {
+      canonical: `/${locale}/legal/${doc}`,
+      languages: { th: `/th/legal/${doc}`, en: `/en/legal/${doc}`, "x-default": `/legal/${doc}` },
+    },
+  };
 }
 
 export default async function LegalPage({ params }: Props) {

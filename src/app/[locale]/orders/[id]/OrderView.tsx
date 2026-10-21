@@ -59,7 +59,7 @@ function OrderView({ session, id }: { session: Session; id: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chatBusy, setChatBusy] = useState(false);
-  const [chatError, setChatError] = useState(false);
+  const [chatError, setChatError] = useState<"failed" | "suspended" | null>(null);
 
   const wrap = "mx-auto flex max-w-5xl flex-col gap-6 px-5 pt-6 pb-24 sm:px-8";
   if (data === undefined && loadError) {
@@ -107,24 +107,29 @@ function OrderView({ session, id }: { session: Session; id: string }) {
     } catch (e) {
       const code = e instanceof Error ? e.message : "";
       // bad-state: the order moved on meanwhile (e.g. a slip after it was cancelled or expired).
-      setError(code === "storage-full" || code === "bad-image" || code === "bad-state" ? code : "generic");
+      // slip-rejected: the same file the shop already turned down (0005), so it needs a different one.
+      const known = ["storage-full", "bad-image", "bad-state", "slip-rejected", "account-suspended"];
+      setError(known.includes(code) ? code : "generic");
     } finally {
       setBusy(false);
     }
   };
-  const setStatus = (status: OrderStatus, extra?: Parameters<MarketStore["setOrderStatus"]>[2]) => act((s) => s.setOrderStatus(order.id, status, extra));
+  // The acting side goes with the change: the store refuses a move this side may not make.
+  const setStatus = (status: OrderStatus, extra?: { tracking?: Order["tracking"]; cancelReason?: string }) =>
+    act((s) => s.setOrderStatus(order.id, status, { ...extra, side: role }));
 
   const chat = async () => {
     setChatBusy(true);
-    setChatError(false);
+    setChatError(null);
     try {
       router.push(
         role === "buyer"
           ? await openChat(order.shopId, uid, session.profile?.displayName || session.user.name)
           : await openChat(order.shopId, order.buyerId, order.address.name),
       );
-    } catch {
-      setChatError(true);
+    } catch (e) {
+      // A suspended account may read its orders but not start a conversation (0005).
+      setChatError(e instanceof Error && e.message === "account-suspended" ? "suspended" : "failed");
       setChatBusy(false);
     }
   };
@@ -170,7 +175,7 @@ function OrderView({ session, id }: { session: Session; id: string }) {
           {chatBlocked && <p className="text-xs text-muted">{tm("exampleNoChat")}</p>}
           {chatError && (
             <p role="alert" className="text-xs text-[#B3261E] dark:text-[#FF8A80]">
-              {t("chatFailed")}
+              {chatError === "suspended" ? tm("shopPage.chatSuspended") : t("chatFailed")}
             </p>
           )}
         </div>

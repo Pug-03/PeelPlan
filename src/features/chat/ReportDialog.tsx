@@ -6,7 +6,8 @@ import { useState } from "react";
 import { getStore, TEST_MODE, type ReportReason } from "@/features/market/store";
 import { Modal } from "./Modal";
 
-const REASONS = ["scam", "spam", "harassment", "inappropriate", "other"] as const;
+/** The reasons the database stores (0002 `reports.reason`), counterfeit included: it's in the Terms. */
+const REASONS = ["scam", "spam", "harassment", "counterfeit", "other"] as const;
 type Reason = (typeof REASONS)[number];
 const KEY = "peelplan.reports.v1";
 
@@ -20,12 +21,6 @@ function saveLocalReport(r: ChatReport) {
   } catch {
     /* storage unavailable: the confirmation still shows */
   }
-}
-
-/** The database has no "inappropriate" reason (0002 `reports.reason`): file it as "other", tagged in the note. */
-function toStored(reason: Reason, note: string): { reason: ReportReason; note: string } {
-  if (reason !== "inappropriate") return { reason, note };
-  return { reason: "other", note: `[inappropriate] ${note}`.trim().slice(0, 1000) };
 }
 
 export function ReportDialog({
@@ -46,12 +41,12 @@ export function ReportDialog({
   const [note, setNote] = useState("");
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<"failed" | "rateLimited" | "alreadyReported" | null>(null);
 
   const close = () => {
     onClose();
     setDone(false);
-    setFailed(false);
+    setFailed(null);
     setNote("");
     setReason("scam");
   };
@@ -75,7 +70,7 @@ export function ReportDialog({
             e.preventDefault();
             if (busy) return;
             setBusy(true);
-            setFailed(false);
+            setFailed(null);
             const clean = note.trim().slice(0, 1000);
             try {
               if (TEST_MODE) {
@@ -83,12 +78,13 @@ export function ReportDialog({
               } else {
                 const s = await getStore();
                 if (!s.reportThread) throw new Error("unsupported");
-                const r = toStored(reason, clean);
-                await s.reportThread(threadId, r.reason, r.note);
+                await s.reportThread(threadId, reason satisfies ReportReason, clean);
               }
               setDone(true);
-            } catch {
-              setFailed(true);
+            } catch (e) {
+              // 0005: one open report per conversation per person, and five an hour.
+              const code = e instanceof Error ? e.message : "";
+              setFailed(code === "rate-limited" ? "rateLimited" : code === "already-reported" ? "alreadyReported" : "failed");
             } finally {
               setBusy(false);
             }
@@ -123,7 +119,7 @@ export function ReportDialog({
           </label>
           {failed && (
             <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-              {t("failed")}
+              {t(failed)}
             </p>
           )}
           <div className="flex justify-end gap-2">

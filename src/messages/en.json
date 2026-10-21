@@ -22,12 +22,22 @@
     },
     "you": "You: {text}",
     "photo": "Photo",
-    "orderAttached": "Order",
     "unread": "{count} unread",
     "testBanner": "Test mode: chats stay on this device. Open two browser tabs to try both sides.",
     "back": "All messages",
     "viewShop": "View shop",
     "buyer": "Buyer",
+    "shopUnavailable": "Shop unavailable",
+    "viewAs": "Reply as",
+    "roles": {
+      "buyer": "Buyer",
+      "shop": "My shop"
+    },
+    "admin": {
+      "readOnly": "Staff view: this conversation was reported, so you can read it but not take part.",
+      "with": "with {buyer}",
+      "fromShop": "Shop"
+    },
     "exampleShop": "Example shop, replies automatically",
     "today": "Today",
     "yesterday": "Yesterday",
@@ -45,7 +55,9 @@
       "failed": "Couldn't send. Please try again.",
       "full": "This device is out of storage for test chats. Try a smaller photo.",
       "badImage": "That file couldn't be read as an image.",
-      "rateLimited": "You're sending messages too fast. Wait a moment, then try again."
+      "rateLimited": "You're sending messages too fast. Wait a moment, then try again.",
+      "suspended": "Your account is suspended, so you can't send messages. You can still read this conversation.",
+      "shopUnavailable": "Your shop isn't on sale right now, so it can't send messages. Buyers can still write to you, and open orders can still be settled."
     },
     "safety": "Never pay outside the PromptPay QR shown on your order. PeelPlan staff will never ask for your password.",
     "orders": {
@@ -82,6 +94,7 @@
         "scam": "Asked me to pay outside PeelPlan or looks like a scam",
         "spam": "Spam or advertising",
         "harassment": "Harassment or threats",
+        "counterfeit": "Selling copies of someone else's artwork or brand",
         "inappropriate": "Inappropriate photos or content",
         "other": "Something else"
       },
@@ -94,7 +107,9 @@
       "testNote": "Test mode: the report is saved on this device only.",
       "close": "Close",
       "sending": "Sending…",
-      "failed": "Couldn't send the report. Please try again."
+      "failed": "Couldn't send the report. Please try again.",
+      "rateLimited": "You've sent several reports already. Wait a few minutes before sending another.",
+      "alreadyReported": "You've already reported this conversation. We're looking at it."
     },
     "notFound": {
       "title": "Conversation not found",
@@ -122,7 +137,8 @@
     "languageLabel": "Switch language to Thai",
     "theme": "Toggle dark mode",
     "menu": "Menu",
-    "shops": "Shops"
+    "shops": "Shops",
+    "skipToContent": "Skip to main content"
   },
   "landing": {
     "heroA": "See it at",
@@ -384,7 +400,6 @@
     "noUploads": "No stickers yet. Add a photo of one to get started.",
     "add": "Add {name}",
     "deleteAsset": "Remove from my stickers",
-    "properties": "Properties",
     "nothingSelected": "Select a sticker to edit its size and position.",
     "multiSelected": "{count} stickers selected",
     "width": "Width",
@@ -392,7 +407,6 @@
     "x": "X from left",
     "y": "Y from top",
     "rotation": "Rotation",
-    "lockAspect": "Lock aspect ratio",
     "finish": "Finish",
     "finishes": {
       "glossy": "Glossy",
@@ -426,11 +440,9 @@
       "character": "Characters (demo only)"
     },
     "sharedOpened": "Shared layout saved to your collection as a new layout.",
-    "restoreMine": "Restore mine",
     "dismiss": "Dismiss",
     "storageFull": "Couldn't save the image on this device (storage full or private mode). It stays until you close the tab.",
     "myCollection": "My collection",
-    "autosaved": "Saved automatically",
     "search": "Search stickers",
     "searchPlaceholder": "Search: cat, coffee, python…",
     "clearSearch": "Clear search",
@@ -446,7 +458,14 @@
     "saveImageFailed": "Couldn't create the image. Try again.",
     "shareFailed": "Couldn't create the share link. Try again.",
     "addFailed": "Couldn't add that sticker. Try again.",
-    "lidOnlyPng": "Lid only (PNG)"
+    "lidOnlyPng": "Lid only (PNG)",
+    "tooManyStickers": "A layout holds up to 200 stickers. Remove one to make room.",
+    "saveFailed": "Couldn't save this change on this device (storage full or private mode). Your work stays until you close the tab.",
+    "sharedMissing": "{count, plural, one {# sticker couldn't load: uploaded images stay on the device that made the link.} other {# stickers couldn't load: uploaded images stay on the device that made the link.}}",
+    "calibrationOdd": "That is far from a real card's width. Check the card is flat against the screen before saving.",
+    "estimateNote": "This model's corner radius and logo position are estimates, not published specs.",
+    "canvasFocus": "Lid canvas. Select a sticker, then nudge it with the arrow keys.",
+    "emojiNote": "Emoji print as “?” in the PDF."
   },
   "calibrate": {
     "title": "Calibrate your screen",
@@ -492,12 +511,13 @@
     "resetPoints": "Reset points",
     "resultSize": "Printed size: {w} × {h} mm",
     "processing": "Working…",
-    "error": "This image couldn't be opened. Try a JPG or PNG."
+    "error": "This image couldn't be opened. Try a JPG or PNG.",
+    "tooBig": "That file is over 25 MB. Try a smaller photo.",
+    "svgUnsupported": "SVG files aren't supported yet. Save it as a PNG and try again."
   },
   "export": {
     "title": "Export",
     "png": "Image (PNG)",
-    "pngBody": "For sharing. Not to scale.",
     "pdf": "1:1 print guide (PDF)",
     "pdfBody": "Exact size with a 100 mm calibration ruler.",
     "paper": "Paper",
@@ -509,7 +529,6 @@
     "templateHint": "Cut out the dashed shapes, lay the paper on your lid and stick through the holes.",
     "images": "Include sticker images",
     "download": "Download PDF",
-    "downloadPng": "Download PNG",
     "coordinates": "Coordinate sheet",
     "coordinatesBody": "Centre of each sticker measured from the lid's left and top edges (hinge at the bottom).",
     "printWarning": "Print at 100% / Actual size. Turn off \"Fit to page\".",
@@ -545,8 +564,10 @@
       "colSize": "Size (w x h)",
       "colRotation": "Rotation (CW)",
       "rotationCw": "{deg}° CW",
-      "flipped": "(flipped)"
-    }
+      "flipped": "(flipped)",
+      "estimateNote": "Note: corner radius and logo position are estimates, not published specs."
+    },
+    "skippedAssets": "{count, plural, one {# sticker image couldn't be read and was left out.} other {# sticker images couldn't be read and were left out.}}"
   },
   "auth": {
     "signIn": "Sign in",
@@ -605,6 +626,8 @@
     "demoNote": "Acts as if you signed in with Google, using a test account stored on this device. Use it until Supabase is connected.",
     "backHome": "Back to the home page",
     "sessionError": "We couldn't load your account. Check your connection and try again.",
+    "stillLoading": "Still loading your account…",
+    "cookiesBlocked": "Your browser is blocking cookies for this site, so signing in can't finish. Allow cookies for PeelPlan and try again.",
     "retry": "Try again"
   },
   "shop": {
@@ -614,7 +637,6 @@
     "follow": "Follow",
     "following": "Following",
     "chat": "Message",
-    "chatSoon": "Messaging arrives with the marketplace",
     "sold": "Sold",
     "rating": "Rating",
     "reviewsCount": "{count} reviews",
@@ -676,7 +698,6 @@
     "emptyTitle": "No layouts yet",
     "emptyBody": "Start a layout and it appears here, saved as you go.",
     "profile": "Your profile",
-    "shopPending": "Shop: {name} · waiting for review",
     "viewShop": "View shop page",
     "buyer": "Planner account",
     "testAccount": "Test account (simulated Google sign-in)",
@@ -992,9 +1013,10 @@
       "toCheck": "Slips to check",
       "toShip": "Paid, ready to ship",
       "summary": "Summary",
-      "revenue": "Revenue this month",
-      "revenueHint": "Orders you confirmed as paid, shipped or completed",
+      "revenue": "Money received this month",
+      "revenueHint": "Orders whose slip you accepted this month, shipping included",
       "products": "Products · {active} on sale",
+      "productsHidden": "Products · hidden until your shop is approved",
       "messages": "Unread messages",
       "noPromptPay": "Add your PromptPay in Shop settings so buyers can pay you. Without it, orders can't be paid."
     },
@@ -1030,6 +1052,8 @@
       "size": "{w} × {h} mm",
       "madeToOrderShort": "Made to order",
       "inStock": "{count} in stock",
+      "available": "{count} available",
+      "reservedShort": "{count} reserved",
       "confirmDelete": "Delete this product?",
       "keep": "Keep",
       "delete": "Delete",
@@ -1055,7 +1079,9 @@
       "sizeRange": "5–400 mm, up to one decimal place",
       "price": "Price (THB)",
       "priceHint": "1–100,000 baht, per piece",
-      "stock": "Stock",
+      "stock": "Stock available",
+      "stockHint": "How many a buyer can still order right now.",
+      "stockReserved": "{count, plural, one {# piece is} other {# pieces are}} reserved by open orders and already taken out of this number. Type what is still free to sell, not what is on your shelf.",
       "madeToOrder": "Made to order (no stock limit)",
       "finish": "Finish",
       "finishes": {
@@ -1076,8 +1102,8 @@
     "settings": {
       "identity": "Shop details",
       "name": "Shop name",
-      "renameNote": "Renaming a live shop sends it back for a quick review.",
-      "renameWarning": "Saving a new name sends your shop back to review. It is hidden from buyers until approved again.",
+      "renameNote": "Changing the name, the About text, what you make or your PromptPay sends a live shop back for a quick review.",
+      "renameWarning": "What you changed sends your shop back to review when you save: the name, the About text, what you make or your PromptPay. Buyers won't see the shop until it is approved again.",
       "about": "About the shop",
       "aboutHint": "What you make and what makes it yours. Up to 1,000 characters.",
       "city": "City",
@@ -1133,7 +1159,11 @@
       },
       "save": "Save changes",
       "saving": "Saving…",
-      "saved": "Saved"
+      "saved": "Saved",
+      "unsavedTitle": "Leave without saving?",
+      "unsavedBody": "Your changes to the shop settings haven't been saved yet. Leaving this page drops them.",
+      "unsavedStay": "Keep editing",
+      "unsavedLeave": "Leave and discard"
     },
     "errors": {
       "shopName": "Shop name must be 2–80 characters.",
@@ -1152,6 +1182,7 @@
       "promptpayName": "Enter the account name (2–120 characters).",
       "link": "Enter a full https:// link.",
       "save": "Couldn't save. Try again.",
+      "suspended": "Your account is suspended, so you can't open a shop. Contact us if you think that's a mistake.",
       "storageFull": "This device's storage is full. Use smaller images or remove some.",
       "fixFields": "Check the highlighted fields.",
       "delete": "Couldn't delete. Try again.",
@@ -1209,7 +1240,8 @@
       "browseShops": "See all shops",
       "exampleReadOnly": "This is an example shop. You can't buy from it or message it, but you can try its stickers on your lid.",
       "notTaking": "This shop isn't taking orders yet. Check back soon.",
-      "chatFailed": "Couldn't open the chat. Please try again."
+      "chatFailed": "Couldn't open the chat. Please try again.",
+      "chatSuspended": "Your account is suspended, so you can't start a new conversation."
     },
     "cart": {
       "title": "Cart",
@@ -1282,7 +1314,8 @@
         "bad-address": "Please check your shipping address and phone number.",
         "not-onboarded": "Finish setting up your account before ordering.",
         "not-signed-in": "Your sign-in has expired. Sign in again to place the order.",
-        "rate-limited": "Too many tries in a short time. Wait a minute, then try again."
+        "rate-limited": "Too many tries in a short time. Wait a minute, then try again.",
+      "account-suspended": "Your account is suspended, so you can't place orders. Contact us if you think that's a mistake."
       },
       "blocked": {
         "example": "This is an example shop, so it can't take real orders.",
@@ -1387,7 +1420,9 @@
         "bad-image": "Couldn't open this image. Try a JPG or PNG.",
         "storage-full": "This device's storage is full. Try a smaller image.",
         "generic": "Something went wrong. Please try again.",
-        "bad-state": "This order isn't waiting for a slip any more. It may have been cancelled, or the shop already updated it."
+        "bad-state": "This order isn't waiting for a slip any more. It may have been cancelled, or the shop already updated it.",
+        "slip-rejected": "The shop already turned this slip down. Attach a different photo of the transfer.",
+        "account-suspended": "Your account is suspended, so this can't be changed. Contact us if you think that's a mistake."
       },
       "chatFailed": "Couldn't open the chat. Please try again.",
       "cancelReasons": {
@@ -1449,6 +1484,23 @@
       "views": "Page views, last 30 days",
       "trafficNote": "A visit is one browser tab on one day. Counted without cookies; people with Do Not Track or Global Privacy Control are not counted.",
       "trafficNoteTest": "Test mode: these numbers only count visits made in this browser."
+    },
+    "staffLog": {
+      "title": "Recent staff actions",
+      "note": "Every approval, rejection, suspension and hidden listing, with the reason given. Staff only.",
+      "actions": {
+        "set_shop_status": "Shop status changed",
+        "suspend_user": "Account suspension",
+        "hide_product": "Listing hidden or shown",
+        "status": "Status changed"
+      },
+      "targets": {
+        "shop": "shop",
+        "profile": "account",
+        "product": "listing",
+        "report": "report",
+        "feedback": "feedback"
+      }
     },
     "visitors": {
       "range": "Date range",
@@ -1514,6 +1566,8 @@
         "approve": "Approve",
         "reject": "Reject",
         "suspend": "Back to review",
+        "suspendOwner": "Suspend owner's account",
+        "unsuspendOwner": "Lift owner's suspension",
         "view": "View shop page"
       },
       "detail": {
@@ -1527,21 +1581,32 @@
         "reason": "Note to seller"
       },
       "confirm": {
+        "approveTitle": "Approve this shop?",
+        "approveBody": "{name} goes on sale right away: buyers can see it, order from it and pay its PromptPay. Check the shop name, the About text and the PromptPay name first.",
+        "approveSubmit": "Approve shop",
         "rejectTitle": "Reject this shop?",
-        "rejectBody": "Buyers won't be able to see {name}. The seller sees your reason on their dashboard.",
+        "rejectBody": "Buyers won't be able to see {name}, and every order of theirs still awaiting payment is cancelled. That can't be undone: approving the shop again does not bring those orders back. The seller sees your reason on their dashboard.",
         "suspendTitle": "Send back to review?",
-        "suspendBody": "{name} will be hidden from buyers until you approve it again.",
+        "suspendBody": "{name} will be hidden from buyers until you approve it again, and every order of theirs still awaiting payment is cancelled. That can't be undone: approving the shop again does not bring those orders back.",
         "reason": "Reason for the seller",
         "reasonOptional": "Note for the seller (optional)",
         "reasonHint": "Shown to the seller on their dashboard. Be specific about what to fix.",
         "reasonRequired": "Write a reason so the seller knows what to fix.",
+        "suspendOwnerTitle": "Suspend this owner's account?",
+        "suspendOwnerBody": "{name}'s owner keeps reading and can settle orders that are already open, but can't order, message or open another shop until the suspension is lifted. The reason is kept in the staff log.",
+        "suspendOwnerSubmit": "Suspend account",
+        "unsuspendOwnerTitle": "Lift this suspension?",
+        "unsuspendOwnerBody": "{name}'s owner can order, message and open shops again. Their shop keeps whatever status it has now.",
+        "unsuspendOwnerSubmit": "Lift suspension",
         "rejectSubmit": "Reject shop",
         "suspendSubmit": "Send back to review",
         "cancel": "Cancel"
       },
       "errors": {
         "save": "Couldn't update {name}. Try again.",
-        "notAdmin": "this account isn't an admin"
+        "notAdmin": "this account isn't an admin",
+        "ownAccount": "you can't suspend your own account",
+        "unsupported": "this database doesn't support that yet"
       }
     },
     "feedback": {
@@ -1579,6 +1644,14 @@
         "shop": "Reported by the shop"
       },
       "noNote": "No details given",
+      "buyerIs": "Buyer: {name}",
+      "showEvidence": "Show the reported messages",
+      "hideEvidence": "Hide the reported messages",
+      "loadingEvidence": "Loading the messages…",
+      "noEvidence": "No message snapshot for this report. Open the conversation instead.",
+      "evidencePhoto": "(photo)",
+      "unknownShop": "Shop no longer available",
+      "unknownBuyer": "unknown",
       "openThread": "Open conversation",
       "markHandled": "Mark handled",
       "reopen": "Reopen",

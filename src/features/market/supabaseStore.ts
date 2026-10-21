@@ -47,6 +47,11 @@ function check<T>(res: Result<T> | { data: T | null; error: { message: string } 
   return res.data as T;
 }
 
+/** An RPC this database doesn't have (migration not applied yet), so the caller can do it the old way. */
+function isMissingFunction(error: { code?: string; message: string }) {
+  return error.code === "PGRST202" || /could not find the function|does not exist/i.test(error.message);
+}
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isUuid = (s: string) => UUID.test(s);
 const num = (v: unknown) => Number(v);
@@ -566,29 +571,52 @@ export const supabaseStore: MarketStore = {
 
   async reportThread(threadId, reason, note) {
     if (!isUuid(threadId)) throw new Error("not-found");
+    const clean = note.slice(0, 1000);
+    // file_report (0005) validates the reason, snapshots the conversation for staff and returns the
+    // report id. Older databases don't have it, and 0005 keeps the plain insert working on purpose,
+    // so fall back to it; either path can answer 'already-reported' or 'rate-limited'.
+    const { error } = await db().rpc("file_report", { p_thread_id: threadId, p_reason: reason, p_note: clean });
+    if (!error) return;
+    if (!isMissingFunction(error)) throw new Error(error.message);
     // Insert only (no .select()): reporters have no read access to reports.
-    check(
-      await db()
-        .from("reports")
-        .insert({ thread_id: threadId, reason, note: note.slice(0, 1000) }),
-    );
+    check(await db().from("reports").insert({ thread_id: threadId, reason, note: clean }));
   },
 
   // approveForTesting: intentionally absent. Shops are approved by staff (admin page / service role).
 
   async listAllShops() {
     // Admin-only RPC (raises 'not-admin' otherwise); returns every shop with owner name and counts.
-    type Row = ShopRow & { owner_name: string; product_count: number; order_count: number; recent_order_count: number };
+    // 0005 stopped sending PromptPay numbers to the browser: `has_promptpay` says yes/no instead, and
+    // `owner_suspended` says whether the owner's account is suspended. Both are missing before 0005.
+    type Row = ShopRow & {
+      owner_name: string;
+      product_count: number;
+      order_count: number;
+      recent_order_count: number;
+      has_promptpay?: boolean;
+      owner_suspended?: boolean;
+    };
     const rows = (check(await db().rpc("admin_list_shops")) as Row[] | null) ?? [];
-    const real: AdminShop[] = rows.map((r) => ({
-      ...toShop(r),
-      ownerName: r.owner_name,
-      productCount: num(r.product_count),
-      orderCount: num(r.order_count),
-      recentOrderCount: num(r.recent_order_count),
-    }));
+    const real: AdminShop[] = rows.map((r) => {
+      const hasPromptPay = r.has_promptpay ?? !!r.promptpay_id;
+      return {
+        ...toShop(r),
+        // Staff see whether there is an account, never the number (it is often a national ID).
+        promptpay: undefined,
+        hasPromptPay,
+        ownerSuspended: r.owner_suspended ?? false,
+        acceptsPayment: r.status === "approved" && hasPromptPay,
+        ownerName: r.owner_name,
+        productCount: num(r.product_count),
+        orderCount: num(r.order_count),
+        recentOrderCount: num(r.recent_order_count),
+      };
+    });
     const examples: AdminShop[] = EXAMPLE_SHOPS.map((s) => ({
       ...s,
+      promptpay: undefined,
+      hasPromptPay: !!s.promptpay?.id,
+      ownerSuspended: false,
       ownerName: "PeelPlan",
       productCount: EXAMPLE_PRODUCTS.filter((p) => p.shopId === s.id).length,
       orderCount: 0,
@@ -599,6 +627,13 @@ export const supabaseStore: MarketStore = {
   async setShopStatus(shopId, status, reason) {
     if (!isUuid(shopId)) throw new Error("not-found");
     check(await db().rpc("set_shop_status", { p_shop_id: shopId, p_status: status, p_reason: reason?.trim() || null }));
+    emit();
+  },
+  async setUserSuspended(userId, suspended, reason) {
+    if (!isUuid(userId)) throw new Error("not-found");
+    const { error } = await db().rpc("set_user_suspended", { p_user_id: userId, p_suspended: suspended, p_reason: reason?.trim() || null });
+    // Before 0005 there is no such RPC: say so instead of looking as if it worked.
+    if (error) throw new Error(isMissingFunction(error) ? "unsupported" : error.message);
     emit();
   },
 

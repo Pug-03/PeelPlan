@@ -2,10 +2,12 @@
 
 import { ArrowLeft, ArrowUp, Flag, ImagePlus, Package, ShieldCheck, Store, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { adminOrderSummary, canAdminReadThread, type AdminOrder } from "@/features/admin/data";
 import { fileToDataUrl, getStore, useMarketQuery } from "@/features/market/store";
 import { LoadError } from "@/features/market/ui/buyer";
-import type { Message, Order } from "@/features/market/types";
+import type { Message, Order, Shop, Thread } from "@/features/market/types";
 import { Link } from "@/i18n/navigation";
 import type { Session } from "@/lib/session";
 import { baht, dayKey, dayLabel, timeOfDay } from "./format";
@@ -16,14 +18,41 @@ import { ReportDialog } from "./ReportDialog";
 
 const MAX = 2000;
 
-function useConversation(id: string, userId: string) {
-  return useMarketQuery(
+type Loaded = {
+  thread: Thread;
+  shop: Shop | null;
+  /** Which side the reader writes as. `null` = staff reading a reported conversation (read-only). */
+  side: Side | null;
+  /** Both when the same account owns the shop and bought from it: then the reader picks. */
+  sides: Side[];
+  messages: Message[];
+  pairOrders: Order[];
+  orders: Map<string, Order>;
+  /** Staff view only: the little an admin may know about an order mentioned here (0005). */
+  adminOrders: Map<string, AdminOrder>;
+};
+
+/** The thread as this reader sees it, or `null` when it isn't theirs to read. `want` is the side asked for. */
+function useConversation(id: string, userId: string, want: Side | null) {
+  return useMarketQuery<Loaded | null>(
     async (s) => {
       const thread = await s.getThread(id);
-      if (!thread) return { thread: null } as const;
+      if (!thread) return null;
       const [shop, mine] = await Promise.all([s.getShopById(thread.shopId), s.myShop(userId)]);
-      const side: Side | null = thread.buyerId === userId ? "buyer" : mine && mine.id === thread.shopId ? "shop" : null;
-      if (!side) return { thread: null } as const;
+      const sides: Side[] = [...(thread.buyerId === userId ? (["buyer"] as const) : []), ...(mine && mine.id === thread.shopId ? (["shop"] as const) : [])];
+      // Not a party: staff may still read a conversation someone reported, to see the evidence.
+      if (!sides.length) {
+        if (!(await canAdminReadThread(id))) return null;
+        const messages = await s.messages(id);
+        // Orders themselves stay closed to staff; the summary RPC gives status and totals, no buyer details.
+        const adminOrders = new Map<string, AdminOrder>();
+        for (const oid of new Set(messages.flatMap((m) => (m.orderId ? [m.orderId] : [])))) {
+          const o = await adminOrderSummary(oid);
+          if (o) adminOrders.set(oid, o);
+        }
+        return { thread, shop, side: null, sides, messages, pairOrders: [], orders: new Map(), adminOrders };
+      }
+      const side = want && sides.includes(want) ? want : sides[0];
       const messages = await s.messages(id);
       // Orders between this buyer and this shop, for the picker and for rendering order cards.
       const pairOrders = (side === "buyer" ? await s.buyerOrders(userId) : await s.shopOrders(thread.shopId))
@@ -34,9 +63,9 @@ function useConversation(id: string, userId: string) {
         const o = await s.getOrder(oid);
         if (o) orders.set(oid, o);
       }
-      return { thread, shop, side, messages, pairOrders, orders } as const;
+      return { thread, shop, side, sides, messages, pairOrders, orders, adminOrders: new Map() };
     },
-    [id, userId],
+    [id, userId, want],
   );
 }
 
@@ -53,6 +82,28 @@ function MessageText({ text }: { text: string }) {
         ),
       )}
     </p>
+  );
+}
+
+/** The order behind a message, as much of it as staff may see: no link, no buyer details. */
+function AdminOrderCard({ order }: { order: AdminOrder | undefined }) {
+  const t = useTranslations("chat");
+  const locale = useLocale();
+  if (!order)
+    return (
+      <span className="flex items-center gap-2 rounded-xl border border-hairline bg-bg px-3 py-2 text-sm text-muted">
+        <Package className="size-4" strokeWidth={1.75} aria-hidden="true" />
+        {t("order.missing")}
+      </span>
+    );
+  return (
+    <span className="flex min-w-56 flex-col rounded-xl border border-hairline bg-bg px-3 py-2.5 text-left">
+      <span className="text-sm font-semibold">{t("order.label", { code: order.code })}</span>
+      <span className="text-xs text-muted">
+        {t("order.total", { total: baht(order.totalThb, locale) })} · {t.has(`status.${order.status}`) ? t(`status.${order.status}`) : order.status} ·{" "}
+        {t("orders.items", { count: order.itemCount })}
+      </span>
+    </span>
   );
 }
 
@@ -88,7 +139,12 @@ function OrderCard({ order, mine }: { order: Order | undefined; mine: boolean })
 export function Conversation({ id, session }: { id: string; session: Session }) {
   const t = useTranslations("chat");
   const locale = useLocale();
-  const { data, error: loadError, retry } = useConversation(id, session.user.id);
+  // The inbox row says which side it was opened from (/messages/<id>?as=shop); the toggle below wins
+  // once the reader uses it. Only an account that is both the buyer and the shop ever sees both.
+  const asParam = useSearchParams().get("as");
+  const [picked, setPicked] = useState<Side | null>(null);
+  const want = picked ?? (asParam === "shop" ? "shop" : asParam === "buyer" ? "buyer" : null);
+  const { data, error: loadError, retry } = useConversation(id, session.user.id, want);
 
   const [text, setText] = useState("");
   const [image, setImage] = useState<string | null>(null);
@@ -102,10 +158,10 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
   const fileRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const ready = data && data.thread ? data : null;
+  const ready = data ?? null;
   const count = ready?.messages.length ?? 0;
-  const side = ready?.side;
-  const unread = ready ? (ready.side === "buyer" ? ready.thread.unreadBuyer : ready.thread.unreadShop) : 0;
+  const side = ready?.side ?? null;
+  const unread = !side ? 0 : side === "buyer" ? ready!.thread.unreadBuyer : ready!.thread.unreadShop;
 
   // Stick to the newest message. Photos load after the first paint and push the list down, so
   // follow each one as it loads, unless the reader has scrolled up meanwhile.
@@ -121,7 +177,7 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
       if (pinned) el.scrollTop = el.scrollHeight;
     };
     el.addEventListener("scroll", onScroll, { passive: true });
-    // `load` doesn't bubble; capture it from every <img> in the list.
+    // `load` doesn't bubble; capture it from every image in the list.
     el.addEventListener("load", onLoad, true);
     return () => {
       el.removeEventListener("scroll", onScroll);
@@ -160,10 +216,13 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
 
   const { thread, shop, messages, pairOrders, orders } = ready;
   const role = ready.side;
-  const otherName = role === "buyer" ? (shop?.name ?? "…") : thread.buyerName;
+  // A suspended shop is no longer public, so its record may not load: say so instead of showing "…".
+  const shopName = shop?.name ?? t("shopUnavailable");
+  const otherName = role === "shop" ? thread.buyerName : shopName;
 
   /** `report` shows the error where the person is looking: the composer, or the open order picker. */
   const send = async (body: { text?: string; image?: string; orderId?: string }, report: (msg: string | null) => void = setError) => {
+    if (!role) return false;
     setSending(true);
     report(null);
     try {
@@ -172,7 +231,10 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
       return true;
     } catch (e) {
       const code = e instanceof Error ? e.message : "";
-      report(code === "storage-full" ? t("composer.full") : code === "rate-limited" ? t("composer.rateLimited") : t("composer.failed"));
+      // 0005: a suspended account can read but not write, and the shop side can't write once the shop
+      // is no longer approved (the buyer side still can, so an open order can be settled).
+      const known = { "storage-full": "full", "rate-limited": "rateLimited", "account-suspended": "suspended", "shop-unavailable": "shopUnavailable" } as const;
+      report(t(`composer.${known[code as keyof typeof known] ?? "failed"}`));
       return false;
     } finally {
       setSending(false);
@@ -209,7 +271,8 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
     }
   };
 
-  const mineFrom = (m: Message) => m.from === role;
+  // Staff see the shop's messages on the "mine" side, with every bubble labelled, so the two sides read apart.
+  const mineFrom = (m: Message) => m.from === (role ?? "shop");
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -222,13 +285,14 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
         >
           <ArrowLeft className="size-5" strokeWidth={1.75} aria-hidden="true" />
         </Link>
-        <Avatar name={otherName} logo={role === "buyer" ? shop?.logo : undefined} tint={role === "buyer" ? shop?.tint : undefined} size="size-10" />
+        <Avatar name={otherName} logo={role === "shop" ? undefined : shop?.logo} tint={role === "shop" ? undefined : shop?.tint} size="size-10" />
         <div className="flex min-w-0 flex-1 flex-col">
           <h1 className="truncate font-semibold">{otherName}</h1>
           <p className="flex min-w-0 items-center gap-2 text-xs text-muted">
             {role === "shop" && <span>{t("buyer")}</span>}
-            {role === "buyer" && shop?.example && <span className="truncate">{t("exampleShop")}</span>}
-            {role === "buyer" && shop && (
+            {!role && <span className="truncate">{t("admin.with", { buyer: thread.buyerName || t("buyer") })}</span>}
+            {role !== "shop" && shop?.example && <span className="truncate">{t("exampleShop")}</span>}
+            {role !== "shop" && shop && (
               <Link href={`/shops/${shop.slug}`} className="inline-flex shrink-0 items-center gap-1 underline underline-offset-2 hover:text-ink">
                 <Store className="size-3" strokeWidth={2} aria-hidden="true" />
                 {t("viewShop")}
@@ -236,15 +300,46 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
             )}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setReporting(true)}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm text-muted transition-colors hover:bg-surface hover:text-ink"
-        >
-          <Flag className="size-4" strokeWidth={1.75} aria-hidden="true" />
-          <span className="max-sm:sr-only">{t("report.button")}</span>
-        </button>
+        {role && (
+          <button
+            type="button"
+            onClick={() => setReporting(true)}
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm text-muted transition-colors hover:bg-surface hover:text-ink"
+          >
+            <Flag className="size-4" strokeWidth={1.75} aria-hidden="true" />
+            <span className="max-sm:sr-only">{t("report.button")}</span>
+          </button>
+        )}
       </div>
+
+      {/* Reading your own shop's inbox: the same account is both sides, so let it switch. */}
+      {ready.sides.length === 2 && (
+        <div className="flex items-center gap-2 border-b border-hairline px-3 py-2 sm:px-4">
+          <span className="text-xs text-muted">{t("viewAs")}</span>
+          <div role="radiogroup" aria-label={t("viewAs")} className="inline-flex rounded-full bg-surface p-1">
+            {(["buyer", "shop"] as Side[]).map((r) => (
+              <button
+                key={r}
+                type="button"
+                role="radio"
+                aria-checked={role === r}
+                onClick={() => setPicked(r)}
+                className="rounded-full px-3 py-1 text-xs font-medium text-muted transition-colors aria-checked:bg-bg aria-checked:text-ink aria-checked:shadow-soft"
+              >
+                {t(`roles.${r}`)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Staff reading a reported conversation: evidence only, nothing to send or mark read. */}
+      {!role && (
+        <p className="flex items-start gap-2 border-b border-hairline bg-accent-soft px-3 py-2 text-xs leading-relaxed sm:px-4">
+          <ShieldCheck className="mt-px size-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
+          {t("admin.readOnly")}
+        </p>
+      )}
 
       {/* Messages */}
       <div ref={listRef} role="log" aria-live="polite" aria-label={t("title")} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 sm:px-5">
@@ -262,9 +357,15 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
                   </li>
                 )}
                 {m.from === "system" ? (
-                  <li className="mx-auto my-1 max-w-sm rounded-full bg-surface px-3 py-1 text-center text-xs text-muted">
-                    <span className="sr-only">{t("system")}: </span>
-                    {m.text}
+                  // Written by moderation (0005), e.g. when a shop is closed and an unpaid order is
+                  // cancelled: bilingual text, and the order it is about.
+                  <li className="mx-auto my-1 flex max-w-sm flex-col items-center gap-1.5 rounded-2xl bg-surface px-3 py-2 text-center text-xs text-muted">
+                    <span>
+                      <span className="sr-only">{t("system")}: </span>
+                      {m.text}
+                    </span>
+                    {m.orderId &&
+                      (role ? <OrderCard order={orders.get(m.orderId)} mine={false} /> : <AdminOrderCard order={ready.adminOrders.get(m.orderId)} />)}
                   </li>
                 ) : (
                   <li className={`flex max-w-[85%] flex-col gap-1 sm:max-w-[70%] ${mine ? "items-end self-end" : "items-start self-start"}`}>
@@ -282,12 +383,14 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
                           <img src={m.image} alt="" className="max-h-64 w-auto max-w-full object-cover" />
                         </button>
                       )}
-                      {m.orderId && <OrderCard order={orders.get(m.orderId)} mine={mine} />}
+                      {m.orderId &&
+                        (role ? <OrderCard order={orders.get(m.orderId)} mine={mine} /> : <AdminOrderCard order={ready.adminOrders.get(m.orderId)} />)}
                       {m.text && <MessageText text={m.text} />}
                     </div>
-                    <time dateTime={m.at} className="px-1 text-[0.6875rem] text-muted">
-                      {timeOfDay(m.at, locale)}
-                    </time>
+                    <span className="flex items-center gap-1.5 px-1 text-[0.6875rem] text-muted">
+                      {!role && <span>{m.from === "buyer" ? t("buyer") : t("admin.fromShop")}</span>}
+                      <time dateTime={m.at}>{timeOfDay(m.at, locale)}</time>
+                    </span>
                   </li>
                 )}
               </Fragment>
@@ -296,103 +399,105 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
         </ol>
       </div>
 
-      {/* Composer */}
-      <div className="border-t border-hairline bg-bg px-3 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-4">
-        {image && (
-          <div className="relative mb-2 inline-block">
-            {/* eslint-disable-next-line @next/next/no-img-element -- local preview */}
-            <img src={image} alt="" className="h-20 w-auto rounded-xl border border-hairline object-cover" />
+      {/* Composer (not for staff: a reported conversation is read-only) */}
+      {role && (
+        <div className="border-t border-hairline bg-bg px-3 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-4">
+          {image && (
+            <div className="relative mb-2 inline-block">
+              {/* eslint-disable-next-line @next/next/no-img-element -- local preview */}
+              <img src={image} alt="" className="h-20 w-auto rounded-xl border border-hairline object-cover" />
+              <button
+                type="button"
+                onClick={() => setImage(null)}
+                aria-label={t("composer.removeImage")}
+                className="absolute -top-2 -right-2 grid size-7 place-items-center rounded-full bg-ink text-bg"
+              >
+                <X className="size-4" strokeWidth={2} aria-hidden="true" />
+              </button>
+            </div>
+          )}
+          {error && (
+            <p role="alert" className="mb-2 text-sm text-red-600 dark:text-red-400">
+              {error}
+            </p>
+          )}
+          <form
+            className="flex items-end gap-1.5"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void submit();
+            }}
+          >
             <button
               type="button"
-              onClick={() => setImage(null)}
-              aria-label={t("composer.removeImage")}
-              className="absolute -top-2 -right-2 grid size-7 place-items-center rounded-full bg-ink text-bg"
+              onClick={() => fileRef.current?.click()}
+              aria-label={t("composer.attachImage")}
+              title={t("composer.attachImage")}
+              className="grid size-10 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-surface hover:text-ink"
             >
-              <X className="size-4" strokeWidth={2} aria-hidden="true" />
+              <ImagePlus className="size-5" strokeWidth={1.75} aria-hidden="true" />
             </button>
-          </div>
-        )}
-        {error && (
-          <p role="alert" className="mb-2 text-sm text-red-600 dark:text-red-400">
-            {error}
-          </p>
-        )}
-        <form
-          className="flex items-end gap-1.5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit();
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            aria-label={t("composer.attachImage")}
-            title={t("composer.attachImage")}
-            className="grid size-10 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-surface hover:text-ink"
-          >
-            <ImagePlus className="size-5" strokeWidth={1.75} aria-hidden="true" />
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            tabIndex={-1}
-            aria-hidden="true"
-            onChange={(e) => {
-              void onFile(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => setPicker(true)}
-            aria-label={t("composer.attachOrder")}
-            title={t("composer.attachOrder")}
-            className="grid size-10 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-surface hover:text-ink"
-          >
-            <Package className="size-5" strokeWidth={1.75} aria-hidden="true" />
-          </button>
-          <label className="sr-only" htmlFor="chat-input">
-            {t("composer.label")}
-          </label>
-          <textarea
-            id="chat-input"
-            ref={inputRef}
-            value={text}
-            onChange={(e) => setText(e.target.value.slice(0, MAX))}
-            onKeyDown={onKey}
-            maxLength={MAX}
-            rows={1}
-            placeholder={t("composer.placeholder")}
-            aria-describedby="chat-hint"
-            className="field-sizing-content max-h-36 min-h-10 min-w-0 flex-1 resize-none rounded-2xl border border-hairline bg-surface px-3.5 py-2 text-base leading-6 placeholder:text-muted focus:border-ink focus:outline-none focus-visible:outline-2"
-          />
-          <button
-            type="submit"
-            disabled={!canSend}
-            aria-label={t("composer.send")}
-            className="grid size-10 shrink-0 place-items-center rounded-full bg-[#D7FF3A] text-[#111] transition-transform active:scale-95 disabled:bg-surface disabled:text-muted"
-          >
-            <ArrowUp className="size-5" strokeWidth={2.25} aria-hidden="true" />
-          </button>
-        </form>
-        <div className="mt-1.5 flex items-start justify-between gap-3 text-[0.6875rem] leading-snug text-muted">
-          <p className="flex items-start gap-1">
-            <ShieldCheck className="mt-px size-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
-            {t("safety")}
-          </p>
-          <span id="chat-hint" className="sr-only">
-            {t("composer.hint")}
-          </span>
-          {text.length > MAX - 200 && (
-            <span className="shrink-0 tabular-nums" aria-live="polite">
-              {t("composer.count", { count: text.length, max: MAX })}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden="true"
+              onChange={(e) => {
+                void onFile(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setPicker(true)}
+              aria-label={t("composer.attachOrder")}
+              title={t("composer.attachOrder")}
+              className="grid size-10 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-surface hover:text-ink"
+            >
+              <Package className="size-5" strokeWidth={1.75} aria-hidden="true" />
+            </button>
+            <label className="sr-only" htmlFor="chat-input">
+              {t("composer.label")}
+            </label>
+            <textarea
+              id="chat-input"
+              ref={inputRef}
+              value={text}
+              onChange={(e) => setText(e.target.value.slice(0, MAX))}
+              onKeyDown={onKey}
+              maxLength={MAX}
+              rows={1}
+              placeholder={t("composer.placeholder")}
+              aria-describedby="chat-hint"
+              className="field-sizing-content max-h-36 min-h-10 min-w-0 flex-1 resize-none rounded-2xl border border-hairline bg-surface px-3.5 py-2 text-base leading-6 placeholder:text-muted focus:border-ink focus:outline-none focus-visible:outline-2"
+            />
+            <button
+              type="submit"
+              disabled={!canSend}
+              aria-label={t("composer.send")}
+              className="grid size-10 shrink-0 place-items-center rounded-full bg-[#D7FF3A] text-[#111] transition-transform active:scale-95 disabled:bg-surface disabled:text-muted"
+            >
+              <ArrowUp className="size-5" strokeWidth={2.25} aria-hidden="true" />
+            </button>
+          </form>
+          <div className="mt-1.5 flex items-start justify-between gap-3 text-[0.6875rem] leading-snug text-muted">
+            <p className="flex items-start gap-1">
+              <ShieldCheck className="mt-px size-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
+              {t("safety")}
+            </p>
+            <span id="chat-hint" className="sr-only">
+              {t("composer.hint")}
             </span>
-          )}
+            {text.length > MAX - 200 && (
+              <span className="shrink-0 tabular-nums" aria-live="polite">
+                {t("composer.count", { count: text.length, max: MAX })}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Image lightbox */}
       <Modal
@@ -452,7 +557,7 @@ export function Conversation({ id, session }: { id: string; session: Session }) 
         )}
       </Modal>
 
-      <ReportDialog open={reporting} onClose={() => setReporting(false)} threadId={thread.id} reporterId={session.user.id} side={role} />
+      {role && <ReportDialog open={reporting} onClose={() => setReporting(false)} threadId={thread.id} reporterId={session.user.id} side={role} />}
     </div>
   );
 }

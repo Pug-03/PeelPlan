@@ -50,6 +50,8 @@ const SUBMIT_ERRORS = [
   "not-onboarded",
   "not-signed-in",
   "rate-limited",
+  // 0005: staff suspended this account, so it can't start anything new.
+  "account-suspended",
 ] as const;
 type SubmitError = (typeof SUBMIT_ERRORS)[number] | "generic";
 const toSubmitError = (code: string): SubmitError => ((SUBMIT_ERRORS as readonly string[]).includes(code) ? (code as SubmitError) : "generic");

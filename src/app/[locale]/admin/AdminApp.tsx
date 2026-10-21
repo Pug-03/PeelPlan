@@ -4,7 +4,7 @@ import { AlertTriangle, ArrowRight, Eye, FlaskConical, MessageSquareText, Shield
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { AuthGate } from "@/components/AuthGate";
-import { listReports, useAdminQuery, useIsAdmin } from "@/features/admin/data";
+import { listAdminActions, listReports, useAdminQuery, useIsAdmin } from "@/features/admin/data";
 import { visitorStats } from "@/features/analytics/client";
 import { sumLast } from "@/features/analytics/stats";
 import { FEEDBACK_EVENT, listFeedback } from "@/features/feedback/client";
@@ -12,7 +12,7 @@ import { TEST_MODE, useMarket } from "@/features/market/store";
 import type { AdminShop } from "@/features/market/types";
 import { Link } from "@/i18n/navigation";
 import type { Session } from "@/lib/session";
-import { cardClass } from "../seller/ui";
+import { cardClass, useDate } from "../seller/ui";
 import { FeedbackTab, ReportsTab, type FeedbackFilter } from "./InboxTabs";
 import { ShopsTab, type ShopFilter } from "./ShopsTab";
 import { VisitorsTab } from "./VisitorsTab";
@@ -217,6 +217,42 @@ function Overview({ pending, newFeedback, openReports, go }: { pending?: number;
         </div>
         <p className="text-xs text-muted">{TEST_MODE ? t("trafficNoteTest") : t("trafficNote")}</p>
       </section>
+
+      <StaffLog />
     </div>
+  );
+}
+
+/**
+ * The audit trail (0005 `admin_actions`): who approved, rejected, suspended or hid what, and why.
+ * Hidden when there is nothing to show, which includes test mode and databases before 0005.
+ */
+function StaffLog() {
+  const t = useTranslations("admin.staffLog");
+  const date = useDate();
+  const q = useAdminQuery(() => listAdminActions(20), []);
+  if (!q.data?.length) return null;
+  return (
+    <section aria-labelledby="stafflog-title" className="flex flex-col gap-3">
+      <h2 id="stafflog-title" className="text-sm font-medium text-muted">
+        {t("title")}
+      </h2>
+      <ul className="divide-y divide-hairline overflow-hidden rounded-2xl border border-hairline bg-bg">
+        {q.data.map((a) => (
+          <li key={a.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-4 py-2.5 text-sm">
+            <span className="font-medium">{t.has(`actions.${a.action}`) ? t(`actions.${a.action}`) : a.action}</span>
+            <span className="text-muted">{t.has(`targets.${a.targetType}`) ? t(`targets.${a.targetType}`) : a.targetType}</span>
+            {a.newStatus && (
+              <span className="text-muted">
+                {a.oldStatus ? `${a.oldStatus} → ${a.newStatus}` : a.newStatus}
+              </span>
+            )}
+            {a.reason && <span className="min-w-0 basis-full break-words text-muted">{a.reason}</span>}
+            <span className="ml-auto text-xs text-muted tabular-nums">{date(a.at)}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="text-xs text-muted">{t("note")}</p>
+    </section>
   );
 }

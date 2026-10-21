@@ -50,7 +50,7 @@ function CreateShop({ session }: { session: Session }) {
   const ta = useTranslations("auth");
   const fromOnboarding = session.profile?.shop;
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<"name" | "types" | "save" | null>(null);
+  const [error, setError] = useState<"name" | "types" | "save" | "suspended" | null>(null);
   const [types, setTypes] = useState<string[]>(["die-cut"]);
 
   const create = async (name: string, about: string, productTypes: string[]) => {
@@ -58,8 +58,9 @@ function CreateShop({ session }: { session: Session }) {
     setError(null);
     try {
       await (await getStore()).saveMyShop(session.user.id, { name, about, productTypes });
-    } catch {
-      setError("save");
+    } catch (e) {
+      // A suspended account can't open a shop (0005); anything else is a plain save failure.
+      setError(e instanceof Error && e.message === "account-suspended" ? "suspended" : "save");
       setBusy(false);
     }
   };
@@ -132,9 +133,9 @@ function CreateShop({ session }: { session: Session }) {
           </button>
         </form>
       )}
-      {error === "save" && (
+      {(error === "save" || error === "suspended") && (
         <p role="alert" className="text-sm text-[#C62F35]">
-          {t("errors.save")}
+          {t(error === "suspended" ? "errors.suspended" : "errors.save")}
         </p>
       )}
       <p className="text-xs text-muted">{t("create.review")}</p>
@@ -307,9 +308,14 @@ function Overview({ shop, orders, goOrders, goProducts }: { shop: Shop; orders?:
   const toCheck = list.filter((o) => o.status === "slip_submitted").length;
   const toShip = list.filter((o) => o.status === "paid").length;
   const month = bangkokMonth(new Date().toISOString());
-  // Money the shop has confirmed receiving (slip checked) for orders placed this month, Thai time.
+  // Money the shop confirmed receiving this month, Thai time: dated by when the slip was accepted
+  // (the "paid" event), not by when the order was placed. Includes shipping, as the buyer paid it.
   const revenue = list
-    .filter((o) => ["paid", "shipped", "completed"].includes(o.status) && bangkokMonth(o.createdAt) === month)
+    .filter((o) => {
+      if (!["paid", "shipped", "completed"].includes(o.status)) return false;
+      const paidAt = o.history.find((h) => h.status === "paid")?.at;
+      return bangkokMonth(paidAt ?? o.createdAt) === month;
+    })
     .reduce((s, o) => s + o.totalThb, 0);
   const unread = (threads ?? []).reduce((s, x) => s + x.unreadShop, 0);
   const activeCount = (products ?? []).filter((p) => p.active).length;
@@ -365,7 +371,8 @@ function Overview({ shop, orders, goOrders, goProducts }: { shop: Shop; orders?:
         <button type="button" onClick={goProducts} className={`${cardClass} text-left transition-shadow hover:shadow-soft`}>
           <Package className="size-5 text-muted" strokeWidth={1.75} aria-hidden="true" />
           <p className="mt-2 text-2xl font-semibold tabular-nums">{products ? products.length : "–"}</p>
-          <p className="text-sm text-muted">{t("products", { active: activeCount })}</p>
+          {/* Nothing is on sale while the shop itself is hidden, however many listings are active. */}
+          <p className="text-sm text-muted">{shop.status === "approved" ? t("products", { active: activeCount }) : t("productsHidden")}</p>
         </button>
         <Link href="/messages" className={`${cardClass} transition-shadow hover:shadow-soft`}>
           <MessageCircle className="size-5 text-muted" strokeWidth={1.75} aria-hidden="true" />

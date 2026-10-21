@@ -171,7 +171,7 @@ export function ShopView({
   const [tab, setTab] = useState<Tab>("products");
   const [following, toggleFollow] = useFollow(shop.slug);
   const [chatBusy, setChatBusy] = useState(false);
-  const [chatError, setChatError] = useState(false);
+  const [chatError, setChatError] = useState<"failed" | "suspended" | null>(null);
   const [toast, showToast] = useToast();
 
   const loaded = useMarket((s) => (preview || marketProp ? Promise.resolve(null) : s.getShop(shop.slug)), [shop.slug, preview, !!marketProp]);
@@ -200,12 +200,13 @@ export function ShopView({
   const chat = async () => {
     if (session.status !== "signed-in" || !market || readOnly) return;
     setChatBusy(true);
-    setChatError(false);
+    setChatError(null);
     try {
       const u = session.session;
       router.push(await openChat(market.id, u.user.id, u.profile?.displayName || u.user.name));
-    } catch {
-      setChatError(true);
+    } catch (e) {
+      // A suspended account may still browse, but not open a conversation (0005).
+      setChatError(e instanceof Error && e.message === "account-suspended" ? "suspended" : "failed");
     } finally {
       setChatBusy(false);
     }
@@ -369,7 +370,7 @@ export function ShopView({
           {notTaking && <p className="rounded-xl bg-surface px-4 py-3 text-sm text-muted">{tm("shopPage.notTaking")}</p>}
           {chatError && (
             <p role="alert" className="rounded-xl bg-[#FDECEA] px-4 py-3 text-sm text-[#8C1D18] dark:bg-[#3B1714] dark:text-[#FFB4AB]">
-              {tm("shopPage.chatFailed")}
+              {tm(chatError === "suspended" ? "shopPage.chatSuspended" : "shopPage.chatFailed")}
             </p>
           )}
         </div>

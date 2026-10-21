@@ -7,7 +7,7 @@ import { fileToDataUrl, getStore } from "@/features/market/store";
 import { normalizePromptPayId } from "@/features/market/promptpay";
 import { LINK_KINDS, type Shop } from "@/features/market/types";
 import { PromptPayQr } from "@/features/market/ui/PromptPayQr";
-import { ariaFor, cardClass, Field, fieldClass, primaryBtn, TypeChips, useUnsavedGuard } from "./ui";
+import { ariaFor, cardClass, Field, fieldClass, primaryBtn, TypeChips, UnsavedDialog, useUnsavedGuard } from "./ui";
 import { validateSettings, type Errors, type SettingsDraft, type SettingsField } from "./validate";
 
 const TINTS = [
@@ -47,11 +47,21 @@ export function SettingsTab({ shop }: { shop: Shop }) {
     if (state === "saved") setState("idle");
   };
   const err = (k: SettingsField) => (errors[k] ? te(errors[k]!) : undefined);
-  const renaming = shop.status === "approved" && d.name.trim() !== shop.name;
+  const ppValid = !!normalizePromptPayId(d.promptpayId);
+  /**
+   * Edits that take an approved shop off sale until staff look again. The database decides this
+   * (0004 `check_shop_rules`): name, about, product types and the PromptPay account.
+   */
+  const reReview =
+    shop.status === "approved" &&
+    (d.name.trim() !== shop.name ||
+      d.about.trim() !== shop.about ||
+      d.productTypes.join("\u0000") !== shop.productTypes.join("\u0000") ||
+      (normalizePromptPayId(d.promptpayId) ?? "") !== (shop.promptpay?.id ?? "") ||
+      d.promptpayName.trim() !== (shop.promptpay?.name ?? ""));
   // Compared with what was last saved (not the reloaded shop: the store normalises some fields).
   const [saved, setSaved] = useState(() => JSON.stringify(toDraft(shop)));
-  useUnsavedGuard(JSON.stringify(d) !== saved);
-  const ppValid = !!normalizePromptPayId(d.promptpayId);
+  const guard = useUnsavedGuard(JSON.stringify(d) !== saved);
 
   const submit = async () => {
     const { errors, patch } = validateSettings(d);
@@ -96,11 +106,6 @@ export function SettingsTab({ shop }: { shop: Shop }) {
             {...ariaFor("s-name", err("name"))}
           />
         </Field>
-        {renaming && (
-          <p role="status" className="-mt-3 rounded-xl bg-[#FFF1C9] px-3 py-2 text-sm text-[#6B4E00]">
-            {t("renameWarning")}
-          </p>
-        )}
         <Field id="s-about" label={t("about")} hint={t("aboutHint")} error={err("about")}>
           <textarea
             id="s-about"
@@ -260,6 +265,13 @@ export function SettingsTab({ shop }: { shop: Shop }) {
         </div>
       </section>
 
+      {/* Next to Save, where it is read before saving, not next to whichever field was edited. */}
+      {reReview && (
+        <p role="status" className="rounded-xl bg-[#FFF1C9] px-3 py-2 text-sm text-[#6B4E00]">
+          {t("renameWarning")}
+        </p>
+      )}
+
       <div className="sticky bottom-0 -mx-5 flex flex-wrap items-center gap-3 border-t border-hairline bg-bg/95 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:mx-0 sm:rounded-2xl sm:border">
         <button type="submit" disabled={state === "saving"} className={primaryBtn}>
           {state === "saving" ? t("saving") : t("save")}
@@ -276,6 +288,8 @@ export function SettingsTab({ shop }: { shop: Shop }) {
           {Object.keys(errors).length > 0 && state === "idle" && <span className="text-[#C62F35]">{te("fixFields")}</span>}
         </p>
       </div>
+
+      <UnsavedDialog guard={guard} />
     </form>
   );
 }

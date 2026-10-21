@@ -51,6 +51,13 @@ export type Shop = {
 /** A shop as the admin sees it: owner's name and a few counts for review. */
 export type AdminShop = Shop & {
   ownerName: string;
+  /**
+   * Whether the shop has a PromptPay account on file. The admin list only says yes/no (the number
+   * itself is the seller's); `promptpay` is filled in only where the backend still returns it.
+   */
+  hasPromptPay: boolean;
+  /** The owner's account is suspended by staff (Supabase 0005; false on older databases). */
+  ownerSuspended: boolean;
   productCount: number;
   orderCount: number;
   /** Orders placed in the last 30 days. */

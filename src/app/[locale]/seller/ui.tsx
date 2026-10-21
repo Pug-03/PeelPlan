@@ -1,7 +1,9 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, type ReactNode } from "react";
+import { Modal } from "@/features/chat/Modal";
 import { PRODUCT_TYPES } from "@/config/onboarding";
 import type { OrderStatus } from "@/features/market/types";
 
@@ -41,8 +43,22 @@ export const ariaFor = (id: string, error?: string) => ({
   "aria-describedby": error ? `${id}-error` : `${id}-hint`,
 });
 
-/** While `dirty`, closing or reloading the tab asks first (the browser shows its own wording). */
-export function useUnsavedGuard(dirty: boolean) {
+export type UnsavedGuard = {
+  /** The in-app link that was held back, if any. Render <UnsavedDialog> to ask about it. */
+  pending: string | null;
+  stay: () => void;
+  leave: () => void;
+};
+
+/**
+ * While `dirty`: closing or reloading the tab asks first (the browser shows its own wording), and a
+ * click on any in-app link (the nav, the language switch) is held back so the page can ask instead
+ * of dropping the form. Use the returned guard with <UnsavedDialog>.
+ */
+export function useUnsavedGuard(dirty: boolean): UnsavedGuard {
+  const router = useRouter();
+  const [pending, setPending] = useState<string | null>(null);
+
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => {
@@ -50,9 +66,59 @@ export function useUnsavedGuard(dirty: boolean) {
       // Older browsers still need returnValue set.
       e.returnValue = "";
     };
+    const onClick = (e: MouseEvent) => {
+      // Let modified clicks (new tab / window / download) and anything already handled through.
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const link = (e.target instanceof Element ? e.target.closest("a[href]") : null) as HTMLAnchorElement | null;
+      if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+      const url = new URL(link.href, location.href);
+      // Same page (including a plain #anchor): nothing is lost.
+      if (url.origin !== location.origin || (url.pathname === location.pathname && url.search === location.search)) return;
+      e.preventDefault();
+      setPending(url.pathname + url.search + url.hash);
+    };
     window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
+    // Capture, so the click is caught before the router's own handler navigates.
+    document.addEventListener("click", onClick, true);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+      document.removeEventListener("click", onClick, true);
+    };
   }, [dirty]);
+
+  return {
+    pending,
+    stay: () => setPending(null),
+    leave: () => {
+      const to = pending;
+      setPending(null);
+      // Already locale-prefixed (it came from a rendered link), so the plain router keeps it as it is.
+      if (to) router.push(to);
+    },
+  };
+}
+
+/** Asks before following a link that would drop unsaved changes. Pair with useUnsavedGuard. */
+export function UnsavedDialog({ guard }: { guard: UnsavedGuard }) {
+  const t = useTranslations("seller.settings");
+  return (
+    <Modal open={!!guard.pending} onClose={guard.stay} label={t("unsavedTitle")} closeLabel={t("unsavedStay")}>
+      <div className="flex flex-col gap-4">
+        <div className="pr-10">
+          <h2 className="text-lg font-semibold">{t("unsavedTitle")}</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted">{t("unsavedBody")}</p>
+        </div>
+        <div className="flex flex-wrap justify-end gap-2">
+          <button type="button" autoFocus onClick={guard.stay} className={`${secondaryBtn} h-10`}>
+            {t("unsavedStay")}
+          </button>
+          <button type="button" onClick={guard.leave} className="inline-flex h-10 items-center rounded-full bg-[#c62f35] px-4 text-sm font-medium text-white">
+            {t("unsavedLeave")}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
 }
 
 export function useMoney() {

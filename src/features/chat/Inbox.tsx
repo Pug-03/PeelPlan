@@ -125,7 +125,9 @@ export function Inbox({ userId, activeId }: { userId: string; activeId?: string 
             return (
               <li key={`${r.side}:${r.thread.id}`}>
                 <Link
-                  href={`/messages/${r.thread.id}`}
+                  // Which side this row is: an account that owns the shop and also bought from it
+                  // would otherwise reply to itself as the buyer.
+                  href={`/messages/${r.thread.id}${r.side === "shop" ? "?as=shop" : ""}`}
                   aria-current={active ? "page" : undefined}
                   className="flex items-center gap-3 rounded-2xl px-2 py-2.5 transition-colors hover:bg-surface aria-[current=page]:bg-surface"
                 >

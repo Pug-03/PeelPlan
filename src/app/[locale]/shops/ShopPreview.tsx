@@ -3,7 +3,7 @@
 import type { DemoShop } from "@/config/demoShops";
 import { useMarket } from "@/features/market/store";
 import { useSession } from "@/lib/session";
-import { ShopView, profileFromShop } from "./ShopView";
+import { ShopView, profileFromShop } from "./[slug]/ShopView";
 
 /**
  * A seller's preview of their own page. Shows the signed-in seller's real shop record when there is

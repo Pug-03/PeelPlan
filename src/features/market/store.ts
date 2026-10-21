@@ -34,7 +34,8 @@ export interface MarketStore {
   buyerOrders(buyerId: string): Promise<Order[]>;
   shopOrders(shopId: string): Promise<Order[]>;
   submitSlip(orderId: string, slip: string): Promise<Order>;
-  setOrderStatus(orderId: string, status: OrderStatus, extra?: { tracking?: Order["tracking"]; cancelReason?: string }): Promise<Order>;
+  /** `side` is who is acting: only the moves NEXT_STATUS allows that side go through (checked again in the database). */
+  setOrderStatus(orderId: string, status: OrderStatus, extra: { side: "buyer" | "shop"; tracking?: Order["tracking"]; cancelReason?: string }): Promise<Order>;
 
   openThread(shopId: string, buyerId: string, buyerName: string): Promise<Thread>;
   getThread(id: string): Promise<Thread | null>;
@@ -55,6 +56,11 @@ export interface MarketStore {
   listAllShops?(): Promise<AdminShop[]>;
   /** Approve / reject / send back to review. `reason` is shown to the seller (required to reject). */
   setShopStatus?(shopId: string, status: ShopStatus, reason?: string): Promise<void>;
+  /**
+   * Suspend (or un-suspend) an account: it keeps reading and can settle open orders, but can't order,
+   * chat or open a shop. Supabase 0005 only; throws 'unsupported' on an older database.
+   */
+  setUserSuspended?(userId: string, suspended: boolean, reason?: string): Promise<void>;
   /** Fires after any change, so views can reload. */
   subscribe(cb: () => void): () => void;
 }
@@ -89,6 +95,20 @@ const now = () => new Date().toISOString();
 
 export function shippingFor(shop: Pick<Shop, "shippingThb" | "freeShippingFromThb">, subtotal: number) {
   return shop.freeShippingFromThb && subtotal >= shop.freeShippingFromThb ? 0 : shop.shippingThb;
+}
+
+/**
+ * Edits an approved shop can't make on its own: the database (0004 `check_shop_rules`) puts the shop
+ * back to `pending` when the name, the about text, the product types or the PromptPay account change.
+ */
+export function sendsBackToReview(patch: ShopPatch, shop: Pick<Shop, "name" | "about" | "productTypes" | "promptpay">) {
+  const pp = (p: Shop["promptpay"]) => `${p?.id ?? ""}|${p?.name ?? ""}`;
+  return (
+    (patch.name !== undefined && patch.name !== shop.name) ||
+    (patch.about !== undefined && patch.about !== shop.about) ||
+    (patch.productTypes !== undefined && patch.productTypes.join("\u0000") !== shop.productTypes.join("\u0000")) ||
+    ("promptpay" in patch && pp(patch.promptpay) !== pp(shop.promptpay))
+  );
 }
 
 /** Which status changes each side may make. Enforced again in the database. */
@@ -222,9 +242,10 @@ export const localStore: MarketStore = {
       const taken = new Set([...allShops(d).map((s) => s.slug), "preview"]);
       const i = d.shops.findIndex((s) => s.ownerId === userId);
       if (i >= 0) {
-        // Changing the public face of an approved shop sends it back for review, as in the database.
+        // Changing the public face or the payment details of an approved shop sends it back for
+        // review, as in the database (0004 check_shop_rules): name, about, types and PromptPay.
         const prev = d.shops[i];
-        const reviewed = patch.name !== undefined && patch.name !== prev.name;
+        const reviewed = sendsBackToReview(patch, prev);
         d.shops[i] = { ...prev, ...patch, status: reviewed && prev.status === "approved" ? "pending" : prev.status };
         return d.shops[i];
       }
@@ -334,6 +355,8 @@ export const localStore: MarketStore = {
     return mutate((d) => {
       const o = d.orders.find((x) => x.id === orderId);
       if (!o) throw new Error("not-found");
+      // A stale tab must not push an order into an impossible state (the database checks this too).
+      if (!NEXT_STATUS[o.status][extra.side].includes(status)) throw new Error("bad-state");
       o.status = status;
       if (extra?.tracking) o.tracking = extra.tracking;
       if (extra?.cancelReason) o.cancelReason = extra.cancelReason;
@@ -427,6 +450,11 @@ export const localStore: MarketStore = {
         return {
           ...s,
           ownerName: s.example ? "PeelPlan" : (owner.get(s.ownerId) ?? ""),
+          // As in Supabase mode (0005): the admin list says whether there is a PromptPay, not what it is.
+          promptpay: undefined,
+          hasPromptPay: !!s.promptpay?.id,
+          // Test mode has one simulated account on the device, so there is nothing to suspend.
+          ownerSuspended: false,
           productCount: allProducts(d).filter((p) => p.shopId === s.id).length,
           orderCount: orders.length,
           recentOrderCount: orders.filter((o) => Date.parse(o.createdAt) >= monthAgo).length,
@@ -589,6 +617,9 @@ function watchCartOwner() {
     window.addEventListener("storage", (e) => e.key === "peelplan.session.v1" && fromDemo());
     return;
   }
+  // Nobody signed in: skip the auth client entirely. Signing in is a full page load through
+  // /auth/callback, so the cookie is already there the next time the cart is read.
+  if (!document.cookie.includes("sb-")) return setCartOwner(null, false);
   void import("@/lib/supabase/client")
     .then(async ({ createSupabaseBrowser }) => {
       const sb = createSupabaseBrowser();

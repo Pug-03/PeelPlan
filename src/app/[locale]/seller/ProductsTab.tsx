@@ -28,11 +28,24 @@ const toDraft = (p: Product): ProductDraft => ({
 /** Transparent-friendly checkerboard behind sticker art. */
 const CHECKER = "bg-[conic-gradient(var(--surface-2)_25%,var(--bg)_0_50%,var(--surface-2)_0_75%,var(--bg)_0)] bg-[length:16px_16px]";
 
+/** Statuses whose units are reserved but not yet gone: cancelling puts them back, shipping doesn't. */
+const OPEN_STATUSES = ["awaiting_payment", "slip_submitted", "paid"];
+
 export function ProductsTab({ shop }: { shop: Shop }) {
   const t = useTranslations("seller.products");
   const te = useTranslations("seller.errors");
   const money = useMoney();
   const { data: products, error, retry } = useMarketQuery((s) => s.listProducts(shop.id, { includeInactive: true }), [shop.id]);
+  // Open orders already took their units out of `stock`, so the number here is what's still available.
+  const { data: orders } = useMarketQuery((s) => s.shopOrders(shop.id), [shop.id]);
+  const reserved = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const o of orders ?? []) {
+      if (!OPEN_STATUSES.includes(o.status)) continue;
+      for (const it of o.items) m.set(it.productId, (m.get(it.productId) ?? 0) + it.qty);
+    }
+    return m;
+  }, [orders]);
   // null = closed, "new" = adding, otherwise the product being edited.
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
@@ -85,7 +98,8 @@ export function ProductsTab({ shop }: { shop: Shop }) {
               <div className="flex flex-1 flex-col gap-1 p-3">
                 <p className="truncate text-sm font-medium">{p.name}</p>
                 <p className="text-xs text-muted tabular-nums">
-                  {t("size", { w: p.widthMm, h: p.heightMm })} · {p.stock === null ? t("madeToOrderShort") : t("inStock", { count: p.stock })}
+                  {t("size", { w: p.widthMm, h: p.heightMm })} · {p.stock === null ? t("madeToOrderShort") : t("available", { count: p.stock })}
+                  {p.stock !== null && !!reserved.get(p.id) && ` · ${t("reservedShort", { count: reserved.get(p.id)! })}`}
                 </p>
                 <p className="text-sm font-semibold tabular-nums">{money(p.priceThb)}</p>
                 {confirming === p.id ? (
@@ -149,12 +163,19 @@ export function ProductsTab({ shop }: { shop: Shop }) {
         </ul>
       )}
 
-      {editing && <ProductDialog shop={shop} product={editing === "new" ? null : editing} onClose={() => setEditing(null)} />}
+      {editing && (
+        <ProductDialog
+          shop={shop}
+          product={editing === "new" ? null : editing}
+          reserved={editing === "new" ? 0 : (reserved.get(editing.id) ?? 0)}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   );
 }
 
-function ProductDialog({ shop, product, onClose }: { shop: Shop; product: Product | null; onClose: () => void }) {
+function ProductDialog({ shop, product, reserved, onClose }: { shop: Shop; product: Product | null; reserved: number; onClose: () => void }) {
   const t = useTranslations("seller.products");
   const locale = useLocale() as "th" | "en";
   const te = useTranslations("seller.errors");
@@ -362,7 +383,13 @@ function ProductDialog({ shop, product, onClose }: { shop: Shop; product: Produc
             />
           </Field>
           <div className="flex flex-col gap-1.5">
-            <Field id="p-stock" label={t("stock")} error={err("stock")}>
+            {/* The field is what buyers can still order: units held by open orders are already out of it. */}
+            <Field
+              id="p-stock"
+              label={t("stock")}
+              hint={d.madeToOrder || !reserved ? t("stockHint") : t("stockReserved", { count: reserved })}
+              error={err("stock")}
+            >
               <input
                 id="p-stock"
                 inputMode="numeric"

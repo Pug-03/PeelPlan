@@ -17,7 +17,7 @@ type Props = { params: Promise<{ locale: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "shop" });
-  return { title: `${t("indexTitle")} - PeelPlan`, alternates: { canonical: `/${locale}/shops` } };
+  return { title: `${t("indexTitle")} - PeelPlan`, alternates: { canonical: `/${locale}/shops`, languages: { th: "/th/shops", en: "/en/shops", "x-default": "/shops" } } };
 }
 
 /** Index: sellers' approved shops (loaded on the client), then the labelled example shops with their layouts on the lid. */
