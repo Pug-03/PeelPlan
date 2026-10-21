@@ -57,6 +57,56 @@ function consumeLangSwap(): { menu: boolean } | null {
   }
 }
 
+/** On-screen elements that hold text of their own (outermost only): the pieces a language switch morphs. */
+function textBlocks(): HTMLElement[] {
+  const out: HTMLElement[] = [];
+  const walk = (el: Element) => {
+    for (const child of el.children) {
+      if (!(child instanceof HTMLElement) || out.length >= 120) continue;
+      const r = child.getBoundingClientRect();
+      if (!r.width || r.bottom < 0 || r.top > innerHeight) continue;
+      const ownText = [...child.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
+      // A caption sitting in the same box as a picture (the lid's "312.6 mm") must not take the picture with it.
+      if (ownText && r.height < 240 && !child.querySelector("img, picture, canvas, video, svg:not(:only-child)")) out.push(child);
+      else walk(child);
+    }
+  };
+  walk(document.body);
+  return out;
+}
+
+/**
+ * Give each text block its own view-transition name so only the words change: the old ones blur away,
+ * the new ones rise in top to bottom, and everything else (laptop, stickers, photos) holds still.
+ * Old and new words never pair, so nothing slides across the page. Blocks with a fill (pills, chips)
+ * do pair, by order when they sit in about the same spot, so they stretch to the new label instead of vanishing.
+ */
+type TextBlock = { el: HTMLElement; rect: DOMRect; filled: boolean };
+function unnameTextBlocks(blocks: TextBlock[]) {
+  blocks.forEach(({ el }) => {
+    el.style.removeProperty("view-transition-name");
+    el.style.removeProperty("view-transition-class");
+  });
+}
+function nameTextBlocks(prev: TextBlock[] | null, sheet: HTMLStyleElement): TextBlock[] {
+  if (prev) unnameTextBlocks(prev);
+  const rules: string[] = [];
+  const blocks = textBlocks().map((el, i) => {
+    const rect = el.getBoundingClientRect();
+    const css = getComputedStyle(el);
+    const filled = css.backgroundColor !== "rgba(0, 0, 0, 0)" || css.backgroundImage !== "none";
+    const was = prev?.[i];
+    const paired = filled && (!prev || (was?.filled && Math.abs(was.rect.top - rect.top) < 64 && Math.abs(was.rect.left - rect.left) < 64));
+    const name = paired ? `lang-box-${i}` : `lang-${prev ? "new" : "old"}-${i}`;
+    el.style.setProperty("view-transition-name", name);
+    el.style.setProperty("view-transition-class", filled ? "lang-box" : "lang-text");
+    if (prev) rules.push(`::view-transition-new(${name}){animation-delay:${160 + Math.round(Math.min(1, Math.max(0, rect.top / innerHeight)) * 160)}ms}`);
+    return { el, rect, filled };
+  });
+  if (prev) sheet.textContent = rules.join("");
+  return blocks;
+}
+
 export function LocaleSwitch({ className = "", inMenu = false }: { className?: string; inMenu?: boolean }) {
   const t = useTranslations("nav");
   const locale = useLocale();
@@ -71,6 +121,9 @@ export function LocaleSwitch({ className = "", inMenu = false }: { className?: s
   );
   const href = `${pathname}${search}`;
 
+  // Fetch the other language's page ahead of time (on hover / focus), so the switch itself only swaps it in.
+  const prefetch = () => router.prefetch(href, { locale: next });
+
   const onClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
     e.preventDefault();
@@ -82,33 +135,43 @@ export function LocaleSwitch({ className = "", inMenu = false }: { className?: s
     // Stay where you are on the page; only the language changes.
     const go = () => router.push(href, { locale: next, scroll: false });
     const root = document.documentElement;
-    if (!("startViewTransition" in document) || matchMedia("(prefers-reduced-motion: reduce)").matches) return go();
-    // The old page blurs away while the new language wipes in behind a lime bar (see .lang-wipe in globals.css).
-    root.dataset.langSwap = next;
-    const vt = document.startViewTransition(
-      () =>
-        new Promise<void>((resolve) => {
-          let settled = false;
-          const done = () => {
-            if (settled) return;
-            settled = true;
-            obs.disconnect();
-            const bar = document.createElement("div");
-            bar.className = "lang-wipe";
-            bar.setAttribute("aria-hidden", "true");
-            document.body.append(bar);
-            resolve();
-          };
-          // The new page is in once <html lang> flips; wait one more frame so it has painted.
-          const obs = new MutationObserver(() => root.lang === next && requestAnimationFrame(() => requestAnimationFrame(done)));
-          obs.observe(root, { attributes: true, attributeFilter: ["lang"] });
-          setTimeout(done, 2000);
-          go();
-        }),
-    );
+    const swap = "startViewTransition" in document && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // The page remounts in the new language: don't replay the hero's entrance, it reads as lag.
+    // data-lang-swap turns on the text morph in globals.css.
+    const flag = () => {
+      root.dataset.noEntrance = "";
+      if (swap) root.dataset.langSwap = next;
+    };
+    flag();
+    // The new page is in once <html lang> flips. React wipes <html>'s attributes when the [locale] layout
+    // remounts, so put the flags back right away, before the browser paints or snapshots the new page.
+    // No requestAnimationFrame here: rendering is paused during a view transition, so it would only fire after the timeout.
+    const arrived = new Promise<void>((resolve) => {
+      const obs = new MutationObserver(() => {
+        if (root.lang !== next) return;
+        obs.disconnect();
+        flag();
+        resolve();
+      });
+      obs.observe(root, { attributes: true, attributeFilter: ["lang"] });
+      setTimeout(() => {
+        obs.disconnect();
+        resolve();
+      }, 1200);
+    });
+    if (!swap) return go();
+    const sheet = document.createElement("style");
+    document.head.append(sheet);
+    let blocks = nameTextBlocks(null, sheet);
+    const vt = document.startViewTransition(async () => {
+      go();
+      await arrived;
+      blocks = nameTextBlocks(blocks, sheet);
+    });
     void vt.finished.finally(() => {
       delete root.dataset.langSwap;
-      document.querySelectorAll(".lang-wipe").forEach((n) => n.remove());
+      unnameTextBlocks(blocks);
+      sheet.remove();
     });
   };
 
@@ -118,6 +181,8 @@ export function LocaleSwitch({ className = "", inMenu = false }: { className?: s
       locale={next}
       scroll={false}
       onClick={onClick}
+      onPointerEnter={prefetch}
+      onFocus={prefetch}
       aria-label={t("languageLabel")}
       className={`rounded-full px-2 py-2 text-sm whitespace-nowrap text-muted transition-colors hover:bg-surface hover:text-ink sm:px-3 ${className}`}
     >
