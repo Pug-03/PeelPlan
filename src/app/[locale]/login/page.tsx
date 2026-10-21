@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Wordmark } from "@/components/Wordmark";
 import { Link, redirect } from "@/i18n/navigation";
@@ -6,6 +7,8 @@ import { AUTH_ENABLED } from "@/lib/supabase/config";
 import { getSession } from "@/lib/supabase/server";
 import { DemoSignIn } from "./DemoSignIn";
 import { GoogleButton } from "./GoogleButton";
+
+export const metadata: Metadata = { robots: { index: false } };
 
 export default async function LoginPage({ params, searchParams }: PageProps<"/[locale]/login">) {
   const { locale } = await params;

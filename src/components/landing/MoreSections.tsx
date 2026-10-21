@@ -237,16 +237,21 @@ function SizeOutlines() {
       {models.map((m) => {
         const w = m.lid.widthMm.value;
         const h = m.lid.heightMm.value;
-        const y = pad + maxH - h;
         return (
           <g key={m.id} data-o={m.id} className="size-lid">
-            <rect data-fx-path className="size-outline" x={pad} y={y} width={w} height={h} rx={m.lid.cornerRadiusMm.value} />
-            <text x={pad + w - 5} y={y + 11} textAnchor="end" className="size-label">
-              {m.name.replace(/^MacBook /, "")}
-            </text>
+            <rect data-fx-path className="size-outline" x={pad} y={pad + maxH - h} width={w} height={h} rx={m.lid.cornerRadiusMm.value} />
           </g>
         );
       })}
+      {/* Labels go on top of every outline. The three smallest lids nearly share a top-right corner, so their labels
+          step left one label-width each instead of stacking on each other's edges. */}
+      {models.map((m, i) => (
+        <g key={m.id} data-o={m.id} className="size-lid">
+          <text x={pad + m.lid.widthMm.value - 13 - Math.max(0, i - 2) * 40} y={pad + maxH - m.lid.heightMm.value + 8} textAnchor="end" className="size-label">
+            {m.name.replace(/^MacBook /, "")}
+          </text>
+        </g>
+      ))}
     </svg>
   );
 }

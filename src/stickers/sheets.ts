@@ -1,6 +1,7 @@
 /**
  * DEMO-ONLY stickers cut from sheets the founder supplied (Disney, Sanrio, programming brands, and third-party illustration sets).
- * Trademarked/copyrighted: shown only when DEMO_ASSETS is on. Generated from the split manifest; PNGs in public/stickers/demo.
+ * Trademarked/copyrighted: shown only when DEMO_ASSETS is on. Generated from the split manifest; PNGs in demo-assets/stickers,
+ * served by /stickers/demo/[file] only when demo assets are on.
  */
 import type { LibrarySticker } from "./library";
 

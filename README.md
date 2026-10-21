@@ -187,6 +187,8 @@ src/
 ├─ stickers/            original in-house SVG sticker packs
 └─ messages/            en.json, th.json (+ key parity test)
 
+demo-assets/stickers/   demo-only character PNGs, served only when NEXT_PUBLIC_DEMO_ASSETS=true
+
 supabase/migrations/
 ├─ 0001_profiles_shops.sql             accounts, onboarding, shop applications
 ├─ 0002_marketplace.sql                products, orders, slips, chat, storage
@@ -256,11 +258,24 @@ Visitor statistics are first-party and cookieless: no IP addresses, no third-par
 </details>
 
 <details>
+<summary><b>Deploying: site URL, headers and test mode</b></summary>
+
+<br />
+
+- `NEXT_PUBLIC_SITE_URL` is the public origin (for example `https://peelplan.app`). It is baked in at build time for canonical links, Open Graph tags, `sitemap.xml` and `robots.txt`. On Vercel the project's production domain is used when it is unset. Any other production build without it fails, so the site never ships pointing at `http://localhost:3000`; set `ALLOW_LOCAL_SITE_URL=1` (or build into `NEXT_DIST_DIR`) for a local check.
+- Without `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` the app runs in browser test mode with a simulated sign-in. Production builds and servers print a warning when that happens.
+- `next.config.ts` sends security headers on every route: a Content-Security-Policy (self, the Supabase origin and its Realtime socket, `frame-ancestors 'none'`), `X-Frame-Options: DENY`, `nosniff`, a strict referrer policy and a Permissions-Policy that turns off camera, microphone and location. Scripts allow `'unsafe-inline'` for Next's inline payload and the pre-paint theme script.
+
+</details>
+
+<details>
 <summary><b>Demo-only artwork</b></summary>
 
 <br />
 
 `NEXT_PUBLIC_DEMO_ASSETS=true` in the gitignored `.env.local` turns on an Apple-style lid logo and third-party character stickers for private mockups. They are trademarked or copyrighted, so leave the variable unset on any public deployment; example lids then use PeelPlan's own stickers. The screenshots above are taken with it off.
+
+The character PNGs live in `demo-assets/stickers/`, outside `public/`. `/stickers/demo/<file>.png` serves them only when the variable is on and answers 404 otherwise.
 
 </details>
 

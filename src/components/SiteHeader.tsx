@@ -66,7 +66,25 @@ function textBlocks(): HTMLElement[] {
   const covers = [...document.querySelectorAll(".site-header-shell, .site-header-menu")].map((n) => n.getBoundingClientRect());
   const covered = (el: HTMLElement, r: DOMRect) =>
     !header?.contains(el) && covers.some((c) => r.left < c.right && r.right > c.left && r.top < c.bottom && r.bottom > c.top);
-  const walk = (el: Element) => {
+  // Text clipped by an overflow-hidden/clip ancestor (marquees, the review strip) would be lifted out of its clip and
+  // drawn whole during the transition, so only blocks that sit fully inside every clipping ancestor are taken.
+  type Clip = { left: number; top: number; right: number; bottom: number } | null;
+  const inside = (r: DOMRect, c: Clip) => !c || (r.left >= c.left - 0.5 && r.right <= c.right + 0.5 && r.top >= c.top - 0.5 && r.bottom <= c.bottom + 0.5);
+  const clipOf = (el: HTMLElement, r: DOMRect, c: Clip): Clip => {
+    // Any non-visible overflow clips that axis (hidden, clip, and scroll containers alike).
+    const { overflowX, overflowY } = getComputedStyle(el);
+    const x = overflowX !== "visible";
+    const y = overflowY !== "visible";
+    if (!x && !y) return c;
+    const base = c ?? { left: -Infinity, top: -Infinity, right: Infinity, bottom: Infinity };
+    return {
+      left: x ? Math.max(base.left, r.left) : base.left,
+      right: x ? Math.min(base.right, r.right) : base.right,
+      top: y ? Math.max(base.top, r.top) : base.top,
+      bottom: y ? Math.min(base.bottom, r.bottom) : base.bottom,
+    };
+  };
+  const walk = (el: Element, clip: Clip) => {
     for (const child of el.children) {
       if (!(child instanceof HTMLElement) || out.length >= 120) continue;
       const r = child.getBoundingClientRect();
@@ -74,11 +92,11 @@ function textBlocks(): HTMLElement[] {
       const ownText = [...child.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
       // A caption sitting in the same box as a picture (the lid's "312.6 mm") must not take the picture with it.
       if (ownText && r.height < 240 && !child.querySelector("img, picture, canvas, video, svg:not(:only-child)")) {
-        if (!covered(child, r)) out.push(child);
-      } else walk(child);
+        if (!covered(child, r) && inside(r, clip)) out.push(child);
+      } else walk(child, clipOf(child, r, clip));
     }
   };
-  walk(document.body);
+  walk(document.body, null);
   return out;
 }
 

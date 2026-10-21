@@ -23,6 +23,9 @@ export type Session = { user: SessionUser; profile: SessionProfile | null; demo:
 
 const KEY = "peelplan.session.v1";
 const EVENT = "peelplan:session";
+const RETRY_EVENT = "peelplan:session-retry";
+/** Older builds kept the delivery address device-wide; it must not outlive the account that typed it. */
+const LEGACY_DEVICE_KEYS = ["peelplan.address.v1"];
 
 function read(): Session | null {
   try {
@@ -64,18 +67,40 @@ export function saveDemoProfile(profile: SessionProfile) {
 }
 
 export async function signOut() {
-  if (AUTH_ENABLED) {
-    const { createSupabaseBrowser } = await import("@/lib/supabase/client");
-    await createSupabaseBrowser()?.auth.signOut();
+  try {
+    if (AUTH_ENABLED) {
+      const { createSupabaseBrowser } = await import("@/lib/supabase/client");
+      await createSupabaseBrowser()?.auth.signOut();
+    }
+  } finally {
+    try {
+      LEGACY_DEVICE_KEYS.forEach((k) => localStorage.removeItem(k));
+    } catch {
+      /* storage unavailable */
+    }
+    write(null);
   }
-  write(null);
 }
 
-export type SessionState = { status: "loading" } | { status: "signed-out" } | { status: "signed-in"; session: Session };
+/** Re-runs the session lookup after `failed` / `profileError` (e.g. a Retry button). */
+export function retrySession() {
+  window.dispatchEvent(new Event(RETRY_EVENT));
+}
+
+/**
+ * `failed`: the auth client couldn't load, so who's signed in is unknown (still "loading" for
+ * callers that only wait). `profileError`: signed in, but the profile couldn't be fetched; `profile`
+ * is null without meaning "not onboarded", so don't send them to onboarding.
+ */
+export type SessionState =
+  | { status: "loading"; failed?: boolean }
+  | { status: "signed-out" }
+  | { status: "signed-in"; session: Session; profileError?: boolean };
 
 /** Current session; re-renders on sign-in/out in this or another tab. */
 export function useSession(): SessionState {
   const [state, setState] = useState<SessionState>({ status: "loading" });
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -95,32 +120,53 @@ export function useSession(): SessionState {
         window.removeEventListener("storage", on);
       };
     }
-    import("@/lib/supabase/client").then(async ({ createSupabaseBrowser }) => {
-      const sb = createSupabaseBrowser();
-      if (!sb || !alive) return;
-      const apply = async (userId: string | undefined, meta: Record<string, unknown> | undefined, email: string | undefined) => {
-        if (!userId) return alive && setState({ status: "signed-out" });
-        const { data: p } = await sb.from("profiles").select("display_name, birth_date, is_shop, onboarded_at").eq("id", userId).maybeSingle();
+    const onRetry = () => {
+      setState({ status: "loading" });
+      setAttempt((n) => n + 1);
+    };
+    window.addEventListener(RETRY_EVENT, onRetry);
+    import("@/lib/supabase/client")
+      .then(async ({ createSupabaseBrowser }) => {
+        const sb = createSupabaseBrowser();
         if (!alive) return;
-        setState({
-          status: "signed-in",
-          session: {
-            demo: false,
-            user: { id: userId, name: (meta?.full_name as string) ?? email ?? "", email: email ?? "", avatarUrl: meta?.avatar_url as string | undefined },
-            profile: p?.onboarded_at ? { displayName: p.display_name, birthDate: p.birth_date, isShop: p.is_shop, onboardedAt: p.onboarded_at } : null,
-          },
-        });
-      };
-      const { data } = await sb.auth.getSession();
-      await apply(data.session?.user.id, data.session?.user.user_metadata, data.session?.user.email);
-      const sub = sb.auth.onAuthStateChange((_e, session) => void apply(session?.user.id, session?.user.user_metadata, session?.user.email));
-      unsub = () => sub.data.subscription.unsubscribe();
-    });
+        if (!sb) return setState({ status: "signed-out" });
+        const apply = async (userId: string | undefined, meta: Record<string, unknown> | undefined, email: string | undefined) => {
+          if (!userId) return alive && setState({ status: "signed-out" });
+          const { data: p, error } = await sb
+            .from("profiles")
+            .select("display_name, birth_date, is_shop, onboarded_at")
+            .eq("id", userId)
+            .maybeSingle()
+            .then(
+              (r) => r,
+              (e: unknown) => ({ data: null, error: e }),
+            );
+          if (!alive) return;
+          setState({
+            status: "signed-in",
+            ...(error ? { profileError: true } : {}),
+            session: {
+              demo: false,
+              user: { id: userId, name: (meta?.full_name as string) ?? email ?? "", email: email ?? "", avatarUrl: meta?.avatar_url as string | undefined },
+              profile: p?.onboarded_at ? { displayName: p.display_name, birthDate: p.birth_date, isShop: p.is_shop, onboardedAt: p.onboarded_at } : null,
+            },
+          });
+        };
+        const { data } = await sb.auth.getSession();
+        await apply(data.session?.user.id, data.session?.user.user_metadata, data.session?.user.email);
+        const sub = sb.auth.onAuthStateChange((_e, session) => void apply(session?.user.id, session?.user.user_metadata, session?.user.email));
+        if (alive) unsub = () => sub.data.subscription.unsubscribe();
+        else sub.data.subscription.unsubscribe();
+      })
+      .catch(() => {
+        if (alive) setState({ status: "loading", failed: true });
+      });
     return () => {
       alive = false;
+      window.removeEventListener(RETRY_EVENT, onRetry);
       unsub();
     };
-  }, []);
+  }, [attempt]);
 
   return state;
 }

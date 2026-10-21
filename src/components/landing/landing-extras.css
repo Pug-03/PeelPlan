@@ -173,6 +173,11 @@
   font-size: 8px;
   letter-spacing: 0.02em;
   fill: var(--muted);
+  /* A page-coloured halo keeps a label readable where a neighbouring outline passes behind it. */
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
   transition:
     fill 300ms var(--ease-out-soft),
     opacity 300ms var(--ease-out-soft);
@@ -441,7 +446,7 @@ html:not([data-theme="dark"]) .peel-liner {
 
 /* Endless decorative loops rest while their section is off screen (ScrollFx marks sections with
    data-offscreen), so they don't keep the page busy while you scroll elsewhere. */
-[data-offscreen] :is(.lid-float, .size-outline, .review-track, .cta-pop),
+[data-offscreen] :is(.lid-float, .review-track, .cta-pop),
 [data-offscreen] .cta-pop::before {
   animation-play-state: paused;
 }

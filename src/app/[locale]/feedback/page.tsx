@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteHeader } from "@/components/SiteHeader";
 import { FeedbackSection } from "@/features/feedback/FeedbackSection";
 import { Link } from "@/i18n/navigation";
+import { safePath } from "@/lib/safe-path";
 
 type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ from?: string | string[] }> };
 
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /** Same-site path only; anything else falls back to the home page. */
-const safeFrom = (v: string | string[] | undefined) => (typeof v === "string" && /^\/(?!\/)/.test(v) ? v.slice(0, 200) : "/");
+const safeFrom = (v: string | string[] | undefined) => (typeof v === "string" ? safePath(v.slice(0, 200), "/") : "/");
 
 export default async function FeedbackPage({ params, searchParams }: Props) {
   const { locale } = await params;
