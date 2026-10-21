@@ -8,6 +8,7 @@ import { svgToPngDataUrl } from "@/lib/image/browser";
 import type { StickerAsset } from "@/lib/layout";
 import { ART_VERSION, VISIBLE_LIBRARY, stickerThumb, svgDataUrl, type LibrarySticker, type StickerCategory } from "@/stickers/library";
 import { GROUP_LABELS, STICKER_GROUPS, buildIndex, groupCounts, searchStickers, type GroupFilter } from "@/stickers/search";
+import { Link } from "@/i18n/navigation";
 import { getCurrentId, isAssetUsedElsewhere } from "../collection";
 import { deleteAsset, saveAsset } from "../persist";
 import { useEditor } from "../store";
@@ -258,7 +259,10 @@ export function StickerPanel({ onUpload }: { onUpload: (f: File) => void }) {
         {tab === "shop" && (
           <div className="flex flex-col items-start gap-3 rounded-xl bg-surface p-4">
             <Store className="size-6" strokeWidth={1.5} aria-hidden="true" />
-            <p className="text-sm leading-relaxed text-muted">{t("shopSoon")}</p>
+            <p className="text-sm leading-relaxed text-muted">{t("shopHint")}</p>
+            <Link href="/shops" className="rounded-full border border-ink px-4 py-2 text-sm font-medium transition-colors hover:bg-ink hover:text-bg">
+              {t("shopLink")}
+            </Link>
           </div>
         )}
       </div>

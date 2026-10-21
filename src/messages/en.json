@@ -376,6 +376,8 @@
       "library": "Library",
       "shop": "Shops"
     },
+    "shopHint": "Shop stickers come with their real size. Open a shop and tap “Try on my MacBook” to bring them onto this lid.",
+    "shopLink": "16622",
     "upload": "Add sticker photo",
     "uploadHint": "Photo or image of a single sticker. Plain background works best.",
     "noUploads": "No stickers yet. Add a photo of one to get started.",
