@@ -210,8 +210,16 @@ html.js .reveal.is-visible {
 html[data-no-entrance] :is(.hero-line, .hero-fade, .hero-underline path) {
   animation: none;
 }
-html[data-no-entrance] .hero-line:nth-child(4) {
-  animation: wiggle-peel 3.2s var(--ease-out-soft) infinite;
+@media (prefers-reduced-motion: no-preference) {
+  html[data-no-entrance] .hero-line:nth-child(4) {
+    animation: wiggle-peel 3.2s var(--ease-out-soft) infinite;
+  }
+}
+/* Sections already on screen show at once instead of fading up again in the new language. */
+html[data-lang-swap].js .reveal {
+  opacity: 1;
+  transform: none;
+  transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

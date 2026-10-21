@@ -113,12 +113,16 @@ function nameTextBlocks(prev: TextBlock[] | null, sheet: HTMLStyleElement): Text
     const name = same ? same.name : paired ? `lang-box-${i}` : `lang-${prev ? "new" : "old"}-${i}`;
     el.style.setProperty("view-transition-name", name);
     el.style.setProperty("view-transition-class", same ? "lang-same" : filled ? "lang-box" : "lang-text");
-    if (prev && !same) rules.push(`::view-transition-new(${name}){animation-delay:${160 + Math.round(Math.min(1, Math.max(0, rect.top / innerHeight)) * 160)}ms}`);
+    // Paired pills stay on screen and stretch, so they don't wait for their turn like the words do.
+    if (prev && !same && !paired) rules.push(`::view-transition-new(${name}){animation-delay:${160 + Math.round(Math.min(1, Math.max(0, rect.top / innerHeight)) * 160)}ms}`);
     return { el, rect, filled, text, name };
   });
   if (prev) sheet.textContent = rules.join("");
   return blocks;
 }
+
+/** The language switch in flight, so a second click can't start another one and undo its cleanup. */
+let activeSwap: ViewTransition | null = null;
 
 export function LocaleSwitch({ className = "", inMenu = false }: { className?: string; inMenu?: boolean }) {
   const t = useTranslations("nav");
@@ -140,6 +144,7 @@ export function LocaleSwitch({ className = "", inMenu = false }: { className?: s
   const onClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
     e.preventDefault();
+    if (activeSwap) return;
     try {
       sessionStorage.setItem(KEEP_KEY, JSON.stringify({ menu: inMenu, at: Date.now() }));
     } catch {
@@ -164,24 +169,29 @@ export function LocaleSwitch({ className = "", inMenu = false }: { className?: s
         if (root.lang !== next) return;
         obs.disconnect();
         flag();
+        // The new header has read the menu state by now; pages without one (the editor) never clear it.
+        try {
+          sessionStorage.removeItem(KEEP_KEY);
+        } catch {
+          /* storage unavailable */
+        }
         resolve();
       });
       obs.observe(root, { attributes: true, attributeFilter: ["lang"] });
-      setTimeout(() => {
-        obs.disconnect();
-        resolve();
-      }, 1200);
+      // On a slow network stop holding the screen, but keep watching so the flags still land when the page does.
+      setTimeout(resolve, 1200);
     });
     if (!swap) return go();
     const sheet = document.createElement("style");
     document.head.append(sheet);
     let blocks = nameTextBlocks(null, sheet);
-    const vt = document.startViewTransition(async () => {
+    const vt = (activeSwap = document.startViewTransition(async () => {
       go();
       await arrived;
       blocks = nameTextBlocks(blocks, sheet);
-    });
+    }));
     void vt.finished.finally(() => {
+      activeSwap = null;
       delete root.dataset.langSwap;
       unnameTextBlocks(blocks);
       sheet.remove();
