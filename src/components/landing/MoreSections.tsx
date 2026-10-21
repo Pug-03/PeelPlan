@@ -224,14 +224,6 @@ export async function Gallery() {
 /* ---------- Real lid sizes ---------- */
 
 /** One colour per model, shared by the outline drawing and the table swatches. */
-const MODEL_TINT: Record<string, string> = {
-  "macbook-neo-13": "#FF7A59",
-  "macbook-air-13-m5": "#4C8DFF",
-  "macbook-air-15-m5": "#2EC4B6",
-  "macbook-pro-14-m5": "#8B7CF6",
-  "macbook-pro-16-m5": "#E8A317",
-};
-
 /** Every lid outline drawn from the same corner at true relative size. */
 function SizeOutlines() {
   const pad = 6;
@@ -239,30 +231,19 @@ function SizeOutlines() {
   const maxH = Math.max(...LAPTOP_MODELS.map((m) => m.lid.heightMm.value));
   // Largest first so smaller lids sit on top.
   const models = [...LAPTOP_MODELS].sort((a, b) => b.lid.widthMm.value - a.lid.widthMm.value);
-  // Light translucent tints build up where the lids overlap, and a slow colour wave runs through them.
+  // Ink outlines on a faint ink wash that deepens where lids overlap; hovering a table row picks that lid out in ink.
   return (
-    <svg data-fx="draw" viewBox={`0 0 ${maxW + pad * 2} ${maxH + pad * 2}`} className="mt-10 h-auto w-full max-w-md" aria-hidden="true">
-      {models.map((m, i) => {
+    <svg data-fx="draw" viewBox={`0 0 ${maxW + pad * 2} ${maxH + pad * 2}`} className="mt-10 h-auto w-full max-w-md overflow-visible" aria-hidden="true">
+      {models.map((m) => {
         const w = m.lid.widthMm.value;
         const h = m.lid.heightMm.value;
+        const y = pad + maxH - h;
         return (
-          <g key={m.id}>
-            {/* Page-coloured backing so each smaller lid's tint sits on its own, not on the ones below. */}
-            <rect x={pad} y={pad + maxH - h} width={w} height={h} rx={m.lid.cornerRadiusMm.value} className="fill-bg" />
-            <rect
-              data-fx-path
-              data-o={m.id}
-              className="size-outline"
-              style={{ animationDelay: `${i * 0.5}s` }}
-              x={pad}
-              y={pad + maxH - h}
-              width={w}
-              height={h}
-              rx={m.lid.cornerRadiusMm.value}
-              fill={MODEL_TINT[m.id]}
-              stroke={MODEL_TINT[m.id]}
-              strokeWidth="1.8"
-            />
+          <g key={m.id} data-o={m.id} className="size-lid">
+            <rect data-fx-path className="size-outline" x={pad} y={y} width={w} height={h} rx={m.lid.cornerRadiusMm.value} />
+            <text x={pad + w - 5} y={y + 11} textAnchor="end" className="size-label">
+              {m.name.replace(/^MacBook /, "")}
+            </text>
           </g>
         );
       })}
@@ -326,7 +307,6 @@ export async function SizeTable() {
                 return (
                   <tr key={m.id} data-m={m.id} className="border-b border-hairline transition-colors hover:bg-surface">
                     <th scope="row" className="py-4 pr-4 font-medium">
-                      <span className="mr-2 inline-block h-0.5 w-4 rounded-full align-middle" style={{ background: MODEL_TINT[m.id] }} aria-hidden="true" />
                       {m.name}
                       <span className="block text-xs font-normal text-muted">{m.generation}</span>
                     </th>
@@ -463,59 +443,75 @@ export async function Pricing() {
   const t = await getTranslations("more");
   const free = t.raw("priceFreeItems") as string[];
   const shop = t.raw("priceShopItems") as string[];
+  const pro = t.raw("priceProItems") as string[];
+  const list = (items: string[], muted = false) => (
+    <ul className={`mt-6 flex flex-1 flex-col gap-3 ${muted ? "text-muted" : ""}`}>
+      {items.map((f) => (
+        <li key={f} className="flex gap-3">
+          <Check className="mt-0.5 size-5 shrink-0" strokeWidth={2.25} aria-hidden="true" />
+          {f}
+        </li>
+      ))}
+    </ul>
+  );
   return (
     <section id="pricing" data-fx="sheet" className="bg-surface">
-      <div className="mx-auto max-w-5xl scroll-mt-20 px-5 py-24 sm:px-8 sm:py-28">
+      <div className="mx-auto max-w-6xl scroll-mt-20 px-5 py-24 sm:px-8 sm:py-28">
         <h2 className={`reveal text-center ${heading}`}>
           {t("priceTitleA")} <span className="editorial-italic text-muted">{t("priceTitleB")}</span>
         </h2>
-        <div className="mt-12 grid gap-5 md:grid-cols-2">
-          <div data-fx="parallax" data-speed="18" className="flex flex-col rounded-[var(--radius-card)] border border-ink bg-bg p-7">
+        <div className="mt-12 grid gap-5 md:grid-cols-3">
+          {/* Planners: always free. */}
+          <div className="flex flex-col rounded-[var(--radius-card)] border border-hairline bg-bg p-7">
             <p className="font-medium">{t("priceFreeName")}</p>
             <p className="mt-3 flex items-baseline gap-2">
               <span className="text-5xl font-semibold tracking-tight">{t("priceFreeValue")}</span>
               <span className="text-muted">{t("priceFreeUnit")}</span>
             </p>
-            <ul className="mt-6 flex flex-1 flex-col gap-3">
-              {free.map((f) => (
-                <li key={f} className="flex gap-3">
-                  <Check className="mt-0.5 size-5 shrink-0" strokeWidth={2.25} aria-hidden="true" />
-                  {f}
-                </li>
-              ))}
-            </ul>
+            {list(free)}
             <Link href="/editor" className="mt-8 rounded-full bg-accent px-5 py-3 text-center font-semibold text-accent-ink">
               {t("priceFreeCta")}
             </Link>
           </div>
-          <div data-fx="parallax" data-speed="-18" className="flex flex-col rounded-[var(--radius-card)] border border-dashed border-hairline bg-bg p-7">
-            <div className="flex items-center justify-between">
-              <p className="font-medium">{t("priceShopName")}</p>
-              <span className="rounded-full bg-surface px-2.5 py-0.5 text-xs font-medium">{t("priceSoon")}</span>
-            </div>
-            <p className="mt-3 text-5xl font-semibold tracking-tight text-muted">{t("priceShopValue")}</p>
-            <ul className="mt-6 flex flex-1 flex-col gap-3 text-muted">
-              {shop.map((f) => (
-                <li key={f} className="flex gap-3">
-                  <Check className="mt-0.5 size-5 shrink-0" strokeWidth={2.25} aria-hidden="true" />
-                  {f}
-                </li>
-              ))}
-            </ul>
+
+          {/* Shops: free to start. */}
+          <div className="flex flex-col rounded-[var(--radius-card)] border border-hairline bg-bg p-7">
+            <p className="font-medium">{t("priceShopName")}</p>
+            <p className="mt-3 flex items-baseline gap-2">
+              <span className="text-5xl font-semibold tracking-tight">{t("priceShopValue")}</span>
+              <span className="text-muted">{t("priceShopUnit")}</span>
+            </p>
+            {list(shop)}
             <Link
-              href="/login?next=%2Fonboarding"
-              className="mt-8 rounded-full border border-hairline px-5 py-3 text-center font-semibold transition-colors hover:border-ink"
+              href="/seller"
+              className="mt-8 rounded-full border border-ink px-5 py-3 text-center font-semibold transition-colors hover:bg-ink hover:text-bg"
             >
               {t("priceShopCta")}
             </Link>
+          </div>
+
+          {/* Shops that want reach: monthly Pro. */}
+          <div className="relative flex flex-col rounded-[var(--radius-card)] border-2 border-ink bg-bg p-7 shadow-soft">
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-medium">{t("priceProName")}</p>
+              <span className="rounded-full bg-[#D7FF3A] px-2.5 py-0.5 text-xs font-semibold text-[#111]">{t("priceProBadge")}</span>
+            </div>
+            <p className="mt-3 flex items-baseline gap-2">
+              <span className="text-5xl font-semibold tracking-tight">{t("priceProValue")}</span>
+              <span className="text-muted">{t("priceProUnit")}</span>
+            </p>
+            <p className="mt-1 text-sm text-muted">{t("priceProYearly")}</p>
+            {list(pro)}
+            <Link href="/seller" className="mt-8 rounded-full bg-ink px-5 py-3 text-center font-semibold text-bg transition-opacity hover:opacity-90">
+              {t("priceProCta")}
+            </Link>
+            <p className="mt-3 text-center text-xs text-muted">{t("priceProNote")}</p>
           </div>
         </div>
       </div>
     </section>
   );
 }
-
-/* ---------- Where to print (kinds of places, not named partners) ---------- */
 
 const PRINT_PLACES = [
   { key: "home", icon: Home, tint: "#FFE7A3" },
@@ -580,17 +576,21 @@ export async function PrintPartners() {
         </div>
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {PRINT_PLACES.map(({ key, icon: Icon, tint }, i) => (
-            <li
-              key={key}
-              className="reveal flex flex-col justify-between gap-6 rounded-2xl border border-hairline bg-bg p-4 transition-transform duration-500 ease-[var(--ease-out-soft)] hover:-translate-y-1"
-              style={{ transitionDelay: `${i * 60}ms` }}
-            >
-              <span className="grid size-10 place-items-center rounded-xl" style={{ background: tint }} aria-hidden="true">
-                <Icon className="size-5 text-[#2B2320]" strokeWidth={1.75} />
-              </span>
-              <div>
-                <p className="font-medium">{t(`print.${key}.title`)}</p>
-                <p className="mt-1 text-xs tabular-nums text-muted">{t(`print.${key}.meta`)}</p>
+            // The reveal (and its stagger delay) lives on the <li>; the hover lift is on the card inside, so the
+            // two transitions never fight and hovering isn't delayed.
+            <li key={key} className="reveal" style={{ transitionDelay: `${i * 60}ms` }}>
+              <div className="group flex h-full flex-col justify-between gap-6 rounded-2xl border border-hairline bg-bg p-4 transition-[translate,box-shadow,border-color] duration-300 ease-[var(--ease-out-soft)] hover:-translate-y-1 hover:border-ink/15 hover:shadow-soft">
+                <span
+                  className="grid size-10 place-items-center rounded-xl transition-transform duration-300 ease-[var(--ease-out-soft)] group-hover:scale-110 group-hover:-rotate-6"
+                  style={{ background: tint }}
+                  aria-hidden="true"
+                >
+                  <Icon className="size-5 text-[#2B2320]" strokeWidth={1.75} />
+                </span>
+                <div>
+                  <p className="font-medium">{t(`print.${key}.title`)}</p>
+                  <p className="mt-1 text-xs tabular-nums text-muted">{t(`print.${key}.meta`)}</p>
+                </div>
               </div>
             </li>
           ))}
