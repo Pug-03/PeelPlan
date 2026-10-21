@@ -101,9 +101,9 @@
   },
   "meta": {
     "title": "PeelPlan - See it at actual size before you stick",
-    "description": "Plan MacBook sticker layouts at true 1:1 scale, then print a placement guide accurate to ±1 mm.",
+    "description": "Plan MacBook sticker layouts at true 1:1 scale, try stickers from independent shops before you buy, and print a placement guide accurate to ±1 mm.",
     "ogHeadline": "See it at actual size before you stick.",
-    "ogSub": "MacBook sticker layouts at true 1:1 scale, with a print guide accurate to ±1 mm."
+    "ogSub": "MacBook sticker layouts at true 1:1 scale. Try shop stickers on your lid before you buy."
   },
   "notFound": {
     "title": "This page peeled off",
@@ -126,7 +126,7 @@
     "heroB": "actual size",
     "heroC": "before you",
     "heroPeel": "stick.",
-    "heroSub": "Pick your MacBook, drop stickers onto a lid that's exactly the real size, and print a 1:1 guide that lines up on the real thing.",
+    "heroSub": "Pick your MacBook, try stickers from independent shops on a lid that's exactly the real size, and print a 1:1 guide that lines up on the real thing.",
     "heroCta": "Start planning, free",
     "heroNote": "No account needed. Works on your phone.",
     "marqueeLabel": "Example layouts",
@@ -142,6 +142,7 @@
     "statScale": "1:1",
     "statScaleLabel": "vector PDF with a 100 mm calibration line",
     "statModelsLabel": "MacBook models supported, more coming",
+    "howEyebrow": "Planning",
     "howTitleA": "Three steps.",
     "howTitleB": "Zero guesswork.",
     "step1Title": "Pick your MacBook",
@@ -150,9 +151,9 @@
     "step2Body": "Upload photos of your stickers or use ours. Set their size in mm, or measure them against a card or coin.",
     "step3Title": "Print and stick",
     "step3Body": "Export a 1:1 PDF, tiled across A4 or Letter if needed, plus a coordinate sheet.",
-    "shopsTitle": "Sticker shops are coming",
+    "shopsTitle": "Try it on before you buy",
     "shopsLink": "Browse example shops",
-    "shopsBody": "Soon you'll try stickers from independent shops on your lid at real size, then buy the whole layout in one checkout.",
+    "shopsBody": "Every shop sticker comes with its real size in millimetres. Put it on your lid at 1:1 and see how it looks before you order.",
     "faqTitle": "Questions, answered",
     "faq": [
       {
@@ -169,7 +170,11 @@
       },
       {
         "q": "Do I need an account?",
-        "a": "No. Your layouts save on this device and you can share a link. Sign in with Google to keep them together in your collection; cloud saves and buying come later."
+        "a": "No. Your layouts save on this device and you can share a link. Sign in with Google to keep them in your collection, buy from shops, or open your own."
+      },
+      {
+        "q": "Who sends my stickers?",
+        "a": "The shop you buy from. You pay it directly by PromptPay, it checks your slip and ships to you. PeelPlan never holds the money."
       },
       {
         "q": "Can I use photos of my own stickers?",
@@ -298,6 +303,7 @@
     "priceNote": "No commission on sales, ever. Cancel any time; nothing is charged during the free month.",
     "priceFreeCta": "Start a layout",
     "priceShopCta": "Start your free month",
+    "buyEyebrow": "Buying from shops",
     "buyTitleA": "From cart",
     "buyTitleB": "to your lid",
     "buyLead": "Every sticker here is sold by an independent shop. Plan it at real size, pay the shop directly, and it comes to your door.",
@@ -373,7 +379,6 @@
     "upload": "Add sticker photo",
     "uploadHint": "Photo or image of a single sticker. Plain background works best.",
     "noUploads": "No stickers yet. Add a photo of one to get started.",
-    "shopSoon": "Shop stickers arrive in a later release. You'll be able to try them on at real size right here.",
     "add": "Add {name}",
     "deleteAsset": "Remove from my stickers",
     "properties": "Properties",
@@ -520,7 +525,7 @@
     "signOut": "Sign out",
     "account": "Account",
     "loginTitle": "Sign in to PeelPlan",
-    "loginBody": "Sign in with Google to plan layouts, save them to your collection, and later buy or sell stickers.",
+    "loginBody": "Sign in with Google to plan layouts, save them to your collection, and buy or sell stickers.",
     "google": "Continue with Google",
     "loginError": "Sign-in didn't finish. Please try again.",
     "notConfigured": "Google sign-in turns on once Supabase is connected.",

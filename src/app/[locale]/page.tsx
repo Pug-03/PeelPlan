@@ -107,7 +107,8 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
 
         {/* How it works */}
         <section id="how" className="mx-auto max-w-7xl scroll-mt-20 px-5 py-24 sm:px-8 sm:py-32">
-          <h2 className="reveal max-w-[18ch] text-balance text-[clamp(2.25rem,5vw,4rem)] leading-[1.02] font-semibold tracking-[-0.03em]">
+          <p className="reveal text-sm font-medium tracking-wide text-muted uppercase">{t("howEyebrow")}</p>
+          <h2 className="reveal mt-3 max-w-[18ch] text-balance text-[clamp(2.25rem,5vw,4rem)] leading-[1.02] font-semibold tracking-[-0.03em]">
             {t("howTitleA")} <span className="editorial-italic text-muted">{t("howTitleB")}</span>
           </h2>
           <ol data-fx="steps" className="relative mt-14 grid gap-x-10 gap-y-12 md:grid-cols-3">

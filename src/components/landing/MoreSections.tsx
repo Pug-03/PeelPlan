@@ -568,7 +568,8 @@ export async function BuyFlow() {
     <section className="mx-auto max-w-7xl px-5 py-24 sm:px-8 sm:py-28">
       <div className="reveal flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className={heading}>
+          <p className="text-sm font-medium tracking-wide text-muted uppercase">{t("buyEyebrow")}</p>
+          <h2 className={`mt-3 ${heading}`}>
             {t("buyTitleA")} <span className="editorial-italic text-muted">{t("buyTitleB")}</span>
           </h2>
           <p className="mt-5 max-w-[48ch] text-lg leading-relaxed text-muted">{t("buyLead")}</p>
