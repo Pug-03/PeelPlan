@@ -287,9 +287,10 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
       </div>
 
       {/* Controls */}
-      <div className="flex flex-col gap-2.5 px-1 sm:px-4">
+      <div className="flex min-w-0 flex-col gap-2.5 px-1 sm:px-4">
+        {/* min-w-0 so the row scrolls sideways on a narrow phone instead of widening the hero column. */}
         <div
-          className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible"
+          className="-mx-1 flex min-w-0 items-center gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible"
           role="group"
           aria-label={t("playModels")}
         >

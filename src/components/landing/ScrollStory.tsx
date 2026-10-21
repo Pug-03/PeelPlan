@@ -9,6 +9,9 @@ import { LazySvgLayer } from "@/components/LazySvgLayer";
 import { LidSurface, LogoMark } from "@/components/LidArt";
 import { VISIBLE_LIBRARY, stickerSrc } from "@/stickers/library";
 
+// Once per module, not once per effect.
+gsap.registerPlugin(ScrollTrigger);
+
 const model = getLaptopModel("macbook-pro-14-m5");
 const lid = lidGeometry(model);
 const PAD = 22;
@@ -34,7 +37,6 @@ export function ScrollStory({ title, steps, svgLabel }: { title: React.ReactNode
     const el = root.current;
     if (!el) return;
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    gsap.registerPlugin(ScrollTrigger);
     const ctx = gsap.context(() => {
       const q = gsap.utils.selector(el);
       const outline = q("[data-outline]")[0] as unknown as SVGRectElement | undefined;

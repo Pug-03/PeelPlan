@@ -90,12 +90,19 @@ export function retrySession() {
 /**
  * `failed`: the auth client couldn't load, so who's signed in is unknown (still "loading" for
  * callers that only wait). `profileError`: signed in, but the profile couldn't be fetched; `profile`
- * is null without meaning "not onboarded", so don't send them to onboarding.
+ * is null without meaning "not onboarded", so don't send them to onboarding. `slow`: still waiting
+ * after SLOW_AFTER, so callers can say something instead of holding a blank screen.
  */
 export type SessionState =
-  | { status: "loading"; failed?: boolean }
+  | { status: "loading"; failed?: boolean; slow?: boolean }
   | { status: "signed-out" }
   | { status: "signed-in"; session: Session; profileError?: boolean };
+
+/**
+ * How long a lookup may stay silent. postgrest-js retries a network-level failure sixteen times, so
+ * the profile query can take about eight seconds to give up: far too long to show nothing at all.
+ */
+const SLOW_AFTER = 2000;
 
 /** Current session; re-renders on sign-in/out in this or another tab. */
 export function useSession(): SessionState {
@@ -105,6 +112,7 @@ export function useSession(): SessionState {
   useEffect(() => {
     let alive = true;
     let unsub = () => {};
+    const slow = setTimeout(() => alive && setState((s) => (s.status === "loading" && !s.failed ? { ...s, slow: true } : s)), SLOW_AFTER);
     const fromDemo = () => {
       const s = read();
       if (alive) setState(s ? { status: "signed-in", session: s } : { status: "signed-out" });
@@ -116,6 +124,7 @@ export function useSession(): SessionState {
       window.addEventListener("storage", on);
       return () => {
         alive = false;
+        clearTimeout(slow);
         window.removeEventListener(EVENT, on);
         window.removeEventListener("storage", on);
       };
@@ -163,6 +172,7 @@ export function useSession(): SessionState {
       });
     return () => {
       alive = false;
+      clearTimeout(slow);
       window.removeEventListener(RETRY_EVENT, onRetry);
       unsub();
     };

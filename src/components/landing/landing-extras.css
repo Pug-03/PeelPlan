@@ -19,7 +19,10 @@
 /* Buttons: a light band runs across on hover, and the arrow keeps moving. */
 .cta-run {
   position: relative;
+  /* The shine band runs edge to edge, so it has to be clipped — which would also cut the label if a
+     flex parent squeezed the button. fit-content keeps the label whole without ever outgrowing the row. */
   overflow: hidden;
+  min-width: fit-content;
   isolation: isolate;
 }
 .cta-run::after {

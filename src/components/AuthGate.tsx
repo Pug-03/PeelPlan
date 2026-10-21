@@ -25,8 +25,22 @@ export function AuthGate({ children }: { children: (session: Session) => ReactNo
   }, [state, failed, router, pathname]);
 
   if (failed) return <SessionError />;
-  if (state.status !== "signed-in" || !state.session.profile) return <div className="min-h-dvh bg-surface" aria-busy="true" />;
+  if (state.status !== "signed-in" || !state.session.profile) return <SessionWait slow={state.status === "loading" && !!state.slow} />;
   return <>{children(state.session)}</>;
+}
+
+/** Blank while the lookup is quick; a line of reassurance once it drags (see SLOW_AFTER in session.ts). */
+function SessionWait({ slow }: { slow: boolean }) {
+  const t = useTranslations("auth");
+  return (
+    <div className="grid min-h-dvh place-items-center bg-surface px-5" aria-busy="true">
+      {slow && (
+        <p role="status" className="text-sm text-muted">
+          {t("stillLoading")}
+        </p>
+      )}
+    </div>
+  );
 }
 
 function SessionError() {

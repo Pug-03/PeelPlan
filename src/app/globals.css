@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Build folders hold prerendered HTML; scanning it for class names fails the CSS build (see .gitignore). */
+@source not "../../.next*";
+
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
@@ -91,6 +94,25 @@ body {
     background: var(--accent-soft);
     color: var(--text);
   }
+}
+
+/* First tab stop on every page: off screen until focused, then it jumps past the header to <main>. */
+.skip-link {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  left: 10px;
+  z-index: 60;
+  translate: -200% 0;
+  border-radius: 9999px;
+  background: var(--bg);
+  box-shadow: var(--shadow-soft);
+  padding: 0.625rem 1.125rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+}
+.skip-link:focus {
+  translate: 0 0;
 }
 
 .editorial-italic {
@@ -206,12 +228,14 @@ html.js .reveal.is-visible {
   --d: 400ms;
   animation: fade-up 700ms var(--ease-out-soft) calc(var(--hero-wait, 0ms) + var(--d)) both;
 }
-/* After a language switch the hero is already on screen; skip its entrance (set by LocaleSwitch). */
-html[data-no-entrance] :is(.hero-line, .hero-fade, .hero-underline path) {
+/* After a language switch the hero is already on screen; skip its entrance (set by LocaleSwitch).
+   LocaleSwitch sets the flag on <html> before the switch and hands it to the new page's <main> once
+   it lands, so a later visit to the landing page plays the entrance again. */
+[data-no-entrance] :is(.hero-line, .hero-fade, .hero-underline path) {
   animation: none;
 }
 @media (prefers-reduced-motion: no-preference) {
-  html[data-no-entrance] .hero-line:nth-child(4) {
+  [data-no-entrance] .hero-line:nth-child(4) {
     animation: wiggle-peel 3.2s var(--ease-out-soft) infinite;
   }
 }

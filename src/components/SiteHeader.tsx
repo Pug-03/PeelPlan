@@ -8,13 +8,32 @@ import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { RulerMark, Wordmark } from "./Wordmark";
 import "./site-header.css";
 
+const isDarkNow = () => {
+  const root = document.documentElement;
+  return root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+};
+
 export function ThemeToggle() {
   const t = useTranslations("nav");
+  // The theme lives on <html> (set before paint), so it can only be read after mount: null until then,
+  // which leaves aria-pressed off the server HTML instead of guessing and breaking hydration.
+  const [isDark, setIsDark] = useState<boolean | null>(null);
+  useEffect(() => {
+    const read = () => setIsDark(isDarkNow());
+    read();
+    // ThemeSync and other tabs can change it too.
+    const mo = new MutationObserver(read);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    const system = matchMedia("(prefers-color-scheme: dark)");
+    system.addEventListener("change", read);
+    return () => {
+      mo.disconnect();
+      system.removeEventListener("change", read);
+    };
+  }, []);
   const toggle = () => {
-    const root = document.documentElement;
-    const isDark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-    const next = isDark ? "light" : "dark";
-    root.dataset.theme = next;
+    const next = isDarkNow() ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
     try {
       localStorage.setItem("peelplan.theme", next);
     } catch {
@@ -26,6 +45,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={t("theme")}
+      aria-pressed={isDark ?? undefined}
       className="relative grid size-9 place-items-center rounded-full text-muted transition-colors after:absolute after:-inset-1 hover:bg-surface hover:text-ink sm:size-10 sm:after:hidden"
     >
       <Sun className="hidden size-[18px] dark:block" strokeWidth={1.75} />
@@ -148,13 +168,14 @@ export function LocaleSwitch({ className = "", inMenu = false }: { className?: s
   const next = locale === "th" ? "en" : "th";
   const pathname = usePathname();
   const router = useRouter();
-  // Keep the query (e.g. a seller's /shops/preview?name=…) when switching; empty on the server.
-  const search = useSyncExternalStore(
+  // Keep the query (e.g. a seller's /shops/preview?name=…) and the hash (an admin's #reports tab)
+  // when switching; empty on the server.
+  const suffix = useSyncExternalStore(
     noSubscribe,
-    () => window.location.search,
+    () => window.location.search + window.location.hash,
     () => "",
   );
-  const href = `${pathname}${search}`;
+  const href = `${pathname}${suffix}`;
 
   // Fetch the other language's page ahead of time (on hover / focus), so the switch itself only swaps it in.
   const prefetch = () => router.prefetch(href, { locale: next });
@@ -179,14 +200,25 @@ export function LocaleSwitch({ className = "", inMenu = false }: { className?: s
       if (swap) root.dataset.langSwap = next;
     };
     flag();
+    // Hand the entrance suppression to the page that landed: <main> is a fresh element on every
+    // navigation, so coming back to the landing page later plays the entrance again.
+    const settle = () => {
+      document.querySelector("main")?.setAttribute("data-no-entrance", "");
+      delete root.dataset.noEntrance;
+    };
+    // This switch, until its cleanup has run. A page that lands after that must not re-arm the flags:
+    // data-lang-swap left on <html> would kill every scroll reveal for the rest of the session.
+    let live = true;
+    let stopWatching = () => {};
     // The new page is in once <html lang> flips. React wipes <html>'s attributes when the [locale] layout
     // remounts, so put the flags back right away, before the browser paints or snapshots the new page.
     // No requestAnimationFrame here: rendering is paused during a view transition, so it would only fire after the timeout.
     const arrived = new Promise<void>((resolve) => {
       const obs = new MutationObserver(() => {
         if (root.lang !== next) return;
-        obs.disconnect();
-        flag();
+        stopWatching();
+        if (live) flag();
+        settle();
         // The new header has read the menu state by now; pages without one (the editor) never clear it.
         try {
           sessionStorage.removeItem(KEEP_KEY);
@@ -196,10 +228,22 @@ export function LocaleSwitch({ className = "", inMenu = false }: { className?: s
         resolve();
       });
       obs.observe(root, { attributes: true, attributeFilter: ["lang"] });
-      // On a slow network stop holding the screen, but keep watching so the flags still land when the page does.
-      setTimeout(resolve, 1200);
+      // On a slow network stop holding the screen. Watching carries on until the switch's cleanup, so
+      // the flags still land if the page arrives a moment later — and never after that.
+      const timer = setTimeout(resolve, 1200);
+      stopWatching = () => {
+        obs.disconnect();
+        clearTimeout(timer);
+      };
     });
-    if (!swap) return go();
+    if (!swap) {
+      void arrived.finally(() => {
+        live = false;
+        stopWatching();
+        settle();
+      });
+      return go();
+    }
     const sheet = document.createElement("style");
     document.head.append(sheet);
     let blocks = nameTextBlocks(null, sheet);
@@ -209,10 +253,18 @@ export function LocaleSwitch({ className = "", inMenu = false }: { className?: s
       blocks = nameTextBlocks(blocks, sheet);
     }));
     void vt.finished.finally(() => {
+      live = false;
+      stopWatching();
       activeSwap = null;
       delete root.dataset.langSwap;
+      settle();
       unnameTextBlocks(blocks);
       sheet.remove();
+      try {
+        sessionStorage.removeItem(KEEP_KEY);
+      } catch {
+        /* storage unavailable */
+      }
     });
   };
 
@@ -243,24 +295,39 @@ const UNFOLD_AT = 60;
  */
 export function SiteHeader() {
   const t = useTranslations("nav");
-  // After a language switch the header remounts: come back folded / with the menu open, as it was.
-  const [resume] = useState(readLangSwap);
-  const [folded, setFolded] = useState(() => !!resume && window.scrollY > FOLD_AT);
-  const [open, setOpen] = useState(() => !!resume?.menu);
+  // Server-safe to start with: sessionStorage and scrollY are only readable after mount, and a switch
+  // that never finished would otherwise leave the client hydrating an open menu the server never sent.
+  const [folded, setFolded] = useState(false);
+  const [open, setOpen] = useState(false);
   // A menu carried over from the other language is already open: don't pop it in again.
-  const [resumed, setResumed] = useState(() => !!resume?.menu);
+  const [resumed, setResumed] = useState(false);
   const toggleMenu = () => {
     setResumed(false);
     setOpen((o) => !o);
   };
+  // After a language switch the header remounts: come back folded / with the menu open, as it was.
   useEffect(() => {
+    const resume = readLangSwap();
     try {
       sessionStorage.removeItem(KEEP_KEY);
     } catch {
       /* storage unavailable */
     }
+    if (!resume) return;
+    /* eslint-disable react-hooks/set-state-in-effect -- sessionStorage and scrollY can only be read
+       after mount, and reading them in the initialisers is what made the client hydrate a state the
+       server HTML never had. One pass on mount, never again. */
+    if (window.scrollY > FOLD_AT) setFolded(true);
+    if (resume.menu) {
+      setOpen(true);
+      setResumed(true);
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
   const panel = useRef<HTMLDivElement>(null);
+  // Escape and outside clicks hand focus back to whichever control opened the menu.
+  const menuBtn = useRef<HTMLButtonElement>(null);
+  const orbBtn = useRef<HTMLButtonElement>(null);
 
   // Two invisible markers from the top of the page down to FOLD_AT and UNFOLD_AT; watching them leave and
   // return replaces reading scrollY on every frame (each read forced a style recalc while scroll scenes ran).
@@ -283,15 +350,20 @@ export function SiteHeader() {
   const menuOpen = open;
   useEffect(() => {
     if (!menuOpen) return;
-    const key = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    const click = (e: MouseEvent) => !panel.current?.contains(e.target as Node) && setOpen(false);
+    // Closing without choosing anything: put focus back on the trigger, not on <body>.
+    const dismiss = () => {
+      setOpen(false);
+      (folded ? orbBtn : menuBtn).current?.focus({ preventScroll: true });
+    };
+    const key = (e: KeyboardEvent) => e.key === "Escape" && dismiss();
+    const click = (e: MouseEvent) => !panel.current?.contains(e.target as Node) && dismiss();
     document.addEventListener("keydown", key);
     document.addEventListener("pointerdown", click);
     return () => {
       document.removeEventListener("keydown", key);
       document.removeEventListener("pointerdown", click);
     };
-  }, [menuOpen]);
+  }, [menuOpen, folded]);
 
   const navLink = "grid h-10 place-items-center rounded-full px-2 text-sm text-muted transition-colors hover:text-ink";
 
@@ -325,6 +397,7 @@ export function SiteHeader() {
               <ThemeToggle />
               <HeaderMarket />
               <button
+                ref={menuBtn}
                 type="button"
                 className="grid size-10 place-items-center rounded-full text-ink transition-colors hover:bg-surface md:hidden"
                 aria-label={t("menu")}
@@ -344,6 +417,7 @@ export function SiteHeader() {
 
           {/* Folded: one round button */}
           <button
+            ref={orbBtn}
             type="button"
             className="site-header-orb"
             aria-label={t("menu")}

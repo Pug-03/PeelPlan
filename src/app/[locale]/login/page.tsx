@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { LocaleSwitch } from "@/components/SiteHeader";
 import { Wordmark } from "@/components/Wordmark";
 import { Link, redirect } from "@/i18n/navigation";
 import { afterAuthPath, safePath } from "@/lib/safe-path";
 import { AUTH_ENABLED } from "@/lib/supabase/config";
 import { getSession } from "@/lib/supabase/server";
+import { CookieNotice } from "./CookieNotice";
 import { DemoSignIn } from "./DemoSignIn";
 import { GoogleButton } from "./GoogleButton";
 
@@ -27,9 +29,13 @@ export default async function LoginPage({ params, searchParams }: PageProps<"/[l
   return (
     <main className="grid min-h-dvh place-items-center bg-surface px-5 py-12">
       <div className="w-full max-w-sm rounded-[var(--radius-card)] border border-hairline bg-bg p-8 shadow-soft">
-        <Link href="/" aria-label="PeelPlan" className="inline-block rounded-lg">
-          <Wordmark />
-        </Link>
+        {/* There is no site header here, so the language switch rides along with the wordmark. */}
+        <div className="flex items-center justify-between gap-3">
+          <Link href="/" aria-label="PeelPlan" className="inline-block rounded-lg">
+            <Wordmark />
+          </Link>
+          <LocaleSwitch className="-mr-2" />
+        </div>
         <h1 className="mt-8 text-2xl font-semibold tracking-tight">{t("loginTitle")}</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted">{t("loginBody")}</p>
         {sp.error && (
@@ -37,6 +43,7 @@ export default async function LoginPage({ params, searchParams }: PageProps<"/[l
             {t("loginError")}
           </p>
         )}
+        <CookieNotice />
         <div className="mt-6">
           <div className="flex flex-col gap-3">
             <GoogleButton next={next} disabled={!AUTH_ENABLED} />

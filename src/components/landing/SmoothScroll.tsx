@@ -5,6 +5,9 @@ import Lenis from "lenis";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+// Once per module, not once per effect: re-registering on every mount only added work.
+gsap.registerPlugin(ScrollTrigger);
+
 /**
  * Lenis smooth scroll wired into GSAP's ticker, for mouse and trackpad only. Phones and tablets keep
  * the browser's native touch scrolling: Lenis doesn't smooth touch anyway, and running it there only
@@ -14,7 +17,6 @@ export function SmoothScroll() {
   useEffect(() => {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-    gsap.registerPlugin(ScrollTrigger);
     const lenis = new Lenis({ duration: 1.1, anchors: true });
     lenis.on("scroll", ScrollTrigger.update);
     const tick = (time: number) => lenis.raf(time * 1000);

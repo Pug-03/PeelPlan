@@ -24,7 +24,13 @@ export default async function proxy(request: NextRequest) {
   });
   // getClaims refreshes an expired session like getUser, but checks the JWT locally (cached JWKS) when the
   // project signs with asymmetric keys, instead of a round trip to Supabase Auth on every page and language switch.
-  await supabase.auth.getClaims();
+  // It rethrows anything that isn't an AuthError, and an unhandled throw here would 500 every page,
+  // the public landing included; carrying on with the cookie as it stands is far cheaper.
+  try {
+    await supabase.auth.getClaims();
+  } catch {
+    /* leave the session as it is; the page decides what to do with it */
+  }
   return response;
 }
 

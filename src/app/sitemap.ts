@@ -5,7 +5,8 @@ import { routing } from "@/i18n/routing";
 import { SITE_URL } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const paths = ["", "/editor", "/shops", ...DEMO_SHOPS.map((s) => `/shops/${s.slug}`), ...LEGAL_DOCS.map((d) => `/legal/${d}`)];
+  // /editor is left out on purpose: it is behind sign-in and serves no indexable content.
+  const paths = ["", "/shops", ...DEMO_SHOPS.map((s) => `/shops/${s.slug}`), ...LEGAL_DOCS.map((d) => `/legal/${d}`)];
   return paths.flatMap((path) => {
     const languages = {
       ...Object.fromEntries(routing.locales.map((l) => [l, `${SITE_URL}/${l}${path}`])),

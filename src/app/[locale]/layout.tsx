@@ -56,12 +56,17 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
+  const t = await getTranslations({ locale, namespace: "nav" });
   return (
     <html lang={locale} className={`${anuphan.variable} ${instrument.variable} ${interTight.variable}`} suppressHydrationWarning>
       <head>
         <ThemeScript />
       </head>
       <body className="min-h-dvh">
+        {/* First tab stop: past the eight header controls, straight to <main id="main">. */}
+        <a href="#main" className="skip-link">
+          {t("skipToContent")}
+        </a>
         <NextIntlClientProvider>
           <ThemeSync />
           <FullscreenKey />

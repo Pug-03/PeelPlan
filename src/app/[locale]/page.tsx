@@ -26,7 +26,8 @@ import { Link } from "@/i18n/navigation";
 export async function generateMetadata({ params }: PageProps<"/[locale]">): Promise<Metadata> {
   const { locale } = await params;
   return {
-    alternates: { canonical: `/${locale}`, languages: { th: "/th", en: "/en", "x-default": "/th" } },
+    // The unprefixed URL redirects to the visitor's language, so it is the x-default (same as sitemap.ts).
+    alternates: { canonical: `/${locale}`, languages: { th: "/th", en: "/en", "x-default": "/" } },
   };
 }
 
@@ -57,7 +58,9 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
       <main id="main" className="has-intro">
         {/* Hero */}
         <section className="mx-auto grid max-w-7xl items-center gap-6 px-5 pt-2 pb-4 sm:px-8 sm:pt-2 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:gap-4">
-          <div>
+          {/* min-w-0: a grid column sizes to its widest child by default, which pushed the hero past
+              the section's padding and scrolled the whole landing page sideways on small phones. */}
+          <div className="min-w-0">
             <h1 className="hero-title max-w-[14ch] text-balance text-[clamp(2.6rem,min(6vw,9.5dvh),5.2rem)] leading-[0.98] font-semibold tracking-[-0.04em]">
               <span className="hero-line">{t("heroA")}</span> <span className="hero-line editorial-italic text-[1.08em]">{t("heroB")}</span>{" "}
               <span className="hero-line">{t("heroC")}</span>{" "}
@@ -85,7 +88,7 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
               <span className="text-sm text-muted">{t("heroNote")}</span>
             </div>
           </div>
-          <div className="hero-fade group relative mx-auto w-full max-w-lg lg:max-w-none" style={{ "--d": "300ms" } as React.CSSProperties}>
+          <div className="hero-fade group relative mx-auto w-full max-w-lg min-w-0 lg:max-w-none" style={{ "--d": "300ms" } as React.CSSProperties}>
             <HeroPlayground initial={visibleLayout(heroLayout.stickers, lidGeometry(getLaptopModel(heroLayout.modelId)))} initialModelId={heroLayout.modelId} initialColor={heroLayout.color} />
           </div>
         </section>

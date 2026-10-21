@@ -4,6 +4,33 @@ import { useEffect } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+// Once per module, not once per effect.
+gsap.registerPlugin(ScrollTrigger);
+
+type ResizeArgs = [type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions];
+
+/**
+ * Takes back the window "resize" listeners GSAP leaves behind. ScrollTrigger.enable() adds one per
+ * trigger, but disable() skips the removal whenever the scroller is the viewport (`if (!isViewport)`
+ * in ScrollTrigger 3.15), so killing a trigger never takes its listener off: this page builds about
+ * forty, and every visit and every language switch piled on another set for the rest of the session.
+ * Watch what gets added while the page is up and remove it on the way out.
+ */
+function reclaimResizeListeners() {
+  const original = window.addEventListener;
+  const added: ResizeArgs[] = [];
+  const patched = function (this: Window, ...args: ResizeArgs) {
+    if (args[0] === "resize") added.push(args);
+    return original.apply(this, args as Parameters<typeof window.addEventListener>);
+  } as typeof window.addEventListener;
+  window.addEventListener = patched;
+  return () => {
+    // Only if nothing else wrapped it after us, so a nested mount can't strand the patch.
+    if (window.addEventListener === patched) window.addEventListener = original;
+    added.forEach(([type, listener, options]) => window.removeEventListener(type, listener, options));
+  };
+}
+
 /**
  * Calm scroll-driven motion for landing sections, declared with data attributes so the sections
  * stay server components:
@@ -21,7 +48,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
  */
 export function ScrollFx() {
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
+    // First, before any other landing effect builds a scroll scene.
+    const releaseResize = reclaimResizeListeners();
     const mm = gsap.matchMedia();
     mm.add({ motion: "(prefers-reduced-motion: no-preference)", small: "(max-width: 767px)" }, (ctx) => {
       if (!ctx.conditions?.motion) return;
@@ -204,6 +232,10 @@ export function ScrollFx() {
       io.disconnect();
       sections.forEach((s) => s.removeAttribute("data-offscreen"));
       mm.revert();
+      // Scroll scenes are declared in several components on this page; any trigger created outside a
+      // gsap context would otherwise keep updating on every scroll long after the page was gone.
+      ScrollTrigger.killAll();
+      releaseResize();
     };
   }, []);
   return null;
