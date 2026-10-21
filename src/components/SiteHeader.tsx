@@ -60,6 +60,12 @@ function readLangSwap(): { menu: boolean } | null {
 /** On-screen elements that hold text of their own (outermost only): the pieces a language switch morphs. */
 function textBlocks(): HTMLElement[] {
   const out: HTMLElement[] = [];
+  // Words under the header or an open menu card would be lifted above it, so they stay in the page.
+  // (Hit testing can't tell: during a view transition every point hits <html>.)
+  const header = document.querySelector(".site-header");
+  const covers = [...document.querySelectorAll(".site-header-shell, .site-header-menu")].map((n) => n.getBoundingClientRect());
+  const covered = (el: HTMLElement, r: DOMRect) =>
+    !header?.contains(el) && covers.some((c) => r.left < c.right && r.right > c.left && r.top < c.bottom && r.bottom > c.top);
   const walk = (el: Element) => {
     for (const child of el.children) {
       if (!(child instanceof HTMLElement) || out.length >= 120) continue;
@@ -67,8 +73,9 @@ function textBlocks(): HTMLElement[] {
       if (!r.width || r.bottom < 0 || r.top > innerHeight) continue;
       const ownText = [...child.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
       // A caption sitting in the same box as a picture (the lid's "312.6 mm") must not take the picture with it.
-      if (ownText && r.height < 240 && !child.querySelector("img, picture, canvas, video, svg:not(:only-child)")) out.push(child);
-      else walk(child);
+      if (ownText && r.height < 240 && !child.querySelector("img, picture, canvas, video, svg:not(:only-child)")) {
+        if (!covered(child, r)) out.push(child);
+      } else walk(child);
     }
   };
   walk(document.body);
@@ -80,8 +87,9 @@ function textBlocks(): HTMLElement[] {
  * the new ones rise in top to bottom, and everything else (laptop, stickers, photos) holds still.
  * Old and new words never pair, so nothing slides across the page. Blocks with a fill (pills, chips)
  * do pair, by order when they sit in about the same spot, so they stretch to the new label instead of vanishing.
+ * Words that read the same in both languages ("PeelPlan", "312.6 mm") in the same spot keep their old name and hold still.
  */
-type TextBlock = { el: HTMLElement; rect: DOMRect; filled: boolean };
+type TextBlock = { el: HTMLElement; rect: DOMRect; filled: boolean; text: string; name: string };
 function unnameTextBlocks(blocks: TextBlock[]) {
   blocks.forEach(({ el }) => {
     el.style.removeProperty("view-transition-name");
@@ -91,17 +99,22 @@ function unnameTextBlocks(blocks: TextBlock[]) {
 function nameTextBlocks(prev: TextBlock[] | null, sheet: HTMLStyleElement): TextBlock[] {
   if (prev) unnameTextBlocks(prev);
   const rules: string[] = [];
+  const claimed = new Set<TextBlock>();
   const blocks = textBlocks().map((el, i) => {
     const rect = el.getBoundingClientRect();
     const css = getComputedStyle(el);
     const filled = css.backgroundColor !== "rgba(0, 0, 0, 0)" || css.backgroundImage !== "none";
+    const text = el.textContent ?? "";
     const was = prev?.[i];
     const paired = filled && (!prev || (was?.filled && Math.abs(was.rect.top - rect.top) < 64 && Math.abs(was.rect.left - rect.left) < 64));
-    const name = paired ? `lang-box-${i}` : `lang-${prev ? "new" : "old"}-${i}`;
+    // View-transition names must be unique, so each old block can be matched once.
+    const same = prev?.find((b) => !claimed.has(b) && !b.filled && b.text === text && Math.abs(b.rect.top - rect.top) < 4 && Math.abs(b.rect.left - rect.left) < 4);
+    if (same) claimed.add(same);
+    const name = same ? same.name : paired ? `lang-box-${i}` : `lang-${prev ? "new" : "old"}-${i}`;
     el.style.setProperty("view-transition-name", name);
-    el.style.setProperty("view-transition-class", filled ? "lang-box" : "lang-text");
-    if (prev) rules.push(`::view-transition-new(${name}){animation-delay:${160 + Math.round(Math.min(1, Math.max(0, rect.top / innerHeight)) * 160)}ms}`);
-    return { el, rect, filled };
+    el.style.setProperty("view-transition-class", same ? "lang-same" : filled ? "lang-box" : "lang-text");
+    if (prev && !same) rules.push(`::view-transition-new(${name}){animation-delay:${160 + Math.round(Math.min(1, Math.max(0, rect.top / innerHeight)) * 160)}ms}`);
+    return { el, rect, filled, text, name };
   });
   if (prev) sheet.textContent = rules.join("");
   return blocks;

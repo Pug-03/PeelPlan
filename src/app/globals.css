@@ -557,6 +557,14 @@ html[data-lang-swap]::view-transition-old(.lang-box) {
 html[data-lang-swap]::view-transition-new(.lang-box) {
   animation: lang-box-in 320ms ease-out both;
 }
+/* Words that are the same in both languages hold still: show only the new snapshot, no motion. */
+html[data-lang-swap]::view-transition-group(.lang-same),
+html[data-lang-swap]::view-transition-new(.lang-same) {
+  animation: none;
+}
+html[data-lang-swap]::view-transition-old(.lang-same) {
+  display: none;
+}
 @keyframes lang-word-out {
   to {
     opacity: 0;
