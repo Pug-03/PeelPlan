@@ -32,8 +32,9 @@ export function Inspector({ warnings }: { warnings: LayoutWarnings }) {
   const allLocked = selected.length > 0 && selected.every((s) => s.locked);
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* Phones: the floating bottom bar overlaps this sheet, so leave room to scroll the last rows above it. */}
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 max-lg:pb-[calc(5rem+env(safe-area-inset-bottom,0px))]">
         {!selected.length && <p className="text-sm leading-relaxed text-muted">{t("nothingSelected")}</p>}
 
         {selected.length > 0 && (

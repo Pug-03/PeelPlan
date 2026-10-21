@@ -7,7 +7,7 @@ import { useShallow } from "zustand/react/shallow";
 import { getLaptopModel, lidGeometry } from "@/config/laptops";
 import { downloadBlob } from "@/lib/image/browser";
 import { coordinateRows, csvCell } from "@/lib/layout";
-import type { PdfMode } from "@/lib/pdf/exportPdf";
+import type { PdfMode, PdfText } from "@/lib/pdf/exportPdf";
 import { roundMm } from "@/lib/scale";
 import { useEditor } from "../store";
 import { Button, Segmented, Toggle } from "./controls";
@@ -39,8 +39,43 @@ export function ExportDialog({ open, onClose }: { open: boolean; onClose: () => 
     setBusy(true);
     setError(false);
     try {
-      const { exportLayoutPdf } = await import("@/lib/pdf/exportPdf");
-      const bytes = await exportLayoutPdf({ modelName: model.name, ...lidGeometry(model) }, items, assets, { paper, mode, includeImages: images });
+      const [{ exportLayoutPdf }, { loadPdfFonts }] = await Promise.all([import("@/lib/pdf/exportPdf"), import("@/lib/pdf/fonts")]);
+      // The Thai-capable font carries the localised copy; if it fails to load the PDF falls back to ASCII English.
+      const fonts = await loadPdfFonts();
+      const text: PdfText = {
+        coverTitle: t("doc.coverTitle"),
+        coverSummary: (v) => t("doc.coverSummary", v),
+        beforePrint: t("doc.beforePrint"),
+        stepScale: t("doc.stepScale"),
+        stepPaper: (v) => t("doc.stepPaper", v),
+        stepMeasure: t("doc.stepMeasure"),
+        stepJoin: t("doc.stepJoin"),
+        paperA4: t("a4"),
+        paperLetter: t("letter"),
+        landscape: t("doc.landscape"),
+        square: t("doc.square"),
+        mm: t("doc.mm"),
+        rulerNote: t("doc.rulerNote"),
+        hingeNote: (model) => t("doc.hingeNote", { model }),
+        sheetFooter: (v) => t("doc.sheetFooter", v),
+        templateNote: t("doc.templateNote"),
+        coordTitle: t("doc.coordTitle"),
+        colIndex: t("colIndex"),
+        colName: t("colName"),
+        colX: t("doc.colX"),
+        colY: t("doc.colY"),
+        colSize: t("doc.colSize"),
+        colRotation: t("doc.colRotation"),
+        rotationCw: (deg) => t("doc.rotationCw", { deg }),
+        flipped: t("doc.flipped"),
+      };
+      const bytes = await exportLayoutPdf({ modelName: model.name, ...lidGeometry(model) }, items, assets, {
+        paper,
+        mode,
+        includeImages: images,
+        text,
+        fonts,
+      });
       downloadBlob(new Blob([bytes as BlobPart], { type: "application/pdf" }), `peelplan-${model.id}-${mode}-${stamp}.pdf`);
     } catch {
       setError(true);

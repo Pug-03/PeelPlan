@@ -47,7 +47,7 @@ const CHIP_GROUPS = STICKER_GROUPS.filter((g) => COUNTS[g] > 0);
 const thumbs = new Map<string, string>();
 const thumbOf = (s: LibrarySticker) => thumbs.get(s.id) ?? (thumbs.set(s.id, stickerThumb(s)), thumbs.get(s.id)!);
 
-const LibraryTile = memo(function LibraryTile({ sticker: s, locale }: { sticker: LibrarySticker; locale: "th" | "en" }) {
+const LibraryTile = memo(function LibraryTile({ sticker: s, locale, onAddFailed }: { sticker: LibrarySticker; locale: "th" | "en"; onAddFailed: () => void }) {
   const t = useTranslations("editor");
   const addItem = useEditor((st) => st.addItem);
   return (
@@ -55,7 +55,7 @@ const LibraryTile = memo(function LibraryTile({ sticker: s, locale }: { sticker:
       <button
         type="button"
         aria-label={t("add", { name: s.name[locale] })}
-        onClick={async () => addItem(await ensureLibraryAsset(s), s.name[locale])}
+        onClick={() => void ensureLibraryAsset(s).then((asset) => addItem(asset, s.name[locale]), onAddFailed)}
         className="group flex w-full flex-col items-center gap-1.5 rounded-xl bg-surface p-3 transition-colors hover:bg-surface-2"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -72,17 +72,17 @@ const LibraryTile = memo(function LibraryTile({ sticker: s, locale }: { sticker:
   );
 });
 
-function LibraryGrid({ stickers, locale }: { stickers: LibrarySticker[]; locale: "th" | "en" }) {
+function LibraryGrid({ stickers, locale, onAddFailed }: { stickers: LibrarySticker[]; locale: "th" | "en"; onAddFailed: () => void }) {
   return (
     <ul className="grid grid-cols-3 gap-2 lg:grid-cols-2">
       {stickers.map((s) => (
-        <LibraryTile key={s.id} sticker={s} locale={locale} />
+        <LibraryTile key={s.id} sticker={s} locale={locale} onAddFailed={onAddFailed} />
       ))}
     </ul>
   );
 }
 
-export function StickerPanel({ onUpload }: { onUpload: (f: File) => void }) {
+export function StickerPanel({ onUpload, onAddFailed }: { onUpload: (f: File) => void; onAddFailed: () => void }) {
   const t = useTranslations("editor");
   const locale = useLocale() as "th" | "en";
   const [tab, setTab] = useState<"mine" | "library" | "shop">("library");
@@ -164,7 +164,8 @@ export function StickerPanel({ onUpload }: { onUpload: (f: File) => void }) {
           </div>
         )}
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
+      {/* Phones: the floating bottom bar overlaps this sheet, so leave room to scroll the last rows above it. */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 max-lg:pb-[calc(5rem+env(safe-area-inset-bottom,0px))]">
         {tab === "library" && (
           <div className="flex flex-col gap-3">
             <p aria-live="polite" className="px-1 text-xs text-muted">
@@ -180,7 +181,7 @@ export function StickerPanel({ onUpload }: { onUpload: (f: File) => void }) {
                 </button>
               </div>
             ) : filtering ? (
-              <LibraryGrid stickers={results} locale={locale} />
+              <LibraryGrid stickers={results} locale={locale} onAddFailed={onAddFailed} />
             ) : (
               <div className="flex flex-col gap-5">
                 {(["fun", "coding", "character"] as StickerCategory[]).map((cat) => {
@@ -189,7 +190,7 @@ export function StickerPanel({ onUpload }: { onUpload: (f: File) => void }) {
                   return (
                     <section key={cat} aria-label={t(`categories.${cat}`)}>
                       <h3 className="mb-2 px-1 text-xs text-muted">{t(`categories.${cat}`)}</h3>
-                      <LibraryGrid stickers={list} locale={locale} />
+                      <LibraryGrid stickers={list} locale={locale} onAddFailed={onAddFailed} />
                     </section>
                   );
                 })}

@@ -44,7 +44,8 @@
       "hint": "Enter to send, Shift+Enter for a new line",
       "failed": "Couldn't send. Please try again.",
       "full": "This device is out of storage for test chats. Try a smaller photo.",
-      "badImage": "That file couldn't be read as an image."
+      "badImage": "That file couldn't be read as an image.",
+      "rateLimited": "You're sending messages too fast. Wait a moment, then try again."
     },
     "safety": "Never pay outside the PromptPay QR shown on your order. PeelPlan staff will never ask for your password.",
     "orders": {
@@ -91,7 +92,9 @@
       "doneTitle": "Thanks, we got your report",
       "doneBody": "We'll review this conversation. If you were asked to pay outside your order's PromptPay QR, don't pay.",
       "testNote": "Test mode: the report is saved on this device only.",
-      "close": "Close"
+      "close": "Close",
+      "sending": "Sending…",
+      "failed": "Couldn't send the report. Please try again."
     },
     "notFound": {
       "title": "Conversation not found",
@@ -128,7 +131,7 @@
     "heroPeel": "stick.",
     "heroSub": "Pick your MacBook, try stickers from independent shops on a lid that's exactly the real size, and print a 1:1 guide that lines up on the real thing.",
     "heroCta": "Start planning, free",
-    "heroNote": "No account needed. Works on your phone.",
+    "heroNote": "Free. Sign in with Google to start. Works on your phone.",
     "marqueeLabel": "Example layouts",
     "storyTitleA": "Plan it",
     "storyTitleB": "before",
@@ -170,7 +173,7 @@
       },
       {
         "q": "Do I need an account?",
-        "a": "No. Your layouts save on this device and you can share a link. Sign in with Google to keep them in your collection, buy from shops, or open your own."
+        "a": "Yes, but it's free: sign in with Google to start. Your layouts are saved on this device, and you can share any of them as a link. The same sign-in lets you buy from shops or open your own."
       },
       {
         "q": "Who sends my stickers?",
@@ -181,8 +184,6 @@
         "a": "Yes. Upload or take a photo, remove the background, then set the real size by typing it, picking a preset, or marking a card or coin in the photo."
       }
     ],
-    "ctaTitleA": "Your lid, your rules,",
-    "ctaTitleB": "real size.",
     "ctaButton": "Open the editor",
     "footerLegal": "MacBook is a trademark of Apple Inc. Model names are used only to identify lid dimensions. PeelPlan is not affiliated with Apple.",
     "placeholderNote": "Example layouts and shops shown are illustrative placeholders.",
@@ -286,7 +287,7 @@
     "priceFreeName": "For decorating your laptop",
     "priceFreeValue": "Free",
     "priceFreeUnit": "forever",
-    "priceFreeItems": ["Every supported MacBook at real size", "Library stickers and your own uploads", "1:1 PDF print guide", "Auto-saved collection"],
+    "priceFreeItems": ["Every supported MacBook at real size", "Library stickers and your own uploads", "1:1 PDF print guide", "Collection saved on this device"],
     "priceLead": "Planning your lid is always free. Shops pick a monthly plan, and every new shop gets its first month free to try it out.",
     "priceTrial": "1 month free",
     "priceMonth": "/ month",
@@ -443,6 +444,8 @@
     "saveImageBody": "Your lid and its stickers on a share card, ready to post.",
     "savingImage": "Saving…",
     "saveImageFailed": "Couldn't create the image. Try again.",
+    "shareFailed": "Couldn't create the share link. Try again.",
+    "addFailed": "Couldn't add that sticker. Try again.",
     "lidOnlyPng": "Lid only (PNG)"
   },
   "calibrate": {
@@ -520,7 +523,30 @@
     "colSize": "Size (mm)",
     "colRot": "Rotation",
     "failed": "The PDF couldn't be created. Try again, or remove stickers whose images are missing.",
-    "working": "Preparing PDF…"
+    "working": "Preparing PDF…",
+    "doc": {
+      "coverTitle": "PeelPlan - 1:1 placement guide",
+      "coverSummary": "{model}  |  lid {width} x {height} mm  |  {count, plural, one {# sticker} other {# stickers}}",
+      "beforePrint": "Before you print",
+      "stepScale": "1. In the print dialog choose Scale: 100% / Actual size. Turn OFF \"Fit to page\" / \"Shrink\".",
+      "stepPaper": "2. Paper: {paper}. {sheets, plural, one {# sheet} other {# sheets}} after this page.",
+      "stepMeasure": "3. Measure the ruler below with a real ruler. It must be exactly 100 mm. If not, check scaling.",
+      "stepJoin": "4. Cut along the dashed lines, butt the sheets edge to edge so the crosshairs meet, then tape.",
+      "landscape": "(landscape)",
+      "square": "50 x 50 mm square",
+      "mm": "mm",
+      "rulerNote": "This line must measure exactly 100 mm. Print at 100% / Actual size, not \"Fit to page\".",
+      "hingeNote": "{model} - hinge side at bottom",
+      "sheetFooter": "Sheet {sheet}  ({page} / {pages})",
+      "templateNote": "CUT-OUT TEMPLATE: cut along the dashed outlines",
+      "coordTitle": "Coordinate sheet (sticker centre, mm from the lid edges, hinge at the bottom)",
+      "colX": "X from left",
+      "colY": "Y from top",
+      "colSize": "Size (w x h)",
+      "colRotation": "Rotation (CW)",
+      "rotationCw": "{deg}° CW",
+      "flipped": "(flipped)"
+    }
   },
   "auth": {
     "signIn": "Sign in",
@@ -577,7 +603,9 @@
     "demoTitle": "Testing mode",
     "demoButton": "Simulate Google sign-in",
     "demoNote": "Acts as if you signed in with Google, using a test account stored on this device. Use it until Supabase is connected.",
-    "backHome": "Back to the home page"
+    "backHome": "Back to the home page",
+    "sessionError": "We couldn't load your account. Check your connection and try again.",
+    "retry": "Try again"
   },
   "shop": {
     "verified": "Verified shop",
@@ -622,12 +650,16 @@
     "backHome": "Back to PeelPlan",
     "allShops": "All shops",
     "indexTitle": "Sticker shops",
-    "indexBody": "Browse example shops and try any of their stickers on your lid at real size.",
-    "productsCount": "{count, plural, one {# sticker} other {# stickers}}"
+    "indexBody": "Browse sticker shops and try any of their stickers on your lid at real size.",
+    "productsCount": "{count, plural, one {# sticker} other {# stickers}}",
+    "realTitle": "Shops on PeelPlan",
+    "examplesTitle": "Example shops",
+    "exampleLabel": "Examples",
+    "examplesBody": "Made up to show how shops look. Try their stickers on your lid; they don't sell for real."
   },
   "collection": {
     "title": "My collection",
-    "subtitle": "Every layout you make is saved here automatically.",
+    "subtitle": "Every layout you make is saved here automatically, on this device.",
     "newLayout": "New layout",
     "untitled": "Untitled layout",
     "open": "Open",
@@ -1036,7 +1068,10 @@
       "activeHint": "Turn off to hide it from your shop without deleting it.",
       "cancel": "Cancel",
       "save": "Save product",
-      "saving": "Saving…"
+      "saving": "Saving…",
+      "discardTitle": "Discard your changes to this product?",
+      "keepEditing": "Keep editing",
+      "discard": "Discard"
     },
     "settings": {
       "identity": "Shop details",
@@ -1118,7 +1153,16 @@
       "link": "Enter a full https:// link.",
       "save": "Couldn't save. Try again.",
       "storageFull": "This device's storage is full. Use smaller images or remove some.",
-      "fixFields": "Check the highlighted fields."
+      "fixFields": "Check the highlighted fields.",
+      "delete": "Couldn't delete. Try again.",
+      "linkHost": {
+        "tiktok": "Use a TikTok link (tiktok.com).",
+        "shopee": "Use a Shopee Thailand link (shopee.co.th).",
+        "lazada": "Use a Lazada Thailand link (lazada.co.th).",
+        "instagram": "Use an Instagram link (instagram.com).",
+        "facebook": "Use a Facebook link (facebook.com).",
+        "line": "Use a LINE link (line.me or lin.ee)."
+      }
     }
   },
   "market": {
@@ -1162,7 +1206,10 @@
       "paymentBody": "Pay the shop directly by PromptPay, then attach the slip on the order page. PeelPlan never holds the money.",
       "notFoundTitle": "Shop not found",
       "notFoundBody": "It may have closed, still be waiting for review, or the link may be wrong.",
-      "browseShops": "See all shops"
+      "browseShops": "See all shops",
+      "exampleReadOnly": "This is an example shop. You can't buy from it or message it, but you can try its stickers on your lid.",
+      "notTaking": "This shop isn't taking orders yet. Check back soon.",
+      "chatFailed": "Couldn't open the chat. Please try again."
     },
     "cart": {
       "title": "Cart",
@@ -1182,7 +1229,9 @@
       "removeAria": "Remove {name} from cart",
       "freeFrom": "Add {amount} more for free shipping",
       "checkout": "Check out this shop",
-      "fixFirst": "Fix the items above before checking out."
+      "fixFirst": "Fix the items above before checking out.",
+      "exampleClosed": "Example shops don't sell for real. Remove these items to check out other shops.",
+      "noPayment": "This shop hasn't set up PromptPay yet, so it can't take orders. You can remove these items."
     },
     "checkout": {
       "title": "Checkout",
@@ -1225,7 +1274,20 @@
         "product-unavailable": "Some items are no longer sold. Remove them from your cart and try again.",
         "shop-unavailable": "This shop isn't taking orders right now.",
         "storage-full": "This device's storage is full. Remove old orders or chats with images first.",
-        "generic": "Couldn't place the order. Please try again."
+        "generic": "Couldn't place the order. Please try again.",
+        "own-shop": "This is your own shop, so you can't order from it.",
+        "too-many-open-orders": "You have too many orders waiting for payment or slip checks. Pay or cancel some of them first.",
+        "too-many-units": "One order can have at most 200 pieces. Lower some quantities in your cart.",
+        "bad-lines": "Something in your cart doesn't look right. Check the quantities and try again.",
+        "bad-address": "Please check your shipping address and phone number.",
+        "not-onboarded": "Finish setting up your account before ordering.",
+        "not-signed-in": "Your sign-in has expired. Sign in again to place the order.",
+        "rate-limited": "Too many tries in a short time. Wait a minute, then try again."
+      },
+      "blocked": {
+        "example": "This is an example shop, so it can't take real orders.",
+        "noPayment": "This shop hasn't set up PromptPay yet, so it can't take orders right now.",
+        "closed": "This shop isn't taking orders right now."
       }
     },
     "orders": {
@@ -1324,7 +1386,13 @@
       "errors": {
         "bad-image": "Couldn't open this image. Try a JPG or PNG.",
         "storage-full": "This device's storage is full. Try a smaller image.",
-        "generic": "Something went wrong. Please try again."
+        "generic": "Something went wrong. Please try again.",
+        "bad-state": "This order isn't waiting for a slip any more. It may have been cancelled, or the shop already updated it."
+      },
+      "chatFailed": "Couldn't open the chat. Please try again.",
+      "cancelReasons": {
+        "expired": "Not paid in time",
+        "shop-unavailable": "The shop stopped taking orders"
       }
     },
     "carriers": {
@@ -1334,7 +1402,13 @@
       "jt": "J&T Express",
       "ninjavan": "Ninja Van",
       "other": "Other"
-    }
+    },
+    "loadError": {
+      "title": "Couldn't load this",
+      "body": "Check your connection and try again.",
+      "retry": "Try again"
+    },
+    "exampleNoChat": "Example shop: there's no one to chat with."
   },
   "admin": {
     "eyebrow": "PeelPlan team",

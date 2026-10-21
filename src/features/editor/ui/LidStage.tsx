@@ -206,11 +206,15 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
   useEffect(() => {
     const down = (e: KeyboardEvent) => e.key === "Shift" && setShift(true);
     const up = (e: KeyboardEvent) => e.key === "Shift" && setShift(false);
+    // Shift released while another window had focus never sends keyup here; don't leave snapping off.
+    const blur = () => setShift(false);
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
+    window.addEventListener("blur", blur);
     return () => {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", blur);
     };
   }, []);
 

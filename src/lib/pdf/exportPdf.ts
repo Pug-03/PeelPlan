@@ -1,3 +1,4 @@
+import fontkit from "@pdf-lib/fontkit";
 import {
   PDFDocument,
   PDFPage,
@@ -37,6 +38,68 @@ export type PdfLid = {
   logo?: { x: number; y: number; width: number; height: number };
 };
 
+/** Every string printed in the PDF, so the caller can pass the current locale's copy. */
+export type PdfText = {
+  coverTitle: string;
+  coverSummary: (v: { model: string; width: number; height: number; count: number }) => string;
+  beforePrint: string;
+  stepScale: string;
+  stepPaper: (v: { paper: string; sheets: number }) => string;
+  stepMeasure: string;
+  stepJoin: string;
+  paperA4: string;
+  paperLetter: string;
+  landscape: string;
+  square: string;
+  /** Millimetre unit after numbers, e.g. "mm". */
+  mm: string;
+  rulerNote: string;
+  hingeNote: (model: string) => string;
+  sheetFooter: (v: { sheet: string; page: number; pages: number }) => string;
+  templateNote: string;
+  coordTitle: string;
+  colIndex: string;
+  colName: string;
+  colX: string;
+  colY: string;
+  colSize: string;
+  colRotation: string;
+  rotationCw: (deg: number) => string;
+  flipped: string;
+};
+
+/** ASCII copy: the built-in Helvetica can only draw Latin text. */
+export const DEFAULT_PDF_TEXT: PdfText = {
+  coverTitle: "PeelPlan - 1:1 placement guide",
+  coverSummary: ({ model, width, height, count }) => `${model}  |  lid ${width} x ${height} mm  |  ${count} stickers`,
+  beforePrint: "Before you print",
+  stepScale: '1. In the print dialog choose Scale: 100% / Actual size. Turn OFF "Fit to page" / "Shrink".',
+  stepPaper: ({ paper, sheets }) => `2. Paper: ${paper}. ${sheets} sheet(s) after this page.`,
+  stepMeasure: "3. Measure the ruler below with a real ruler. It must be exactly 100 mm. If not, check scaling.",
+  stepJoin: "4. Cut along the dashed lines, butt the sheets edge to edge so the crosshairs meet, then tape.",
+  paperA4: "A4",
+  paperLetter: "US Letter",
+  landscape: "(landscape)",
+  square: "50 x 50 mm square",
+  mm: "mm",
+  rulerNote: 'This line must measure exactly 100 mm. Print at 100% / Actual size - NOT "Fit to page".',
+  hingeNote: (model) => `${model} - hinge side at bottom`,
+  sheetFooter: ({ sheet, page, pages }) => `Sheet ${sheet}  (${page} / ${pages})`,
+  templateNote: "CUT-OUT TEMPLATE: cut along dashed outlines",
+  coordTitle: "Coordinate sheet (sticker centre, mm from lid edges, hinge at bottom)",
+  colIndex: "#",
+  colName: "Sticker",
+  colX: "X from left",
+  colY: "Y from top",
+  colSize: "Size (w x h)",
+  colRotation: "Rotation (CW)",
+  rotationCw: (deg) => `${deg} deg CW`,
+  flipped: "(flipped)",
+};
+
+/** TrueType bytes for a Unicode font (regular + bold); lets the PDF print Thai. */
+export type PdfFontBytes = { regular: Uint8Array | ArrayBuffer; bold: Uint8Array | ArrayBuffer };
+
 export type PdfOptions = {
   paper: PaperSize["id"];
   mode: PdfMode;
@@ -44,6 +107,10 @@ export type PdfOptions = {
   includeImages: boolean;
   /** Padding around the lid for dimension labels, mm. */
   paddingMm?: number;
+  /** Localised copy. Used only with `fonts`; without them the PDF falls back to ASCII English. */
+  text?: PdfText;
+  /** Unicode font to embed. Missing or unusable → Helvetica with DEFAULT_PDF_TEXT. */
+  fonts?: PdfFontBytes | null;
 };
 
 const DEFAULT_PADDING_MM = 14;
@@ -102,11 +169,35 @@ function crosshairOps(x: number, y: number, size: number) {
   return [moveTo(x - size, y), lineTo(x + size, y), moveTo(x, y - size), lineTo(x, y + size), stroke()];
 }
 
-function drawText(page: PDFPage, font: PDFFont, text: string, x: number, y: number, size: number, c = INK) {
-  page.drawText(text, { x, y, size, font, color: rgb(c.r, c.g, c.b) });
+/** Characters a font can draw (WinAnsi for Helvetica); anything else prints as "?" instead of failing the export. */
+const glyphSets = new WeakMap<PDFFont, Set<number>>();
+
+function printable(font: PDFFont, text: string) {
+  let set = glyphSets.get(font);
+  if (!set) glyphSets.set(font, (set = new Set(font.getCharacterSet())));
+  return Array.from(text, (ch) => (ch === " " || set.has(ch.codePointAt(0)!) ? ch : "?")).join("");
 }
 
-function drawRuler(page: PDFPage, font: PDFFont, plan: TilePlan) {
+function drawText(page: PDFPage, font: PDFFont, text: string, x: number, y: number, size: number, c = INK) {
+  page.drawText(printable(font, text), { x, y, size, font, color: rgb(c.r, c.g, c.b) });
+}
+
+/** Greedy word wrap on spaces (Thai copy separates phrases with spaces too). */
+function wrap(font: PDFFont, text: string, size: number, maxWidth: number): string[] {
+  const lines: string[] = [];
+  let cur = "";
+  for (const word of printable(font, text).split(" ")) {
+    const next = cur ? `${cur} ${word}` : word;
+    if (cur && font.widthOfTextAtSize(next, size) > maxWidth) {
+      lines.push(cur);
+      cur = word;
+    } else cur = next;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+function drawRuler(page: PDFPage, font: PDFFont, plan: TilePlan, text: PdfText) {
   const { x1, x2, y } = rulerSegment(plan);
   const ops = [pushGraphicsState(), setStrokingRgbColor(...color(INK)), setLineWidth(0.6), moveTo(x1, y), lineTo(x2, y), stroke()];
   for (let mm = 0; mm <= RULER_MM; mm++) {
@@ -117,8 +208,9 @@ function drawRuler(page: PDFPage, font: PDFFont, plan: TilePlan) {
   ops.push(popGraphicsState());
   page.pushOperators(...ops);
   drawText(page, font, "0", x1 - 1.5, y - 8, 6);
-  drawText(page, font, "100 mm", x2 - 10, y - 8, 6);
-  drawText(page, font, 'This line must measure exactly 100 mm. Print at 100% / Actual size - NOT "Fit to page".', x1, y - 17, 7, MUTED);
+  const end = printable(font, `100 ${text.mm}`);
+  drawText(page, font, end, x2 - font.widthOfTextAtSize(end, 6) / 2, y - 8, 6);
+  drawText(page, font, text.rulerNote, x1, y - 17, 7, MUTED);
 }
 
 type Ctx = {
@@ -128,7 +220,7 @@ type Ctx = {
   lid: PdfLid;
   items: LayoutItem[];
   images: Map<string, PDFImage>;
-  opts: Required<PdfOptions>;
+  opts: Required<Omit<PdfOptions, "fonts">>;
   contentW: number;
   contentH: number;
 };
@@ -217,42 +309,50 @@ function drawTilePage(ctx: Ctx, plan: TilePlan, tile: Tile, pageIndex: number, p
   // Labels: positioned via the same matrix so they land on the geometry they describe.
   const toPage = (x: number, y: number) => apply(P, { x, y });
   const inTile = (x: number, y: number) => x >= tile.xMm && x <= tile.xMm + tile.widthMm && y >= tile.yMm && y <= tile.yMm + tile.heightMm;
-  const label = (text: string, x: number, y: number, size = 6.5, c = INK, f = font) => {
+  const text = opts.text;
+  const label = (s: string, x: number, y: number, size = 6.5, c = INK, f = font) => {
     if (!inTile(x, y)) return;
     const p = toPage(x, y);
-    page.drawText(text, { x: p.x, y: p.y, size, font: f, color: rgb(c.r, c.g, c.b) });
+    drawText(page, f, s, p.x, p.y, size, c);
   };
-  label(`${roundMm(lid.widthMm)} mm`, pad + lid.widthMm / 2 - 6, pad - 3);
-  label(`${roundMm(lid.heightMm)} mm`, pad - 12, pad + lid.heightMm / 2);
-  label(`${lid.modelName} - hinge side at bottom`, pad + 2, pad + lid.heightMm + 6, 6.5, MUTED);
+  label(`${roundMm(lid.widthMm)} ${text.mm}`, pad + lid.widthMm / 2 - 6, pad - 3);
+  label(`${roundMm(lid.heightMm)} ${text.mm}`, pad - 12, pad + lid.heightMm / 2);
+  label(text.hingeNote(lid.modelName), pad + 2, pad + lid.heightMm + 6, 6.5, MUTED);
   items.forEach((it, i) => {
     label(`#${i + 1}`, pad + it.xMm + 1.5, pad + it.yMm - 1.5, 7, INK, bold);
     label(`x ${roundMm(it.xMm)}  y ${roundMm(it.yMm)}`, pad + it.xMm + 1.5, pad + it.yMm + 3.5, 5.5, MUTED);
   });
 
-  drawRuler(page, font, plan);
-  const footer = `Sheet ${tile.label}  (${pageIndex} / ${pageCount})${opts.mode === "template" ? "  -  CUT-OUT TEMPLATE: cut along dashed outlines" : ""}`;
+  drawRuler(page, font, plan, text);
+  const footer = `${text.sheetFooter({ sheet: tile.label, page: pageIndex, pages: pageCount })}${opts.mode === "template" ? `  -  ${text.templateNote}` : ""}`;
   drawText(page, bold, footer, mmToPt(m + RULER_MM + 8), rulerSegment(plan).y - 1, 7);
 }
 
 function drawCoverPage(ctx: Ctx, plan: TilePlan) {
   const { doc, font, bold, lid } = ctx;
+  const text = ctx.opts.text;
   const page = doc.addPage([mmToPt(plan.pageWidthMm), mmToPt(plan.pageHeightMm)]);
   const H = mmToPt(plan.pageHeightMm);
   const left = mmToPt(plan.options.marginMm + 5);
+  const maxWidth = mmToPt(plan.pageWidthMm - 2 * (plan.options.marginMm + 5));
   let y = H - mmToPt(25);
-  const line = (text: string, size = 10, f = font, c = INK, gap = 6) => {
-    drawText(page, f, text, left, y, size, c);
+  const line = (s: string, size = 10, f = font, c = INK, gap = 6) => {
+    // Wrapped lines sit closer together than separate steps.
+    wrap(f, s, size, maxWidth).forEach((l, i) => {
+      if (i) y -= size * 1.35;
+      drawText(page, f, l, left, y, size, c);
+    });
     y -= mmToPt(gap);
   };
-  line("PeelPlan - 1:1 placement guide", 18, bold, INK, 10);
-  line(`${lid.modelName}  |  lid ${roundMm(lid.widthMm)} x ${roundMm(lid.heightMm)} mm  |  ${ctx.items.length} stickers`, 10, font, MUTED, 10);
-  line("Before you print", 12, bold, INK, 7);
-  line('1. In the print dialog choose Scale: 100% / Actual size. Turn OFF "Fit to page" / "Shrink".');
-  line(`2. Paper: ${plan.paper.id === "a4" ? "A4" : "US Letter"}${plan.landscape ? " (landscape)" : ""}. ${plan.tiles.length} sheet(s) after this page.`);
-  line("3. Measure the ruler below with a real ruler. It must be exactly 100 mm. If not, check scaling.");
+  line(text.coverTitle, 18, bold, INK, 10);
+  line(text.coverSummary({ model: lid.modelName, width: roundMm(lid.widthMm), height: roundMm(lid.heightMm), count: ctx.items.length }), 10, font, MUTED, 10);
+  line(text.beforePrint, 12, bold, INK, 7);
+  line(text.stepScale);
+  const paper = `${plan.paper.id === "a4" ? text.paperA4 : text.paperLetter}${plan.landscape ? ` ${text.landscape}` : ""}`;
+  line(text.stepPaper({ paper, sheets: plan.tiles.length }));
+  line(text.stepMeasure);
   if (plan.tiles.length > 1) {
-    line("4. Cut along the dashed lines, butt the sheets edge to edge so the crosshairs meet, then tape.");
+    line(text.stepJoin);
   }
   y -= mmToPt(6);
 
@@ -271,22 +371,23 @@ function drawCoverPage(ctx: Ctx, plan: TilePlan) {
   ops.push(setFillingRgbColor(0.97, 0.97, 0.98), rectangle(x1, yH - mmToPt(70), mmToPt(50), mmToPt(50)), fill());
   ops.push(setLineWidth(0.4), rectangle(x1, yH - mmToPt(70), mmToPt(50), mmToPt(50)), stroke(), popGraphicsState());
   page.pushOperators(...ops);
-  drawText(page, bold, "100 mm", x1 + mmToPt(40), yH - mmToPt(6), 9);
-  drawText(page, bold, "100 mm", xV + mmToPt(6), yH - mmToPt(52), 9);
-  drawText(page, font, "50 x 50 mm square", x1 + mmToPt(8), yH - mmToPt(46), 8, MUTED);
+  drawText(page, bold, `100 ${text.mm}`, x1 + mmToPt(40), yH - mmToPt(6), 9);
+  drawText(page, bold, `100 ${text.mm}`, xV + mmToPt(6), yH - mmToPt(52), 9);
+  drawText(page, font, text.square, x1 + mmToPt(8), yH - mmToPt(46), 8, MUTED);
 }
 
 function drawCoordinatePage(ctx: Ctx, plan: TilePlan) {
   const { doc, font, bold, items } = ctx;
+  const text = ctx.opts.text;
   const rows = coordinateRows(items);
   const H = mmToPt(plan.pageHeightMm);
   const left = mmToPt(plan.options.marginMm + 5);
   const cols = [0, 12, 70, 100, 130, 160];
-  const header = ["#", "Sticker", "X from left", "Y from top", "Size (w x h)", "Rotation (CW)"];
+  const header = [text.colIndex, text.colName, text.colX, text.colY, text.colSize, text.colRotation];
   let page = doc.addPage([mmToPt(plan.pageWidthMm), H]);
   let y = H - mmToPt(25);
   const heading = () => {
-    drawText(page, bold, "Coordinate sheet (sticker centre, mm from lid edges, hinge at bottom)", left, y, 11);
+    drawText(page, bold, text.coordTitle, left, y, 11);
     y -= mmToPt(10);
     header.forEach((h, i) => drawText(page, bold, h, left + mmToPt(cols[i]), y, 8));
     y -= mmToPt(6);
@@ -301,23 +402,38 @@ function drawCoordinatePage(ctx: Ctx, plan: TilePlan) {
     const cells = [
       String(r.index),
       r.label.slice(0, 28),
-      `${roundMm(r.xMm)} mm`,
-      `${roundMm(r.yMm)} mm`,
+      `${roundMm(r.xMm)} ${text.mm}`,
+      `${roundMm(r.yMm)} ${text.mm}`,
       `${roundMm(r.widthMm)} x ${roundMm(r.heightMm)}`,
-      `${roundMm(r.rotationDeg)} deg CW${r.flipped ? " (flipped)" : ""}`,
+      `${text.rotationCw(roundMm(r.rotationDeg))}${r.flipped ? ` ${text.flipped}` : ""}`,
     ];
-    cells.forEach((c, i) => drawText(page, font, c.replace(/[^\x20-\x7E]/g, "?"), left + mmToPt(cols[i]), y, 8));
+    cells.forEach((c, i) => drawText(page, font, c, left + mmToPt(cols[i]), y, 8));
     y -= mmToPt(6);
   }
 }
 
+async function embedUnicodeFonts(doc: PDFDocument, fonts: PdfFontBytes) {
+  try {
+    doc.registerFontkit(fontkit);
+    // Subset, not full embed: a full embed only lists widths for glyphs in the cmap, so the
+    // alternate Thai marks that shaping substitutes in (e.g. uni0E48.small) would print 1 em wide.
+    const [font, bold] = await Promise.all([doc.embedFont(fonts.regular, { subset: true }), doc.embedFont(fonts.bold, { subset: true })]);
+    return { font, bold };
+  } catch {
+    return null;
+  }
+}
+
 export async function exportLayoutPdf(lid: PdfLid, items: LayoutItem[], assets: Record<string, StickerAsset>, options: PdfOptions): Promise<Uint8Array> {
-  const opts: Required<PdfOptions> = { paddingMm: DEFAULT_PADDING_MM, ...options };
+  const { fonts, text, ...rest } = options;
   const doc = await PDFDocument.create();
   doc.setTitle(`PeelPlan 1:1 - ${lid.modelName}`);
   doc.setCreator("PeelPlan");
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const embedded = fonts ? await embedUnicodeFonts(doc, fonts) : null;
+  const font = embedded?.font ?? (await doc.embedFont(StandardFonts.Helvetica));
+  const bold = embedded?.bold ?? (await doc.embedFont(StandardFonts.HelveticaBold));
+  // Localised copy needs the Unicode font; Helvetica gets the ASCII English copy.
+  const opts: Ctx["opts"] = { paddingMm: DEFAULT_PADDING_MM, ...rest, text: embedded && text ? text : DEFAULT_PDF_TEXT };
 
   const images = new Map<string, PDFImage>();
   if (opts.mode === "guide" && opts.includeImages) {

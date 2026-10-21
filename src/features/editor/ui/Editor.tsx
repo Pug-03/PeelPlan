@@ -2,7 +2,7 @@
 
 import { Download, ImageDown, LayoutGrid, Link2, Maximize2, Minus, Plus, Redo2, Ruler, ScanLine, TriangleAlert, Undo2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useEffectEvent, useMemo, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { LAPTOP_MODELS, getLaptopModel, lidGeometry } from "@/config/laptops";
 import { Link } from "@/i18n/navigation";
@@ -175,6 +175,8 @@ export default function Editor() {
   const [toast, setToast] = useState<string | null>(null);
   const [sharedNotice, setSharedNotice] = useState(false);
   useHydrate(() => setSharedNotice(true));
+  // Stable so the memoised library tiles don't all re-render with the shell.
+  const addFailed = useCallback(() => setToast(t("addFailed")), [t]);
 
   // "Try on my laptop" from a shop page arrives as ?add=<sticker id>: drop it on the lid at real size.
   useEffect(() => {
@@ -185,8 +187,8 @@ export default function Editor() {
     url.searchParams.delete("add");
     history.replaceState(null, "", url.pathname + url.search + url.hash);
     const def = VISIBLE_LIBRARY.find((l) => l.id === id);
-    if (def) void ensureLibraryAsset(def).then((asset) => useEditor.getState().addItem(asset, def.name[locale]));
-  }, [s.hydrated, locale]);
+    if (def) void ensureLibraryAsset(def).then((asset) => useEditor.getState().addItem(asset, def.name[locale]), addFailed);
+  }, [s.hydrated, locale, addFailed]);
 
   useEffect(() => {
     if (!toast) return;
@@ -196,7 +198,13 @@ export default function Editor() {
 
   const isActual = s.viewMode === "actual" && !!s.calibratedPxPerMm && Math.abs(s.zoom - 1) < 1e-6;
   const share = async () => {
-    const token = await encodeShare(currentLayout(s));
+    let token: string;
+    try {
+      token = await encodeShare(currentLayout(s));
+    } catch {
+      setToast(t("shareFailed"));
+      return;
+    }
     const url = `${window.location.origin}${window.location.pathname}#s=${token}`;
     try {
       await navigator.clipboard.writeText(url);
@@ -304,6 +312,7 @@ export default function Editor() {
         >
           {s.hydrated && (
             <StickerPanel
+              onAddFailed={addFailed}
               onUpload={(f) => {
                 setUploadFile(f);
                 setSheet(null);
@@ -387,9 +396,9 @@ export default function Editor() {
         {/* Right panel */}
         <aside
           aria-label={t("inspector")}
-          className={`absolute inset-x-0 bottom-0 z-30 h-[55dvh] rounded-t-[1.25rem] border-t border-hairline bg-bg shadow-[0_-12px_40px_-12px_rgb(0_0_0/0.2)] transition-transform duration-300 ease-[var(--ease-out-soft)] lg:static lg:z-auto lg:h-auto lg:w-80 lg:translate-y-0 lg:rounded-none lg:border-t-0 lg:border-l lg:shadow-none ${sheet === "edit" ? "translate-y-0" : "translate-y-full"}`}
+          className={`absolute inset-x-0 flex flex-col bottom-0 z-30 h-[55dvh] rounded-t-[1.25rem] border-t border-hairline bg-bg shadow-[0_-12px_40px_-12px_rgb(0_0_0/0.2)] transition-transform duration-300 ease-[var(--ease-out-soft)] lg:static lg:z-auto lg:h-auto lg:w-80 lg:translate-y-0 lg:rounded-none lg:border-t-0 lg:border-l lg:shadow-none ${sheet === "edit" ? "translate-y-0" : "translate-y-full"}`}
         >
-          <div className="flex flex-col gap-3 border-b border-hairline p-4">
+          <div className="flex shrink-0 flex-col gap-3 border-b border-hairline p-4">
             {/* Phones have no room for swatches in the top bar. */}
             <div role="radiogroup" aria-label={t("lidColor")} className="flex items-center gap-2 md:hidden">
               <span className="mr-auto text-sm">{t("lidColor")}</span>

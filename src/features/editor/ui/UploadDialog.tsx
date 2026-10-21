@@ -173,6 +173,12 @@ export function UploadDialog({ file, onClose, onDone }: { file: File | null; onC
     onDone(asset, file?.name.replace(/\.[^.]+$/, "").slice(0, 40) || "Sticker");
   };
 
+  const endStroke = () => {
+    if (!painting.current || !work) return;
+    painting.current = false;
+    setWork(clone(work)); // commit the stroke and recompute shapes
+  };
+
   return (
     <Dialog open={!!file} onClose={onClose} title={t("title")} wide closeLabel={t("cancel")}>
       <ol className="mb-5 flex gap-2 text-sm" aria-label={t("title")}>
@@ -213,11 +219,10 @@ export function UploadDialog({ file, onClose, onDone }: { file: File | null; onC
                 applyBrush(p);
               }}
               onPointerMove={(e) => painting.current && applyBrush(toImg(e))}
-              onPointerUp={() => {
-                if (!painting.current || !work) return;
-                painting.current = false;
-                setWork(clone(work)); // commit the stroke and recompute shapes
-              }}
+              onPointerUp={endStroke}
+              // A cancelled touch (system gesture, palm) still ends the stroke instead of leaving the brush down.
+              onPointerCancel={endStroke}
+              onLostPointerCapture={endStroke}
             />
             {pieceCount > 1 && (
               <p className="mt-3 text-center text-xs text-muted">

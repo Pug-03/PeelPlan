@@ -46,7 +46,7 @@ function CalibrateBody({ onClose }: { onClose: () => void }) {
             className="absolute top-1/2 grid h-14 w-8 -translate-y-1/2 cursor-ew-resize touch-none place-items-center rounded-full border border-hairline bg-bg shadow-soft"
             style={{ left: widthPx - 16 }}
             onPointerDown={(e) => {
-              (e.target as HTMLElement).setPointerCapture(e.pointerId);
+              e.currentTarget.setPointerCapture(e.pointerId);
               drag.current = { startX: e.clientX, startW: widthPx };
             }}
             onPointerMove={(e) => {
@@ -54,6 +54,9 @@ function CalibrateBody({ onClose }: { onClose: () => void }) {
               setWidthPx(Math.min(1200, Math.max(120, drag.current.startW + e.clientX - drag.current.startX)));
             }}
             onPointerUp={() => (drag.current = null)}
+            // A system gesture or lost capture would otherwise leave the handle following the finger.
+            onPointerCancel={() => (drag.current = null)}
+            onLostPointerCapture={() => (drag.current = null)}
             onKeyDown={(e) => {
               const step = e.shiftKey ? 5 : 0.5;
               if (e.key === "ArrowRight") setWidthPx((w) => Math.min(1200, w + step));

@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 /** Native <dialog> modal: focus trap, Esc to close, and inert background come from the platform. */
 export function Dialog({
@@ -20,6 +20,7 @@ export function Dialog({
   closeLabel?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
@@ -29,6 +30,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
+      aria-labelledby={titleId}
       onClose={onClose}
       onCancel={(e) => {
         e.preventDefault();
@@ -39,7 +41,9 @@ export function Dialog({
       {open && (
         <div className="flex max-h-[92dvh] flex-col">
           <div className="flex items-center justify-between gap-4 border-b border-hairline px-5 py-4">
-            <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+            <h2 id={titleId} className="text-lg font-semibold tracking-tight">
+              {title}
+            </h2>
             <button
               type="button"
               onClick={onClose}
