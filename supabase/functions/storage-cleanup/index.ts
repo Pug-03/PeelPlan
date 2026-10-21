@@ -1,7 +1,14 @@
-// Removes orphaned private files: slips of purged orders, replaced / never-submitted slips (after 30
-// days), and chat images no message uses. Which files are orphaned is decided in SQL by
-// public.storage_orphans() (migration 0004); this function only deletes them through the Storage API,
-// because deleting storage.objects rows from SQL is blocked and would not remove the file anyway.
+// Removes orphaned files: slips of purged orders, replaced / never-submitted slips (after 30 days),
+// chat images no message uses, and — since migration 0005 — product-images/<shop_id>/ and
+// shop-images/<shop_id>/ folders whose shop no longer exists. Those last two buckets are PUBLIC, so
+// until 0005 a deleted seller's images stayed downloadable by URL for good.
+// Which files are orphaned is decided in SQL by public.storage_orphans() (migrations 0004 and 0005);
+// this function only deletes them through the Storage API, because deleting storage.objects rows from
+// SQL is blocked and would not remove the file anyway.
+//
+// The batching needs no change for the new buckets: storage_orphans() returns (bucket_id, name) rows
+// from all four buckets in one page, the rows are grouped by bucket before each remove() call, and the
+// run keeps paging until a page comes back short or nothing can be removed.
 //
 // Deploy:   supabase functions deploy storage-cleanup
 // Run:      POST with `Authorization: Bearer <service role key>` (anything else gets 401). Daily from
