@@ -221,6 +221,53 @@
   box-shadow: 0 0 6px rgb(215 255 58 / 0.9);
   animation: peel-twinkle 3s ease-in-out infinite;
 }
+/* The sticker sits on a cutting mat (fine 1-unit grid, a heavier line every 5) that fades out towards the edges.
+   Grid ink flips with the theme. */
+.peel-scene {
+  --mat-line: rgb(28 34 12 / 0.11);
+  --mat-fine: rgb(28 34 12 / 0.055);
+}
+[data-theme="dark"] .peel-scene {
+  --mat-line: rgb(255 255 255 / 0.08);
+  --mat-fine: rgb(255 255 255 / 0.04);
+}
+.peel-scene > div::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--mat-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mat-line) 1px, transparent 1px),
+    linear-gradient(var(--mat-fine) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mat-fine) 1px, transparent 1px);
+  background-size:
+    80px 80px,
+    80px 80px,
+    16px 16px,
+    16px 16px;
+  background-position: center 56%;
+  mask: radial-gradient(ellipse 70% 62% at 50% 56%, #000 30%, transparent 78%);
+}
+/* On a white page the lime glow washes out: light mode keeps the lime light tight behind the sticker,
+   with deeper greens and a liner that lifts off the page. */
+html:not([data-theme="dark"]) .peel-scene > div {
+  background: radial-gradient(circle at 50% 56%, rgb(215 255 58 / 0.3), rgb(215 255 58 / 0.08) 26%, transparent 42%);
+}
+html:not([data-theme="dark"]) .peel-ring {
+  background: conic-gradient(from 0deg, #a8dc12, #7fb312 25%, rgb(127 179 18 / 0.14) 50%, #7fb312 75%, #a8dc12);
+  filter: blur(1.5px) drop-shadow(0 0 14px rgb(143 195 26 / 0.45));
+}
+html:not([data-theme="dark"]) .peel-spark {
+  background: #7fae12;
+  opacity: 0.45;
+  box-shadow: 0 0 4px rgb(127 174 18 / 0.6);
+}
+html:not([data-theme="dark"]) .peel-liner {
+  box-shadow:
+    0 0 0 1px rgb(40 45 20 / 0.08),
+    0 16px 36px rgb(60 70 20 / 0.26);
+}
 /* Set by PeelScene while the scene is off screen. */
 .peel-scene[data-offscreen] :is(.peel-ring, .peel-spark) {
   animation-play-state: paused;

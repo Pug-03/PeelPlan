@@ -115,14 +115,14 @@ export function PeelScene({ title, titleB, body, peelLabel }: { title: string; t
                 <div
                   data-liner
                   aria-hidden="true"
-                  className="absolute -inset-[4%] origin-top-left rounded-[22%] bg-[repeating-linear-gradient(135deg,#F5F3EE_0_10px,#ECE9E1_10px_20px)] shadow-[0_10px_30px_rgb(0_0_0/0.35)]"
+                  className="peel-liner absolute -inset-[4%] origin-top-left rounded-[22%] bg-[repeating-linear-gradient(135deg,#F5F3EE_0_10px,#ECE9E1_10px_20px)] shadow-[0_10px_30px_rgb(0_0_0/0.35)]"
                 >
                   <span className="absolute inset-0 grid place-items-center text-center text-xs font-semibold tracking-[0.25em] text-[#9A968C] uppercase">
                     {peelLabel}
                   </span>
                 </div>
               </div>
-              <div className="absolute inset-0 grid place-items-center rounded-[22%] bg-[repeating-linear-gradient(135deg,#F5F3EE_0_10px,#ECE9E1_10px_20px)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
+              <div className="peel-liner absolute inset-0 grid place-items-center rounded-[22%] bg-[repeating-linear-gradient(135deg,#F5F3EE_0_10px,#ECE9E1_10px_20px)] [backface-visibility:hidden] [transform:rotateY(180deg)]">
                 <span className="text-xs font-semibold tracking-[0.25em] text-[#9A968C] uppercase">PeelPlan · 1:1</span>
               </div>
             </div>
