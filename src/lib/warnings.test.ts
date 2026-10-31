@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LayoutItem } from "./layout";
-import { layoutWarnings } from "./warnings";
+import { layoutWarnings, logoCoverage } from "./warnings";
 
 const it_ = (id: string, xMm: number, yMm: number, o: Partial<LayoutItem> = {}): LayoutItem => ({
   id,
@@ -36,5 +36,30 @@ describe("layoutWarnings", () => {
     const w = layoutWarnings([it_("a", 12, 50), it_("b", 14, 50)], lid, false);
     expect(w.nearEdge.has("a")).toBe(true);
     expect(w.nearEdge.has("b")).toBe(false);
+  });
+});
+
+describe("logoCoverage", () => {
+  const logo = lid.logo;
+  it("is 0 with nothing on the logo", () => {
+    expect(logoCoverage([], logo)).toBe(0);
+    expect(logoCoverage([it_("a", 30, 30)], logo)).toBe(0);
+  });
+  it("is 1 when one sticker hides the whole logo", () => {
+    expect(logoCoverage([it_("a", 150, 100, { widthMm: 40, heightMm: 40 })], logo)).toBe(1);
+  });
+  it("is about half when a sticker covers the left half", () => {
+    const c = logoCoverage([it_("a", 150 - 20, 100, { widthMm: 40, heightMm: 40 })], logo);
+    expect(c).toBeGreaterThan(0.4);
+    expect(c).toBeLessThan(0.6);
+  });
+  it("counts the border and follows rotation", () => {
+    // 20 mm wide, 2 mm border: reaches x = 150 - 26 + 12 = 136 without border, 138 with it.
+    expect(logoCoverage([it_("a", 126, 100, { borderMm: 2 })], logo)).toBeGreaterThan(logoCoverage([it_("a", 126, 100)], logo));
+    // A thin strip near the logo's right edge only clips that edge upright, but turned 90° it crosses the middle.
+    const upright = logoCoverage([it_("a", 160, 100, { widthMm: 6, heightMm: 60 })], logo);
+    const turned = logoCoverage([it_("a", 160, 100, { widthMm: 6, heightMm: 60, rotationDeg: 90 })], logo);
+    expect(upright).toBeGreaterThan(0);
+    expect(turned).toBeGreaterThan(upright);
   });
 });

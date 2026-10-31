@@ -426,6 +426,8 @@
     "backward": "เลื่อนลง",
     "overlapWarning": "{count, plural, other {มีสติกเกอร์ซ้อนกัน # ชิ้น}}",
     "logoWarning": "มีสติกเกอร์ทับพื้นที่โลโก้",
+    "glowBlockedWarning": "สติกเกอร์บังแสงโลโก้บางส่วน",
+    "glowHiddenWarning": "สติกเกอร์บังแสงโลโก้ทั้งหมด",
     "edgeWarning": "{count, plural, other {มีสติกเกอร์ # ชิ้นห่างขอบน้อยกว่า 3 มม.}}",
     "shortcuts": "คีย์ลัด",
     "shortcutList": "Delete ลบ · ⌘/Ctrl+Z ย้อนกลับ · ⇧⌘/Ctrl+Shift+Z ทำซ้ำ · ⌘/Ctrl+D ทำสำเนา · ลูกศรขยับ 1 มม. (Shift 10 มม.) · [ ] ลำดับชั้น · L ล็อก · H พลิก · กด Shift ขณะหมุนเพื่อหมุนทีละ 15°",

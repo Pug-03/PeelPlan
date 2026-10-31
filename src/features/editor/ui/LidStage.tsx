@@ -105,7 +105,7 @@ const Rulers = memo(function Rulers({ widthMm, heightMm, strokePx }: { widthMm: 
 
 const guidesKey = (g: Guide[]) => g.map((x) => (x.kind === "line" ? `${x.axis}${x.at.toFixed(2)}` : `g${x.axis}${x.a.toFixed(2)}`)).join("|");
 
-export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
+export function LidStage({ warnings, logoCovered = 0 }: { warnings: LayoutWarnings; logoCovered?: number }) {
   const t = useTranslations("editor");
   const wrapRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
@@ -475,6 +475,8 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
   const warned = (id: string) => warnings.overlapping.has(id) || warnings.onLogo.has(id);
   const logoT = logoTransform(lid.logo);
   const glow = model.logoFinish === "glow";
+  // Stickers block the light: the halo fades with the share of the logo they cover.
+  const lit = 1 - logoCovered;
 
   return (
     <div
@@ -529,7 +531,7 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
               fillRadialGradientColorStops={scaledStops(initialLighting.specular, 1)}
             />
             {/* Back-lit logo: a wide white halo under the mark (canvas blur ≈ 2σ, so double the SVG radii). */}
-            {DEMO_ASSETS && glow && (
+            {DEMO_ASSETS && glow && lit > 0 && (
               <Path
                 listening={false}
                 data={LOGO_PATH}
@@ -540,7 +542,7 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
                 fill="#fff"
                 shadowColor="#fff"
                 shadowBlur={GLOW_WIDE * 2}
-                shadowOpacity={initialLighting.dark ? 0.85 : 0.45}
+                shadowOpacity={(initialLighting.dark ? 0.85 : 0.45) * lit}
               />
             )}
             {DEMO_ASSETS && (
@@ -558,7 +560,7 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
                 // Pale Air mirror needs a faint dark lip to read; black Pro gloss gets a light one.
                 // Glow: a tight white bloom. Otherwise a lip: the pale Air mirror needs a faint dark one to read; black Pro gloss gets a light one.
                 shadowColor={glow ? "#fff" : model.logoFinish === "mirror-light" || initialLighting.dark ? "#000" : "#fff"}
-                shadowOpacity={glow ? (initialLighting.dark ? 0.95 : 0.6) : model.logoFinish === "mirror-light" ? 0.22 : initialLighting.dark ? 0.35 : 0.6}
+                shadowOpacity={glow ? (initialLighting.dark ? 0.95 : 0.6) * lit : model.logoFinish === "mirror-light" ? 0.22 : initialLighting.dark ? 0.35 : 0.6}
                 shadowBlur={glow ? GLOW_NEAR * 2 : 0.4}
                 shadowOffsetY={glow ? 0 : model.logoFinish === "mirror-light" ? 0.15 : initialLighting.dark ? -0.15 : 0.2}
               />

@@ -23,6 +23,20 @@ function applyTheme() {
 const themeScript = `(function(){var d=document.documentElement;d.classList.add("js");var t;try{t=localStorage.getItem("peelplan.theme")}catch(e){}d.dataset.theme=t||"light"})()`;
 
 /**
+ * Browser extensions (ad blockers, Google Translate) slip their own nodes into <head> and <body> and take
+ * them out again. Switching language remounts the [locale] root layout, and if React then removes a node
+ * an extension already moved or removed, removeChild/insertBefore throw and the whole page drops to the
+ * error screen. Instead, a removal of a node that's already gone is a no-op, and an insert before a
+ * vanished node appends (the content stays on the page, at worst slightly out of order).
+ */
+const domGuardScript = `(function(){var P=Node.prototype;if(P.__peelGuard)return;P.__peelGuard=1;var r=P.removeChild,i=P.insertBefore;P.removeChild=function(c){return c&&c.parentNode!==this?c:r.apply(this,arguments)};P.insertBefore=function(n,b){return b&&b.parentNode!==this?this.appendChild(n):i.apply(this,arguments)}})()`;
+
+/** Runs before React hydrates; same server-only trick as ThemeScript. */
+export function DomGuardScript() {
+  return <script suppressHydrationWarning type={typeof window === "undefined" ? undefined : "text/plain"} dangerouslySetInnerHTML={{ __html: domGuardScript }} />;
+}
+
+/**
  * Pre-paint theme script for <head>. It only needs to run from the server HTML: when a language switch
  * re-mounts the root layout on the client, it renders as an inert data block (ThemeSync covers that case),
  * which also keeps React from warning about a client-rendered <script>.

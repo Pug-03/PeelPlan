@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { FullscreenKey } from "@/components/FullscreenKey";
-import { ThemeScript, ThemeSync } from "@/components/ThemeSync";
+import { DomGuardScript, ThemeScript, ThemeSync } from "@/components/ThemeSync";
 import { VisitTracker } from "@/features/analytics/VisitTracker";
 import { routing } from "@/i18n/routing";
 import { SITE_URL } from "@/lib/site";
@@ -60,6 +60,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   return (
     <html lang={locale} className={`${anuphan.variable} ${instrument.variable} ${interTight.variable}`} suppressHydrationWarning>
       <head>
+        <DomGuardScript />
         <ThemeScript />
       </head>
       <body className="min-h-dvh">

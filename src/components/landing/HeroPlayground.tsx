@@ -86,6 +86,25 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
   const locale = useLocale() as "th" | "en";
   const uid = useId().replace(/:/g, "");
   const svgRef = useRef<SVGSVGElement>(null);
+  // The model row scrolls sideways when the column is narrow: fade the edge that has more pills behind it.
+  const modelRow = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const row = modelRow.current;
+    if (!row) return;
+    const mark = () => {
+      const more = row.scrollWidth - row.clientWidth - row.scrollLeft > 1;
+      if (more) row.dataset.more = "";
+      else delete row.dataset.more;
+    };
+    mark();
+    const ro = new ResizeObserver(mark);
+    ro.observe(row);
+    row.addEventListener("scroll", mark, { passive: true });
+    return () => {
+      ro.disconnect();
+      row.removeEventListener("scroll", mark);
+    };
+  }, []);
   const holoRef = useRef<SVGLinearGradientElement>(null);
 
   const [modelId, setModelId] = useState(initialModelId);
@@ -291,7 +310,8 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
       <div className="flex min-w-0 flex-col gap-2.5 px-1 sm:px-4">
         {/* One row at every width: min-w-0 lets it scroll sideways instead of wrapping or widening the hero column. */}
         <div
-          className="-mx-1 flex min-w-0 items-center gap-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none]"
+          ref={modelRow}
+          className="-mx-1 flex min-w-0 items-center gap-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] data-[more]:[mask-image:linear-gradient(to_right,#000_calc(100%-3rem),transparent)]"
           role="group"
           aria-label={t("playModels")}
         >

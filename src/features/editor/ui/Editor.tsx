@@ -7,7 +7,7 @@ import { useShallow } from "zustand/react/shallow";
 import { LAPTOP_MODELS, getLaptopModel, hasEstimatedGeometry, lidGeometry } from "@/config/laptops";
 import { Link } from "@/i18n/navigation";
 import { MAX_ITEMS, type LayoutItem } from "@/lib/layout";
-import { layoutWarnings } from "@/lib/warnings";
+import { layoutWarnings, logoCoverage } from "@/lib/warnings";
 import { ART_VERSION, VISIBLE_LIBRARY } from "@/stickers/library";
 import { AccountMenu } from "@/components/AccountMenu";
 import { LocaleSwitch, ThemeToggle } from "@/components/SiteHeader";
@@ -185,6 +185,8 @@ export default function Editor() {
   const model = getLaptopModel(s.modelId);
   const lid = useMemo(() => lidGeometry(model), [model]);
   const warnings = useMemo(() => layoutWarnings(s.items, lid, s.keepLogoClear), [s.items, lid, s.keepLogoClear]);
+  // Back-lit logo (PROLED): how much of its light the stickers block, 0..1.
+  const logoCovered = useMemo(() => (model.logoFinish === "glow" ? logoCoverage(s.items, lid.logo) : 0), [model.logoFinish, s.items, lid]);
   const [calOpen, setCalOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -255,6 +257,7 @@ export default function Editor() {
   const warningLines = [
     warnings.overlapping.size ? t("overlapWarning", { count: warnings.overlapping.size }) : null,
     warnings.onLogo.size ? t("logoWarning") : null,
+    logoCovered > 0 ? t(logoCovered >= 0.98 ? "glowHiddenWarning" : "glowBlockedWarning") : null,
     warnings.nearEdge.size ? t("edgeWarning", { count: warnings.nearEdge.size }) : null,
   ].filter(Boolean) as string[];
 
@@ -360,7 +363,7 @@ export default function Editor() {
 
         {/* Canvas */}
         <main className="relative min-w-0 flex-1" aria-label={t("canvasLabel", { w: lid.widthMm, h: lid.heightMm, count: s.items.length })}>
-          {s.hydrated && <LidStage warnings={warnings} />}
+          {s.hydrated && <LidStage warnings={warnings} logoCovered={logoCovered} />}
 
           {/* Scale badge + zoom */}
           <div className="pointer-events-none absolute top-3 left-3 flex flex-wrap items-center gap-2">

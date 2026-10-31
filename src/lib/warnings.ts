@@ -41,3 +41,38 @@ export function layoutWarnings(
   }
   return { overlapping, onLogo, nearEdge };
 }
+
+/**
+ * Share of a back-lit logo hidden under stickers, 0 (all lit) to 1 (fully covered). Sampled on a grid
+ * inside the ellipse that fits the logo box, a close stand-in for the apple silhouette. Stickers are
+ * opaque, borders included; each one's rotated outer rectangle is used, as in the other checks.
+ */
+export function logoCoverage(items: LayoutItem[], logo: { x: number; y: number; width: number; height: number }, steps = 16): number {
+  if (!items.length) return 0;
+  const rects = items.map((it) => {
+    const r = (it.rotationDeg * Math.PI) / 180;
+    return { x: it.xMm, y: it.yMm, hw: it.widthMm / 2 + it.borderMm, hh: it.heightMm / 2 + it.borderMm, cos: Math.cos(r), sin: Math.sin(r) };
+  });
+  let total = 0;
+  let hidden = 0;
+  for (let i = 0; i < steps; i++) {
+    for (let j = 0; j < steps; j++) {
+      const u = (i + 0.5) / steps - 0.5;
+      const v = (j + 0.5) / steps - 0.5;
+      if (u * u + v * v > 0.25) continue;
+      total++;
+      const px = logo.x + u * logo.width;
+      const py = logo.y + v * logo.height;
+      const under = rects.some((q) => {
+        // Into the sticker's own frame (undo its clockwise rotation).
+        const dx = px - q.x;
+        const dy = py - q.y;
+        const lx = dx * q.cos + dy * q.sin;
+        const ly = -dx * q.sin + dy * q.cos;
+        return Math.abs(lx) <= q.hw && Math.abs(ly) <= q.hh;
+      });
+      if (under) hidden++;
+    }
+  }
+  return total ? hidden / total : 0;
+}
