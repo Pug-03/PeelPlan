@@ -33,10 +33,16 @@
   /* A bright, fairly narrow band: at 35% white it vanished on the lime button. */
   background: linear-gradient(105deg, transparent 32%, rgb(255 255 255 / 0.55) 43%, rgb(255 255 255 / 0.95) 50%, rgb(255 255 255 / 0.55) 57%, transparent 68%);
   transform: translateX(-120%);
+  /* Always attached, paused and hidden: leaving the button freezes the band and fades it out. Removing
+     the animation instead snapped the band away in one frame, which read as a blink. */
+  opacity: 0;
+  transition: opacity 250ms var(--ease-out-soft);
+  animation: cta-shine 1400ms ease-in-out infinite paused;
 }
 .cta-run:hover::after,
 .cta-run:focus-visible::after {
-  animation: cta-shine 1400ms ease-in-out infinite;
+  opacity: 1;
+  animation-play-state: running;
 }
 .cta-run:hover .cta-run-arrow {
   animation: cta-arrow 900ms var(--ease-out-soft) infinite;
@@ -80,7 +86,7 @@
   .faq-item::details-content {
     transition: none;
   }
-  .cta-run:hover::after,
+  .cta-run::after,
   .cta-run:hover .cta-run-arrow {
     animation: none;
   }
@@ -516,6 +522,9 @@ html:not([data-theme="dark"]) .price-card {
   filter: drop-shadow(0 0 4px var(--price-glow)) drop-shadow(0 0 10px var(--price-glow));
   opacity: 0;
   transition: opacity 250ms var(--ease-out-soft);
+  /* Paused, not removed, when the pointer leaves: the light fades out where it is instead of jumping
+     back to the top mid-fade. */
+  animation: price-run 1.8s linear infinite paused;
   pointer-events: none;
 }
 .price-card:is(:hover, :focus-within) {
@@ -524,7 +533,7 @@ html:not([data-theme="dark"]) .price-card {
 }
 .price-card:is(:hover, :focus-within)::before {
   opacity: 1;
-  animation: price-run 1.8s linear infinite;
+  animation-play-state: running;
 }
 .price-card:is(:hover, :focus-within) .price-check {
   animation: price-pop 500ms var(--ease-out-soft) both;
