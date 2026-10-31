@@ -613,9 +613,10 @@ export async function BuyFlow() {
       <ol className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {BUY_STEPS.map(({ key, icon: Icon }, i) => (
           // The reveal (and its stagger delay) lives on the <li>; the hover lift is on the card inside, so the
-          // two transitions never fight and hovering isn't delayed.
-          <li key={key} className="reveal" style={{ transitionDelay: `${i * 80}ms` }}>
-            <div className="group flex h-full flex-col gap-8 rounded-2xl border border-hairline bg-bg p-5 transition-[translate,box-shadow,border-color] duration-300 ease-[var(--ease-out-soft)] hover:-translate-y-1 hover:border-ink/15 hover:shadow-soft">
+          // two transitions never fight and hovering isn't delayed. Hover is read from the <li>, which never
+          // moves, so a pointer on the card's bottom edge can't make it bob up and down.
+          <li key={key} className="reveal group" style={{ transitionDelay: `${i * 80}ms` }}>
+            <div className="flex h-full flex-col gap-8 rounded-2xl border border-hairline bg-bg p-5 transition-[translate,box-shadow,border-color] duration-300 ease-[var(--ease-out-soft)] group-hover:-translate-y-1 group-hover:border-ink/15 group-hover:shadow-soft">
               <div className="flex items-center justify-between">
                 <span
                   // One quiet tile for every step; the brand lime only shows on the card you're pointing at.
