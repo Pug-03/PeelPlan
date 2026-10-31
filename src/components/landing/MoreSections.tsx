@@ -377,10 +377,10 @@ export async function ForSellers() {
           </ul>
           <Link
             href="/login?next=%2Fonboarding"
-            className="group mt-9 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-accent-ink transition-transform duration-300 hover:-translate-y-0.5"
+            className="cta-run cta-run-ink group mt-9 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-accent-ink transition-transform duration-300 hover:-translate-y-0.5"
           >
             {t("sellCta")}
-            <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" strokeWidth={2.25} aria-hidden="true" />
+            <ArrowRight className="cta-run-arrow size-4" strokeWidth={2.25} aria-hidden="true" />
           </Link>
         </div>
         <div className="reveal relative mx-auto w-full max-w-md">
@@ -508,7 +508,7 @@ export async function Pricing() {
             <p className="font-medium">{t("priceFreeName")}</p>
             {price(t("priceFreeValue"), t("priceFreeUnit"))}
             {list(free)}
-            <Link href="/editor" className="price-btn mt-8 rounded-full bg-[#D7FF3A] px-5 py-3 text-center font-semibold text-[#111] transition-opacity hover:opacity-90">
+            <Link href="/editor" className="cta-run mt-8 rounded-full bg-[#D7FF3A] px-5 py-3 text-center font-semibold text-[#111] transition-opacity hover:opacity-90">
               {t("priceFreeCta")}
             </Link>
           </div>
@@ -523,7 +523,7 @@ export async function Pricing() {
             {list(basic)}
             <Link
               href="/seller"
-              className="price-btn mt-8 rounded-full border border-ink px-5 py-3 text-center font-semibold transition-colors hover:bg-ink hover:text-bg"
+              className="cta-run cta-run-ink mt-8 rounded-full border border-ink px-5 py-3 text-center font-semibold transition-colors hover:bg-ink hover:text-bg"
             >
               {t("priceShopCta")}
             </Link>
@@ -536,7 +536,7 @@ export async function Pricing() {
             </div>
             {price(t("pricePlusValue"), t("priceMonth"))}
             {list(plus, true)}
-            <Link href="/seller" className="price-btn mt-8 rounded-full bg-ink px-5 py-3 text-center font-semibold text-bg transition-opacity hover:opacity-90">
+            <Link href="/seller" className="cta-run cta-run-ink mt-8 rounded-full bg-ink px-5 py-3 text-center font-semibold text-bg transition-opacity hover:opacity-90">
               {t("priceShopCta")}
             </Link>
           </div>
@@ -604,10 +604,10 @@ export async function BuyFlow() {
         </div>
         <Link
           href="/shops"
-          className="group inline-flex shrink-0 items-center gap-2 self-start rounded-full border border-ink px-5 py-3 font-semibold transition-colors hover:bg-ink hover:text-bg md:self-auto"
+          className="cta-run cta-run-ink group inline-flex shrink-0 items-center gap-2 self-start rounded-full border border-ink px-5 py-3 font-semibold transition-colors hover:bg-ink hover:text-bg md:self-auto"
         >
           {t("buyCta")}
-          <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" strokeWidth={2} aria-hidden="true" />
+          <ArrowRight className="cta-run-arrow size-4" strokeWidth={2} aria-hidden="true" />
         </Link>
       </div>
       <ol className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
