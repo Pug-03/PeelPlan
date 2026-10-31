@@ -460,9 +460,12 @@ html:not([data-theme="dark"]) .peel-liner {
 }
 
 /* ─────────────── Pricing cards: a light runs around the edge on hover ───────────────
-   A conic-gradient ring masked to the border whose start angle
-   spins. A bright head with a long fading tail and a soft bloom, so the motion reads at a glance. Cards also
-   lift and pop their check marks one after another. Keyboard focus does the same as hover. */
+   One conic-gradient ring masked to the border, its start angle spinning: a long fading tail into a
+   bright, white-hot head with a soft bloom. A gradient sweeps by angle, which on a wide card would race
+   round the corners and crawl along the long sides, so PriceRunPace gives each card its own keyframes
+   (--price-kf), timed so the head moves at an even speed along the edge, and a duration (--price-dur)
+   in proportion to the card's perimeter. Cards also lift and pop their check marks one after another.
+   Keyboard focus does the same as hover. */
 @property --price-run {
   syntax: "<angle>";
   inherits: false;
@@ -473,8 +476,9 @@ html:not([data-theme="dark"]) .peel-liner {
   isolation: isolate;
   --price-glow: #d7ff3a;
   --price-w: 3px;
-}
-.price-card {
+  /* The card's own border width (2px on Plus). */
+  --price-bw: 1px;
+  --price-dur: 2.4s;
   transition:
     transform 400ms var(--ease-out-soft),
     box-shadow 400ms var(--ease-out-soft);
@@ -483,12 +487,15 @@ html:not([data-theme="dark"]) .price-card {
   /* Pure lime vanishes on white: the same hue, a step deeper, so the light still reads. */
   --price-glow: #74b300;
 }
+/* The ring's box is exactly the card's border box, so the inherited radius traces the border's curve
+   (a pixel further out and the curves disagreed: the dark border peeked through at the corners). It is
+   drawn inward from there and never thinner than the border, so it covers it. */
 .price-card::before {
   content: "";
   position: absolute;
-  inset: calc(-1 * var(--price-w));
+  inset: calc(-1 * var(--price-bw));
   z-index: 1;
-  padding: var(--price-w);
+  padding: max(var(--price-w), var(--price-bw));
   border-radius: inherit;
   background: conic-gradient(
     from var(--price-run),
@@ -506,7 +513,7 @@ html:not([data-theme="dark"]) .price-card {
   transition: opacity 250ms var(--ease-out-soft);
   /* Paused, not removed, when the pointer leaves: the light fades out where it is instead of jumping
      back to the top mid-fade. */
-  animation: price-run 1.8s linear infinite paused;
+  animation: var(--price-kf, price-run) var(--price-dur) linear infinite paused;
   pointer-events: none;
 }
 /* The card lifts 4px; this strip under it keeps a pointer resting on the bottom edge "on" the card,
@@ -541,6 +548,7 @@ html:not([data-theme="dark"]) .price-card {
 .price-card li:nth-child(5) .price-check {
   animation-delay: 280ms;
 }
+/* Fallback before PriceRunPace has measured the card (and without JS): a plain even spin. */
 @keyframes price-run {
   to {
     --price-run: 360deg;
@@ -556,7 +564,7 @@ html:not([data-theme="dark"]) .price-card {
   .price-card:is(:hover, :focus-within) {
     transform: none;
   }
-  /* No running light: the ring just shows, still. */
+  /* No running light: the whole edge just lights up, still. */
   .price-card:is(:hover, :focus-within)::before {
     animation: none;
     background: var(--price-glow);

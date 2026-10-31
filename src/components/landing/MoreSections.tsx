@@ -2,6 +2,7 @@ import { ArrowRight, Check, Laptop, QrCode, Ruler, Star, Store } from "lucide-re
 import { getLocale, getTranslations } from "next-intl/server";
 import { LidArt, type ArtSticker } from "@/components/LidArt";
 import { DragMarquee } from "./DragMarquee";
+import { PriceRunPace } from "./PriceRunPace";
 import { PACKED_DEV_LID } from "./packedLid";
 import { LAPTOP_MODELS, getLaptopModel, lidGeometry } from "@/config/laptops";
 import { Link } from "@/i18n/navigation";
@@ -499,6 +500,7 @@ export async function Pricing() {
   const trial = <span className="rounded-full bg-[#D7FF3A] px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap text-[#111]">{t("priceTrial")}</span>;
   return (
     <section id="pricing" data-fx="sheet" className="bg-surface">
+      <PriceRunPace />
       <div className="mx-auto max-w-6xl scroll-mt-20 px-5 py-24 sm:px-8 sm:py-28">
         <h2 className={`reveal text-center ${heading}`}>
           {t("priceTitleA")} <span className="editorial-italic text-muted">{t("priceTitleB")}</span>
@@ -531,7 +533,7 @@ export async function Pricing() {
             </Link>
           </div>
 
-          <div className="price-card flex flex-col rounded-[var(--radius-card)] border-2 border-ink bg-bg bg-[radial-gradient(120%_70%_at_100%_0%,rgb(215_255_58/0.16),transparent_60%)] p-7 shadow-soft">
+          <div className="price-card flex flex-col rounded-[var(--radius-card)] border-2 border-ink [--price-bw:2px] bg-bg bg-[radial-gradient(120%_70%_at_100%_0%,rgb(215_255_58/0.16),transparent_60%)] p-7 shadow-soft">
             <div className="flex items-center justify-between gap-3">
               <p className="font-medium">{t("pricePlusName")}</p>
               {trial}
