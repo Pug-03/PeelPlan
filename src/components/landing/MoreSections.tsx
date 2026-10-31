@@ -377,7 +377,7 @@ export async function ForSellers() {
           </ul>
           <Link
             href="/login?next=%2Fonboarding"
-            className="cta-run cta-run-ink group mt-9 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-accent-ink transition-transform duration-300 hover:-translate-y-0.5"
+            className="cta-run cta-run-ink group mt-9 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-accent-ink"
           >
             {t("sellCta")}
             <ArrowRight className="cta-run-arrow size-4" strokeWidth={2.25} aria-hidden="true" />
