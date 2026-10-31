@@ -96,11 +96,13 @@
 }
 
 /* Hero playground: stickers lift under the pointer, slap on when shuffled, peel off on double-click. */
-.hp-tilt {
+/* The wrapper reads the hover and never moves; only the lid inside re-tilts. Tilting the hovered element
+   itself swung its corners out from under the pointer, and the hover flickered on and off. */
+.hp-tilt > svg {
   transform: rotate(-2deg);
   transition: transform 700ms var(--ease-out-soft);
 }
-.hp-tilt:hover {
+.hp-tilt:hover > svg {
   transform: rotate(-1deg);
 }
 .hp-sticker {
@@ -154,7 +156,7 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hp-tilt,
+  .hp-tilt > svg,
   .hp-sticker {
     transition: none;
   }
