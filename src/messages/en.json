@@ -297,6 +297,9 @@
       }
     ],
     "reviewsNote": "These reviews show how the section will look. They'll be replaced with reviews from real users at launch.",
+    "reviewsLabel": "Example reviews",
+    "reviewsPause": "Pause reviews",
+    "reviewsPlay": "Play reviews",
     "stars": "{n} out of 5 stars",
     "priceTitleA": "Free to plan,",
     "priceTitleB": "simple for shops",

@@ -166,19 +166,6 @@
   }
 }
 
-/* Reviews strip: drifts slowly, pauses under the pointer or keyboard focus. */
-.review-track {
-  animation: review-run 60s linear infinite;
-}
-.review-strip:hover .review-track,
-.review-strip:focus-within .review-track {
-  animation-play-state: paused;
-}
-@keyframes review-run {
-  to {
-    transform: translateX(-50%);
-  }
-}
 
 /* Size outlines: hovering a table row highlights that lid. */
 .size-outline {
@@ -229,14 +216,6 @@
   }
   & .size-label {
     fill: var(--text);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .review-track {
-    animation: none;
-  }
-  .review-strip {
-    overflow-x: auto;
   }
 }
 
@@ -475,7 +454,7 @@ html:not([data-theme="dark"]) .peel-liner {
 
 /* Endless decorative loops rest while their section is off screen (ScrollFx marks sections with
    data-offscreen), so they don't keep the page busy while you scroll elsewhere. */
-[data-offscreen] :is(.lid-float, .review-track, .cta-pop),
+[data-offscreen] :is(.lid-float, .cta-pop),
 [data-offscreen] .cta-pop::before {
   animation-play-state: paused;
 }

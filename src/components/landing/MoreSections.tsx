@@ -1,6 +1,7 @@
 import { ArrowRight, Check, Laptop, QrCode, Ruler, Star, Store } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { LidArt, type ArtSticker } from "@/components/LidArt";
+import { DragMarquee } from "./DragMarquee";
 import { PACKED_DEV_LID } from "./packedLid";
 import { LAPTOP_MODELS, getLaptopModel, lidGeometry } from "@/config/laptops";
 import { Link } from "@/i18n/navigation";
@@ -430,11 +431,12 @@ export async function Reviews() {
         </h2>
         <ExampleChip label={t("example")} />
       </div>
-      {/* A slow strip that pauses under the pointer; the copy is duplicated for a seamless loop. */}
-      <div className="review-strip mt-12 -mx-5 overflow-hidden sm:-mx-8">
-        <ul className="review-track flex w-max gap-5 px-5 sm:px-8">
+      {/* Drifts on its own, and can be dragged, flicked, trackpad-swiped or stepped with the arrow keys
+          (same strip as the example layouts). The copy is duplicated for a seamless loop. */}
+      <div className="relative mt-6 -mx-5 pb-12 sm:-mx-8">
+        <DragMarquee label={t("reviewsLabel")} pauseLabel={t("reviewsPause")} playLabel={t("reviewsPlay")}>
           {[...items, ...items].map((r, i) => (
-            <li
+            <figure
               key={i}
               aria-hidden={i >= items.length || undefined}
               className="flex w-[min(80vw,360px)] shrink-0 flex-col justify-between gap-8 rounded-[var(--radius-card)] border border-hairline bg-bg p-6"
@@ -456,11 +458,11 @@ export async function Reviews() {
                   <p className="text-muted">{r.laptop}</p>
                 </div>
               </div>
-            </li>
+            </figure>
           ))}
-        </ul>
+        </DragMarquee>
       </div>
-      <p className="mt-6 text-sm text-muted">{t("reviewsNote")}</p>
+      <p className="text-sm text-muted">{t("reviewsNote")}</p>
     </section>
   );
 }
