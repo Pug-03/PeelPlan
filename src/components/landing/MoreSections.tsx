@@ -61,8 +61,9 @@ const USE_CASES: { key: "dev" | "student" | "collector" | "brand"; modelId: stri
   },
   {
     key: "collector",
-    modelId: "macbook-air-15-m5",
-    color: "#D6CCBC",
+    // The new back-lit Pro: stickers kept to the corners so the glowing logo shows.
+    modelId: "macbook-pro-16-proled",
+    color: "#2B2B2D",
     stickers: [
       { id: "kitty-02", x: 75, y: 60, w: 50, r: -6 },
       { id: "mickey-03", x: 265, y: 60, w: 50, r: 8 },
@@ -136,7 +137,7 @@ const GALLERY_SETS: { modelId: string; color: string; ids: string[] }[] = [
   { modelId: "macbook-neo-13", color: "#E2CDC8", ids: ["p2-lotus", "p2-paper-umbrella", "p2-daisy"] },
   { modelId: "macbook-air-15-m5", color: "#D6CCBC", ids: ["p2-rocket", "p2-ufo", "p2-saturn", "p2-alien", "p2-comet"] },
   {
-    modelId: "macbook-pro-16-m5",
+    modelId: "macbook-pro-16-proled",
     color: "#2B2B2D",
     ids: ["p2-cassette", "p2-game-controller", "p2-headphones", "p2-boombox", "code-coder", "code-key-esc", "code-sym-braces", "code-say-lgtm", "code-rubber-duck"],
   },
@@ -146,7 +147,7 @@ const GALLERY_SETS: { modelId: string; color: string; ids: string[] }[] = [
     color: "#CACBCE",
     ids: ["p2-su-su", "p2-555", "p2-heart", "p2-sparkle", "p2-mai-pen-rai", "p2-chill", "p2-wow-burst", "p2-oops", "p2-checkmark", "p2-twinkle-stars", "p2-tired-but-ok", "p2-hello"],
   },
-  { modelId: "macbook-pro-14-m5", color: "#D9DADC", ids: ["p2-axolotl", "p2-penguin", "p2-jellyfish"] },
+  { modelId: "macbook-pro-14-proled", color: "#D9DADC", ids: ["p2-axolotl", "p2-penguin", "p2-jellyfish"] },
   { modelId: "macbook-air-15-m5", color: "#C2CDD7", ids: ["p2-durian", "p2-mangosteen", "p2-watermelon", "p2-coconut", "p2-chili", "p2-moo-ping"] },
   { modelId: "macbook-neo-13", color: "#CACBCE", ids: ["p2-longtail-boat", "p2-elephant-head", "p2-temple-roof", "p2-tuk-tuk"] },
   {
@@ -156,7 +157,7 @@ const GALLERY_SETS: { modelId: string; color: string; ids: string[] }[] = [
   },
   { modelId: "macbook-pro-16-m5", color: "#D9DADC", ids: ["p2-fox", "p2-whale", "p2-octopus"] },
   {
-    modelId: "macbook-pro-14-m5",
+    modelId: "macbook-pro-14-proled",
     color: "#2B2B2D",
     ids: ["p2-film-camera", "p2-polaroid", "p2-vinyl", "p2-floppy", "p2-laptop", "code-term-tests", "code-git-graph", "code-key-copy", "code-say-todo", "code-stamp-ship-it"],
   },

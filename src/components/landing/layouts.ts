@@ -52,7 +52,7 @@ export const EXAMPLE_LAYOUTS: ExampleLayout[] = [
     ],
   },
   {
-    modelId: "macbook-pro-16-m5",
+    modelId: "macbook-pro-16-proled",
     color: "#2B2B2D",
     shop: { name: "Moonlit Mango", city: { en: "Phuket", th: "ภูเก็ต" }, initials: "MM", tint: "#FFF1C9" },
     stickers: [

@@ -225,8 +225,8 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
   const lidX = CX - geo.w / 2;
   const lidY = CY - geo.h / 2;
   const target = geoOf(modelId);
-  // "MacBook Pro 14\" PROLED" → "PROLED 14\"" so all seven pills fit one row on a desktop hero.
-  const shortName = (name: string) => name.replace(/^MacBook\s+/, "").replace(/^Pro (\S+) PROLED$/, "PROLED $1");
+  // "MacBook Pro 14\" PROLED XDR" → "PROLED 14\"" so all seven pills fit one row on a desktop hero.
+  const shortName = (name: string) => name.replace(/^MacBook\s+/, "").replace(/^Pro (\S+) PROLED XDR$/, "PROLED $1");
 
   const holoStops = useMemo(
     () => ["#ff6bd6", "#ffd36b", "#7cff9b", "#6bd8ff", "#a77bff", "#ff6bd6"].map((c, i, a) => <stop key={i} offset={i / (a.length - 1)} stopColor={c} />),
