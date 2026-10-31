@@ -376,8 +376,7 @@ html:not([data-theme="dark"]) .peel-liner {
     0 14px 30px -8px rgb(17 17 17 / 0.35);
   rotate: -2deg;
   transition:
-    rotate 300ms var(--ease-out-soft),
-    scale 300ms var(--ease-out-soft);
+    transform 300ms var(--ease-out-soft);
   animation: cta-breathe 2.4s ease-in-out infinite;
 }
 .cta-pop::before {
@@ -391,9 +390,11 @@ html:not([data-theme="dark"]) .peel-liner {
   filter: blur(14px);
   animation: cta-halo 2.4s ease-in-out infinite;
 }
-.cta-pop:hover {
-  rotate: 1deg;
-  scale: 1.06;
+/* Hover only grows the button: growing never slips out from under the pointer (re-tilting it did, and
+   the ends flickered). It grows through `transform`, which stacks on the breathing `scale`, so the
+   breathing never has to stop and restart; stopping it made the button jump in size on the way out. */
+.cta-pop:is(:hover, :focus-visible) {
+  transform: scale(1.05);
 }
 @keyframes cta-breathe {
   50% {
