@@ -10,7 +10,7 @@ import { DEMO_ASSETS, LOGO_PATH, logoTransform } from "@/config/demo";
 import { getLaptopModel, lidGeometry } from "@/config/laptops";
 import { boundingBox, corners } from "@/lib/geometry";
 import { MAX_SIZE_MM, MIN_SIZE_MM, type LayoutItem } from "@/lib/layout";
-import { DEFAULT_LIGHT, flatStops, lidLighting, type Light, type Radial } from "@/lib/lighting";
+import { DEFAULT_LIGHT, GLOW_NEAR, GLOW_WIDE, flatStops, lidLighting, type Light, type Radial } from "@/lib/lighting";
 import { fitPxPerMm, roundMm } from "@/lib/scale";
 import { computeSnap, type Box, type Guide } from "@/lib/snap";
 import { LOGO_CLEARANCE_MM, type LayoutWarnings } from "@/lib/warnings";
@@ -474,6 +474,7 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
 
   const warned = (id: string) => warnings.overlapping.has(id) || warnings.onLogo.has(id);
   const logoT = logoTransform(lid.logo);
+  const glow = model.logoFinish === "glow";
 
   return (
     <div
@@ -527,6 +528,21 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
               fillRadialGradientEndRadius={initialLighting.specular.radius}
               fillRadialGradientColorStops={scaledStops(initialLighting.specular, 1)}
             />
+            {/* Back-lit logo: a wide white halo under the mark (canvas blur ≈ 2σ, so double the SVG radii). */}
+            {DEMO_ASSETS && glow && (
+              <Path
+                listening={false}
+                data={LOGO_PATH}
+                x={logoT.x}
+                y={logoT.y}
+                scaleX={logoT.scale}
+                scaleY={logoT.scale}
+                fill="#fff"
+                shadowColor="#fff"
+                shadowBlur={GLOW_WIDE * 2}
+                shadowOpacity={initialLighting.dark ? 0.85 : 0.45}
+              />
+            )}
             {DEMO_ASSETS && (
               <Path
                 ref={logoRef}
@@ -540,10 +556,11 @@ export function LidStage({ warnings }: { warnings: LayoutWarnings }) {
                 fillLinearGradientEndPoint={initialLighting.logo.end}
                 fillLinearGradientColorStops={flatStops(initialLighting.logo.stops)}
                 // Pale Air mirror needs a faint dark lip to read; black Pro gloss gets a light one.
-                shadowColor={model.logoFinish === "mirror-light" || initialLighting.dark ? "#000" : "#fff"}
-                shadowOpacity={model.logoFinish === "mirror-light" ? 0.22 : initialLighting.dark ? 0.35 : 0.6}
-                shadowBlur={0.4}
-                shadowOffsetY={model.logoFinish === "mirror-light" ? 0.15 : initialLighting.dark ? -0.15 : 0.2}
+                // Glow: a tight white bloom. Otherwise a lip: the pale Air mirror needs a faint dark one to read; black Pro gloss gets a light one.
+                shadowColor={glow ? "#fff" : model.logoFinish === "mirror-light" || initialLighting.dark ? "#000" : "#fff"}
+                shadowOpacity={glow ? (initialLighting.dark ? 0.95 : 0.6) : model.logoFinish === "mirror-light" ? 0.22 : initialLighting.dark ? 0.35 : 0.6}
+                shadowBlur={glow ? GLOW_NEAR * 2 : 0.4}
+                shadowOffsetY={glow ? 0 : model.logoFinish === "mirror-light" ? 0.15 : initialLighting.dark ? -0.15 : 0.2}
               />
             )}
             {/* The no-go box stands in for the logo; when the demo logo is drawn, it marks the zone itself. */}

@@ -243,17 +243,39 @@ function SizeOutlines() {
           </g>
         );
       })}
-      {/* Labels go on top of every outline. The three smallest lids nearly share a top-right corner, so their labels
-          step left one label-width each instead of stacking on each other's edges. */}
-      {models.map((m, i) => (
+      {/* Labels go on top of every outline. Several lids nearly share a top-right corner, so a label that would
+          overlap one already placed steps left past it. */}
+      {sizeLabels(models, pad, maxH).map(({ m, label, x, y }) => (
         <g key={m.id} data-o={m.id} className="size-lid">
-          <text x={pad + m.lid.widthMm.value - 13 - Math.max(0, i - 2) * 40} y={pad + maxH - m.lid.heightMm.value + 8} textAnchor="end" className="size-label">
-            {m.name.replace(/^MacBook /, "")}
+          <text x={x} y={y} textAnchor="end" className="size-label">
+            {label}
           </text>
         </g>
       ))}
     </svg>
   );
+}
+
+/** Mono 8px label (see .size-label): about 5 viewBox units per character. */
+const LABEL_CHAR = 5;
+const LABEL_GAP = 6;
+
+/** Each lid's label at its top-right corner, nudged left until it clears every label placed before it. */
+function sizeLabels(models: typeof LAPTOP_MODELS, pad: number, maxH: number) {
+  const placed: { left: number; right: number; top: number; bottom: number }[] = [];
+  return models.map((m) => {
+    const label = m.name.replace(/^MacBook /, "");
+    const width = label.length * LABEL_CHAR;
+    const y = pad + maxH - m.lid.heightMm.value + 8;
+    let x = pad + m.lid.widthMm.value - 13;
+    for (;;) {
+      const hit = placed.find((b) => y - 7 < b.bottom && y + 2 > b.top && x - width < b.right && x > b.left);
+      if (!hit) break;
+      x = hit.left - LABEL_GAP;
+    }
+    placed.push({ left: x - width, right: x, top: y - 7, bottom: y + 2 });
+    return { m, label, x, y };
+  });
 }
 
 export async function SizeTable() {

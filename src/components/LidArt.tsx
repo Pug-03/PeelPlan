@@ -2,7 +2,7 @@ import { useId } from "react";
 import { LazySvgLayer } from "@/components/LazySvgLayer";
 import { DEMO_ASSETS, LOGO_PATH, logoTransform } from "@/config/demo";
 import type { LogoFinish } from "@/config/laptops";
-import { GLOSS_DIR, lidLighting, type Linear, type Radial } from "@/lib/lighting";
+import { GLOSS_DIR, GLOW_NEAR, GLOW_WIDE, lidLighting, type Linear, type Radial } from "@/lib/lighting";
 import { VISIBLE_LIBRARY, stickerSrc } from "@/stickers/library";
 
 export type LogoBox = { x: number; y: number; width: number; height: number };
@@ -82,6 +82,25 @@ export function LogoMark({ logo, lidColor, finish = "gloss-black" }: { logo: Log
   const t = logoTransform(logo);
   const light = lidLighting(lidColor, { widthMm: 24, heightMm: 24 }, undefined, finish);
   const mirror = finish === "mirror-light";
+  if (finish === "glow") {
+    // Back-lit: a crisp white mark inside a soft halo. The halo shows far more on a dark lid than on silver.
+    return (
+      <g transform={`translate(${t.x} ${t.y}) scale(${t.scale})`}>
+        <defs>
+          <LinearDef id={`logo${id}`} g={light.logo} />
+          <filter id={`glowWide${id}`} x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation={GLOW_WIDE} />
+          </filter>
+          <filter id={`glowNear${id}`} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation={GLOW_NEAR} />
+          </filter>
+        </defs>
+        <path d={LOGO_PATH} fill="#fff" opacity={light.dark ? 0.5 : 0.28} filter={`url(#glowWide${id})`} />
+        <path d={LOGO_PATH} fill="#fff" opacity={light.dark ? 0.9 : 0.55} filter={`url(#glowNear${id})`} />
+        <path d={LOGO_PATH} fill={`url(#logo${id})`} />
+      </g>
+    );
+  }
   return (
     <g transform={`translate(${t.x} ${t.y}) scale(${t.scale})`}>
       <defs>

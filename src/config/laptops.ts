@@ -35,12 +35,12 @@ export type LaptopModel = {
     heightMm: Measured<number>;
   };
   colors: LidColor[];
-  /** How the logo inlay renders: Air = pale mirror, Pro = glossy black (as on apple.com). */
+  /** How the logo inlay renders: Air = pale mirror, Pro = glossy black (as on apple.com), PROLED Pro = back-lit glow. */
   logoFinish: LogoFinish;
   source: { url: string; retrieved: string; quote: string };
 };
 
-export type LogoFinish = "mirror-light" | "gloss-black";
+export type LogoFinish = "mirror-light" | "gloss-black" | "glow";
 
 const RETRIEVED = "2026-10-19";
 
@@ -173,6 +173,40 @@ export const LAPTOP_MODELS: LaptopModel[] = [
       url: "https://www.apple.com/macbook-pro/specs/",
       retrieved: RETRIEVED,
       quote: "Width: 14.01 inches (35.57 cm); Depth: 9.77 inches (24.81 cm)",
+    },
+  },
+  // Announced 2026-10-28, on sale 2026-11-06. A thinner, smaller lid than the mini-LED Pro of the same size,
+  // so it can't share that model's outline. The lid logo is back-lit again; its size isn't published.
+  {
+    id: "macbook-pro-14-proled",
+    brand: "Apple",
+    family: "MacBook Pro",
+    name: 'MacBook Pro 14" PROLED',
+    generation: "M5 Pro / M5 Max",
+    lid: { widthMm: official(310.8), heightMm: official(216.3), cornerRadiusMm: unverified(11) },
+    logo: centredLogo(310.8, 216.3, 40, "Estimate: assumed equal to the mini-LED 14-inch; no measurement published yet. Measure a real unit."),
+    colors: PRO_COLORS,
+    logoFinish: "glow",
+    source: {
+      url: "https://www.apple.com/macbook-pro/proled-xdr-display/specs/",
+      retrieved: "2026-10-31",
+      quote: "Width: 12.24 inches (31.08 cm); Depth: 8.52 inches (21.63 cm)",
+    },
+  },
+  {
+    id: "macbook-pro-16-proled",
+    brand: "Apple",
+    family: "MacBook Pro",
+    name: 'MacBook Pro 16" PROLED',
+    generation: "M5 Pro / M5 Max",
+    lid: { widthMm: official(355.5), heightMm: official(244.2), cornerRadiusMm: unverified(12) },
+    logo: centredLogo(355.5, 244.2, 44, "Estimate: assumed equal to the mini-LED 16-inch; no measurement published yet. Measure a real unit."),
+    colors: PRO_COLORS,
+    logoFinish: "glow",
+    source: {
+      url: "https://www.apple.com/macbook-pro/proled-xdr-display/specs/",
+      retrieved: "2026-10-31",
+      quote: "Width: 14.0 inches (35.55 cm); Depth: 9.62 inches (24.42 cm)",
     },
   },
 ];

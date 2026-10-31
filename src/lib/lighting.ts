@@ -22,6 +22,10 @@ const glossDir = (() => {
 })();
 export const GLOSS_DIR = glossDir;
 
+/** Blur radii (σ) of the back-lit logo's halo, in logo-box units (the box is 24 wide). */
+export const GLOW_WIDE = 4.5;
+export const GLOW_NEAR = 1.2;
+
 const clamp = (n: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, n));
 
 function parseHex(hex: string): [number, number, number] {
@@ -57,7 +61,7 @@ export function lidLighting(
   lidHex: string,
   size: { widthMm: number; heightMm: number },
   light: Light = DEFAULT_LIGHT,
-  logoFinish: "mirror-light" | "gloss-black" = "gloss-black",
+  logoFinish: "mirror-light" | "gloss-black" | "glow" = "gloss-black",
 ) {
   const { widthMm: w, heightMm: h } = size;
   const dark = luminance(lidHex) < 0.18;
@@ -99,7 +103,10 @@ export function lidLighting(
   // Air: pale polished mirror, a lighter, cooler tint of the lid that brightens towards the top.
   const split = clamp(0.5 + (0.5 - light.u) * 0.16 + (0.5 - light.v) * 0.08, 0.35, 0.65);
   const logo: Linear =
-    logoFinish === "gloss-black"
+    logoFinish === "glow"
+      ? // Back-lit (PROLED Pro): the light comes from inside, so it ignores the room light. Near-white, a touch cooler at the foot.
+        { start: { x: 12, y: 0 }, end: { x: 12, y: 24 }, stops: [[0, "#ffffff"], [0.6, "#fbfcfd"], [1, "#eef1f5"]] }
+      : logoFinish === "gloss-black"
       ? {
           ...GLOSS_AXIS,
           stops: [

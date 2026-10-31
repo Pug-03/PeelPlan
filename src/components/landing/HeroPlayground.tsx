@@ -206,7 +206,8 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
   const lidX = CX - geo.w / 2;
   const lidY = CY - geo.h / 2;
   const target = geoOf(modelId);
-  const shortName = (name: string) => name.replace(/^MacBook\s+/, "");
+  // "MacBook Pro 14\" PROLED" → "PROLED 14\"" so all seven pills fit one row on a desktop hero.
+  const shortName = (name: string) => name.replace(/^MacBook\s+/, "").replace(/^Pro (\S+) PROLED$/, "PROLED $1");
 
   const holoStops = useMemo(
     () => ["#ff6bd6", "#ffd36b", "#7cff9b", "#6bd8ff", "#a77bff", "#ff6bd6"].map((c, i, a) => <stop key={i} offset={i / (a.length - 1)} stopColor={c} />),
@@ -288,9 +289,9 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
 
       {/* Controls */}
       <div className="flex min-w-0 flex-col gap-2.5 px-1 sm:px-4">
-        {/* min-w-0 so the row scrolls sideways on a narrow phone instead of widening the hero column. */}
+        {/* One row at every width: min-w-0 lets it scroll sideways instead of wrapping or widening the hero column. */}
         <div
-          className="-mx-1 flex min-w-0 items-center gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible"
+          className="-mx-1 flex min-w-0 items-center gap-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none]"
           role="group"
           aria-label={t("playModels")}
         >
@@ -300,7 +301,7 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
               type="button"
               aria-pressed={m.id === modelId}
               onClick={() => setModelId(m.id)}
-              className="rounded-full border border-hairline px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors hover:border-ink aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-bg sm:py-1.5"
+              className="rounded-full border border-hairline px-2.5 py-2.5 text-xs font-medium whitespace-nowrap transition-colors hover:border-ink aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-bg sm:py-1.5"
             >
               {shortName(m.name)}
             </button>
