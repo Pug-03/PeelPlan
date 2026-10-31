@@ -478,7 +478,7 @@ export async function Pricing() {
       {items.map((f) => (
         <li key={f} className="flex gap-3">
           <span
-            className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full ${top ? "bg-[#D7FF3A] text-[#111]" : "bg-ink/[0.08]"}`}
+            className={`price-check mt-0.5 grid size-5 shrink-0 place-items-center rounded-full ${top ? "bg-[#D7FF3A] text-[#111]" : "bg-ink/[0.08]"}`}
             aria-hidden="true"
           >
             <Check className="size-3" strokeWidth={3} />
@@ -504,17 +504,17 @@ export async function Pricing() {
         <p className="reveal mx-auto mt-4 max-w-[52ch] text-center text-muted">{t("priceLead")}</p>
         <div className="mt-12 grid gap-5 md:grid-cols-3">
           {/* Planners: always free. */}
-          <div className="flex flex-col rounded-[var(--radius-card)] border border-hairline bg-bg p-7">
+          <div className="price-card flex flex-col rounded-[var(--radius-card)] border border-hairline bg-bg p-7">
             <p className="font-medium">{t("priceFreeName")}</p>
             {price(t("priceFreeValue"), t("priceFreeUnit"))}
             {list(free)}
-            <Link href="/editor" className="mt-8 rounded-full bg-[#D7FF3A] px-5 py-3 text-center font-semibold text-[#111] transition-opacity hover:opacity-90">
+            <Link href="/editor" className="price-btn mt-8 rounded-full bg-[#D7FF3A] px-5 py-3 text-center font-semibold text-[#111] transition-opacity hover:opacity-90">
               {t("priceFreeCta")}
             </Link>
           </div>
 
           {/* Shops: two monthly plans, both start with a free trial month. */}
-          <div className="flex flex-col rounded-[var(--radius-card)] border border-hairline bg-bg p-7">
+          <div className="price-card flex flex-col rounded-[var(--radius-card)] border border-hairline bg-bg p-7">
             <div className="flex items-center justify-between gap-3">
               <p className="font-medium">{t("priceBasicName")}</p>
               {trial}
@@ -523,27 +523,27 @@ export async function Pricing() {
             {list(basic)}
             <Link
               href="/seller"
-              className="mt-8 rounded-full border border-ink px-5 py-3 text-center font-semibold transition-colors hover:bg-ink hover:text-bg"
+              className="price-btn mt-8 rounded-full border border-ink px-5 py-3 text-center font-semibold transition-colors hover:bg-ink hover:text-bg"
             >
               {t("priceShopCta")}
             </Link>
           </div>
 
-          <div className="flex flex-col rounded-[var(--radius-card)] border-2 border-ink bg-bg bg-[radial-gradient(120%_70%_at_100%_0%,rgb(215_255_58/0.16),transparent_60%)] p-7 shadow-soft">
+          <div className="price-card flex flex-col rounded-[var(--radius-card)] border-2 border-ink bg-bg bg-[radial-gradient(120%_70%_at_100%_0%,rgb(215_255_58/0.16),transparent_60%)] p-7 shadow-soft">
             <div className="flex items-center justify-between gap-3">
               <p className="font-medium">{t("pricePlusName")}</p>
               {trial}
             </div>
             {price(t("pricePlusValue"), t("priceMonth"))}
             {list(plus, true)}
-            <Link href="/seller" className="mt-8 rounded-full bg-ink px-5 py-3 text-center font-semibold text-bg transition-opacity hover:opacity-90">
+            <Link href="/seller" className="price-btn mt-8 rounded-full bg-ink px-5 py-3 text-center font-semibold text-bg transition-opacity hover:opacity-90">
               {t("priceShopCta")}
             </Link>
           </div>
         </div>
 
         {/* Add-on for either shop plan: be the first shop people see. The little shop row shows what you get. */}
-        <div className="mt-5 grid items-center gap-6 rounded-[var(--radius-card)] border border-hairline bg-bg bg-[radial-gradient(90%_160%_at_72%_50%,rgb(215_255_58/0.16),transparent_60%)] p-7 md:grid-cols-[minmax(0,1fr)_auto_auto] md:gap-10">
+        <div className="price-card mt-5 grid items-center gap-6 rounded-[var(--radius-card)] border border-hairline bg-bg bg-[radial-gradient(90%_160%_at_72%_50%,rgb(215_255_58/0.16),transparent_60%)] p-7 md:grid-cols-[minmax(0,1fr)_auto_auto] md:gap-10">
           <div>
             <span className="rounded-full border border-ink/15 px-2.5 py-0.5 text-xs font-medium text-muted">{t("priceBoostTag")}</span>
             <p className="mt-3 text-lg font-semibold">{t("priceBoostName")}</p>
@@ -583,10 +583,10 @@ export async function Pricing() {
 }
 
 const BUY_STEPS = [
-  { key: "pick", icon: Store, tint: "#FFE7A3" },
-  { key: "try", icon: Laptop, tint: "#D4F0FF" },
-  { key: "pay", icon: QrCode, tint: "#E2DBFF" },
-  { key: "stick", icon: Ruler, tint: "#C9F2D2" },
+  { key: "pick", icon: Store },
+  { key: "try", icon: Laptop },
+  { key: "pay", icon: QrCode },
+  { key: "stick", icon: Ruler },
 ] as const;
 
 /** How buying works, from a shop's cart to stickers on the lid. */
@@ -611,18 +611,18 @@ export async function BuyFlow() {
         </Link>
       </div>
       <ol className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {BUY_STEPS.map(({ key, icon: Icon, tint }, i) => (
+        {BUY_STEPS.map(({ key, icon: Icon }, i) => (
           // The reveal (and its stagger delay) lives on the <li>; the hover lift is on the card inside, so the
           // two transitions never fight and hovering isn't delayed.
           <li key={key} className="reveal" style={{ transitionDelay: `${i * 80}ms` }}>
             <div className="group flex h-full flex-col gap-8 rounded-2xl border border-hairline bg-bg p-5 transition-[translate,box-shadow,border-color] duration-300 ease-[var(--ease-out-soft)] hover:-translate-y-1 hover:border-ink/15 hover:shadow-soft">
               <div className="flex items-center justify-between">
                 <span
-                  className="grid size-11 place-items-center rounded-xl transition-transform duration-300 ease-[var(--ease-out-soft)] group-hover:scale-110 group-hover:-rotate-6"
-                  style={{ background: tint }}
+                  // One quiet tile for every step; the brand lime only shows on the card you're pointing at.
+                  className="grid size-11 place-items-center rounded-xl bg-ink/[0.06] text-ink transition-[transform,background-color,color] duration-300 ease-[var(--ease-out-soft)] group-hover:scale-110 group-hover:-rotate-6 group-hover:bg-[#D7FF3A] group-hover:text-[#111]"
                   aria-hidden="true"
                 >
-                  <Icon className="size-5 text-[#2B2320]" strokeWidth={1.75} />
+                  <Icon className="size-5" strokeWidth={1.75} />
                 </span>
                 <span className="text-sm tabular-nums text-muted" aria-hidden="true">
                   {String(i + 1).padStart(2, "0")}

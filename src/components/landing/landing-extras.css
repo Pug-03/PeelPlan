@@ -259,19 +259,20 @@
   background-position: center 56%;
   mask: radial-gradient(ellipse 70% 62% at 50% 56%, #000 30%, transparent 78%);
 }
-/* On a white page the lime glow washes out: light mode keeps the lime light tight behind the sticker,
-   with deeper greens and a liner that lifts off the page. */
+/* On a white page a pale lime glow washes out, so light mode goes saturated instead: an electric lime core
+   behind the sticker, a lime-to-green ring with a double bloom, and bright green sparks. */
 html:not([data-theme="dark"]) .peel-scene > div {
-  background: radial-gradient(circle at 50% 56%, rgb(215 255 58 / 0.3), rgb(215 255 58 / 0.08) 26%, transparent 42%);
+  background:
+    radial-gradient(circle at 50% 56%, rgb(198 255 0 / 0.6), rgb(170 240 20 / 0.28) 22%, rgb(80 210 90 / 0.08) 36%, transparent 46%);
 }
 html:not([data-theme="dark"]) .peel-ring {
-  background: conic-gradient(from 0deg, #a8dc12, #7fb312 25%, rgb(127 179 18 / 0.14) 50%, #7fb312 75%, #a8dc12);
-  filter: blur(1.5px) drop-shadow(0 0 14px rgb(143 195 26 / 0.45));
+  background: conic-gradient(from 0deg, #c6ff00, #7ce000 22%, #22c55e 40%, rgb(34 197 94 / 0.2) 50%, #22c55e 60%, #7ce000 78%, #c6ff00);
+  filter: blur(0.75px) drop-shadow(0 0 8px rgb(124 224 0 / 0.75)) drop-shadow(0 0 26px rgb(198 255 0 / 0.55));
 }
 html:not([data-theme="dark"]) .peel-spark {
-  background: #7fae12;
-  opacity: 0.45;
-  box-shadow: 0 0 4px rgb(127 174 18 / 0.6);
+  background: #5fd400;
+  opacity: 0.7;
+  box-shadow: 0 0 6px rgb(160 240 0 / 0.95);
 }
 html:not([data-theme="dark"]) .peel-liner {
   box-shadow:
@@ -454,4 +455,116 @@ html:not([data-theme="dark"]) .peel-liner {
 [data-offscreen] :is(.lid-float, .review-track, .cta-pop),
 [data-offscreen] .cta-pop::before {
   animation-play-state: paused;
+}
+
+/* ─────────────── Pricing: a light runs around the edge on hover ───────────────
+   Cards and their buttons share one effect: a conic-gradient ring masked to the border whose start angle
+   spins. A bright head with a long fading tail and a soft bloom, so the motion reads at a glance. Cards also
+   lift and pop their check marks one after another. Keyboard focus does the same as hover. */
+@property --price-run {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.price-card,
+.price-btn {
+  position: relative;
+  isolation: isolate;
+  --price-glow: #d7ff3a;
+  --price-w: 3px;
+}
+.price-btn {
+  --price-w: 2.5px;
+  transition:
+    opacity 200ms,
+    background-color 200ms,
+    color 200ms,
+    transform 300ms var(--ease-out-soft);
+}
+.price-card {
+  transition:
+    transform 400ms var(--ease-out-soft),
+    box-shadow 400ms var(--ease-out-soft);
+}
+html:not([data-theme="dark"]) :is(.price-card, .price-btn) {
+  /* Pure lime vanishes on white: the same hue, a step deeper, so the light still reads. */
+  --price-glow: #74b300;
+}
+:is(.price-card, .price-btn)::before {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--price-w));
+  z-index: 1;
+  padding: var(--price-w);
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--price-run),
+    transparent 0 35%,
+    color-mix(in srgb, var(--price-glow) 45%, transparent) 70%,
+    var(--price-glow) 95%,
+    #fff 99%,
+    transparent 100%
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  filter: drop-shadow(0 0 4px var(--price-glow)) drop-shadow(0 0 10px var(--price-glow));
+  opacity: 0;
+  transition: opacity 250ms var(--ease-out-soft);
+  pointer-events: none;
+}
+.price-card:is(:hover, :focus-within) {
+  transform: translateY(-4px);
+  box-shadow: 0 22px 44px -20px rgb(0 0 0 / 0.22);
+}
+.price-btn:is(:hover, :focus-visible) {
+  transform: translateY(-1px);
+}
+:is(.price-card:is(:hover, :focus-within), .price-btn:is(:hover, :focus-visible))::before {
+  opacity: 1;
+  animation: price-run 1.8s linear infinite;
+}
+/* Buttons run a little faster than their card, so the two lights never move in lockstep. */
+.price-btn:is(:hover, :focus-visible)::before {
+  animation-duration: 1.2s;
+}
+.price-card:is(:hover, :focus-within) .price-check {
+  animation: price-pop 500ms var(--ease-out-soft) both;
+}
+.price-card li:nth-child(2) .price-check {
+  animation-delay: 70ms;
+}
+.price-card li:nth-child(3) .price-check {
+  animation-delay: 140ms;
+}
+.price-card li:nth-child(4) .price-check {
+  animation-delay: 210ms;
+}
+.price-card li:nth-child(5) .price-check {
+  animation-delay: 280ms;
+}
+@keyframes price-run {
+  to {
+    --price-run: 360deg;
+  }
+}
+@keyframes price-pop {
+  40% {
+    transform: scale(1.3) rotate(-8deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .price-card,
+  .price-card:is(:hover, :focus-within),
+  .price-btn:is(:hover, :focus-visible) {
+    transform: none;
+  }
+  /* No running light: the ring just shows, still. */
+  :is(.price-card:is(:hover, :focus-within), .price-btn:is(:hover, :focus-visible))::before {
+    animation: none;
+    background: var(--price-glow);
+  }
+  .price-card:is(:hover, :focus-within) .price-check {
+    animation: none;
+  }
 }
