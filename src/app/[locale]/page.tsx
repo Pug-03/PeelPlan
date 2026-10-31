@@ -192,10 +192,10 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
               <p className="mt-5 max-w-[44ch] text-lg leading-relaxed text-muted">{t("shopsBody")}</p>
               <Link
                 href="/shops"
-                className="group mt-7 inline-flex items-center gap-2 rounded-full border border-hairline bg-bg px-5 py-2.5 font-medium transition-colors hover:border-ink"
+                className="cta-run cta-run-ink group mt-7 inline-flex items-center gap-2 rounded-full border border-hairline bg-bg px-5 py-2.5 font-medium transition-colors hover:border-ink"
               >
                 {t("shopsLink")}
-                <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" strokeWidth={2} aria-hidden="true" />
+                <ArrowRight className="cta-run-arrow size-4" strokeWidth={2} aria-hidden="true" />
               </Link>
             </div>
             <div className="reveal relative mx-auto w-full max-w-md">

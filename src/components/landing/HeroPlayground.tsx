@@ -346,7 +346,7 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
           <button
             type="button"
             onClick={shuffle}
-            className="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-hairline"
+            className="cta-run cta-run-ink inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-hairline"
           >
             <Shuffle className="size-4" strokeWidth={2} aria-hidden="true" />
             {t("playShuffle")}
