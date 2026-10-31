@@ -616,3 +616,16 @@ html[data-lang-swap]::view-transition-old(.lang-same) {
     opacity: 0;
   }
 }
+
+/* A hover lift that can't flicker: the element moves up, and this strip below it keeps a pointer resting
+   on the bottom edge over the element, instead of letting it drop back and re-trigger the hover. */
+.hover-lift {
+  position: relative;
+}
+.hover-lift::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 100%;
+  height: 6px;
+}

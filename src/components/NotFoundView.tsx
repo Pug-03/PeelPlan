@@ -20,5 +20,5 @@ export function NotFoundView({ title, body, actions }: { title: ReactNode; body:
 }
 
 export const notFoundPrimary =
-  "inline-flex h-12 items-center rounded-full bg-accent px-6 font-semibold text-accent-ink transition-transform duration-300 ease-[var(--ease-out-soft)] hover:-translate-y-0.5";
+  "inline-flex h-12 items-center rounded-full bg-accent px-6 font-semibold text-accent-ink transition-transform duration-300 ease-[var(--ease-out-soft)] hover:-translate-y-0.5 hover-lift";
 export const notFoundSecondary = "inline-flex h-12 items-center rounded-full px-5 font-medium text-ink transition-colors hover:bg-surface";
