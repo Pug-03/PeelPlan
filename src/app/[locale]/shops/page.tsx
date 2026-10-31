@@ -54,10 +54,10 @@ export default async function ShopsIndex({ params }: Props) {
               const model = getLaptopModel(layout?.modelId ?? "");
               const g = lidGeometry(model);
               return (
-                <li key={shop.slug}>
+                <li key={shop.slug} className="group/lift">
                   <Link
                     href={`/shops/${shop.slug}`}
-                    className="group flex h-full flex-col rounded-[var(--radius-card)] border border-hairline bg-bg p-3 shadow-soft transition-transform duration-300 ease-[var(--ease-out-soft)] hover:-translate-y-0.5"
+                    className="group flex h-full flex-col rounded-[var(--radius-card)] border border-hairline bg-bg p-3 shadow-soft transition-transform duration-300 ease-[var(--ease-out-soft)] group-hover/lift:-translate-y-0.5"
                   >
                     <div className="rounded-[0.9rem] bg-surface p-4">
                       <LidArt

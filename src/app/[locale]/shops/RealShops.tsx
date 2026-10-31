@@ -40,10 +40,10 @@ export function RealShops() {
       </h2>
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {data.map((shop) => (
-          <li key={shop.id}>
+          <li key={shop.id} className="group/lift">
             <Link
               href={`/shops/${shop.slug}`}
-              className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-hairline bg-bg shadow-soft transition-transform duration-300 ease-[var(--ease-out-soft)] hover:-translate-y-0.5"
+              className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-hairline bg-bg shadow-soft transition-transform duration-300 ease-[var(--ease-out-soft)] group-hover/lift:-translate-y-0.5"
             >
               <div className="h-28 bg-surface" style={{ background: `linear-gradient(135deg, ${shop.tint}, var(--surface))` }}>
                 {shop.cover && (
