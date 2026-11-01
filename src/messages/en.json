@@ -373,7 +373,7 @@
   },
   "editor": {
     "title": "Editor",
-    "model": "MacBook",
+    "model": "Device",
     "lidColor": "Lid colour",
     "logoClear": "Keep logo area clear",
     "calibrate": "Calibrate",
