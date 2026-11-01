@@ -163,7 +163,7 @@ export function Inspector({ warnings }: { warnings: LayoutWarnings }) {
             <h3 className="mb-2 text-xs text-muted">{t("layers")}</h3>
             <ul className="flex flex-col gap-0.5">
               {[...items].reverse().map((it) => {
-                const warn = warnings.overlapping.has(it.id) || warnings.onLogo.has(it.id) || warnings.nearEdge.has(it.id);
+                const warn = warnings.overlapping.has(it.id) || warnings.onLogo.has(it.id) || warnings.onCamera.has(it.id) || warnings.nearEdge.has(it.id);
                 return (
                   <li key={it.id}>
                     <button

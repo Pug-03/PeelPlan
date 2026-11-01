@@ -32,6 +32,12 @@ describe("layoutWarnings", () => {
     expect(layoutWarnings(items, lid, true).onLogo.has("a")).toBe(true);
     expect(layoutWarnings(items, lid, false).onLogo.size).toBe(0);
   });
+  it("always flags a sticker on a tablet's camera bump, even with the logo check off", () => {
+    const tab = { widthMm: 178, heightMm: 248, camera: { x: 7, y: 7, width: 24, height: 24 } };
+    const w = layoutWarnings([it_("a", 25, 25), it_("b", 80, 120)], tab, false);
+    expect([...w.onCamera]).toEqual(["a"]);
+    expect(layoutWarnings([it_("a", 25, 25)], lid, false).onCamera.size).toBe(0);
+  });
   it("flags stickers within 3 mm of the edge", () => {
     const w = layoutWarnings([it_("a", 12, 50), it_("b", 14, 50)], lid, false);
     expect(w.nearEdge.has("a")).toBe(true);

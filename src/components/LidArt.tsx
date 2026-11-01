@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { LazySvgLayer } from "@/components/LazySvgLayer";
 import { DEMO_ASSETS, LOGO_PATH, logoTransform } from "@/config/demo";
-import type { LogoFinish } from "@/config/laptops";
+import { cameraLenses, type LogoFinish } from "@/config/laptops";
 import { GLOSS_DIR, GLOW_NEAR, GLOW_WIDE, lidLighting, type Linear, type Radial } from "@/lib/lighting";
 import { VISIBLE_LIBRARY, stickerSrc } from "@/stickers/library";
 
@@ -118,6 +118,29 @@ export function LogoMark({ logo, lidColor, finish = "gloss-black" }: { logo: Log
   );
 }
 
+export type CameraBox = { x: number; y: number; width: number; height: number; radius: number };
+
+/** Raised camera module on a tablet's back: dark glass with its lenses. */
+export function CameraMark({ camera: c }: { camera: CameraBox }) {
+  return (
+    <g transform={`translate(${c.x} ${c.y})`}>
+      <rect width={c.width} height={c.height} rx={c.radius} fill="#1d1e21" stroke="#000" strokeOpacity={0.35} strokeWidth={0.4} />
+      <rect x={0.5} y={0.5} width={c.width - 1} height={c.height - 1} rx={Math.max(0, c.radius - 0.5)} fill="none" stroke="#fff" strokeOpacity={0.12} strokeWidth={0.3} />
+      {cameraLenses(c).map((l, i) =>
+        l.kind === "flash" ? (
+          <circle key={i} cx={l.x} cy={l.y} r={l.r} fill="#e9e1c8" opacity={0.85} />
+        ) : (
+          <g key={i}>
+            <circle cx={l.x} cy={l.y} r={l.r} fill="#0b0c0e" stroke="#4a4c52" strokeWidth={0.35} />
+            <circle cx={l.x} cy={l.y} r={l.r * 0.55} fill={l.kind === "lens" ? "#1b2333" : "#16171a"} />
+            <circle cx={l.x - l.r * 0.25} cy={l.y - l.r * 0.25} r={l.r * 0.16} fill="#fff" opacity={0.35} />
+          </g>
+        ),
+      )}
+    </g>
+  );
+}
+
 export type ArtSticker = { id: string; x: number; y: number; w?: number; r?: number };
 
 const byId = new Map(VISIBLE_LIBRARY.map((s) => [s.id, s]));
@@ -137,11 +160,13 @@ export function LidArt({
   title,
   logo,
   logoFinish = "gloss-black",
+  camera,
   lazy = false,
 }: {
   lazy?: boolean;
   logo?: LogoBox;
   logoFinish?: LogoFinish;
+  camera?: CameraBox;
   widthMm: number;
   heightMm: number;
   radiusMm?: number;
@@ -177,6 +202,7 @@ export function LidArt({
       </defs>
       <LidSurface widthMm={widthMm} heightMm={heightMm} radiusMm={radiusMm} color={color} />
       {logo && <LogoMark logo={logo} lidColor={color} finish={logoFinish} />}
+      {camera && <CameraMark camera={camera} />}
       {/* One shadow filter for the whole sticker layer instead of one per sticker. */}
       <g filter={`url(#shadow${uid})`}>{lazy ? <LazySvgLayer>{layer}</LazySvgLayer> : layer}</g>
     </svg>

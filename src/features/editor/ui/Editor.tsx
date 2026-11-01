@@ -257,6 +257,7 @@ export default function Editor() {
   const warningLines = [
     warnings.overlapping.size ? t("overlapWarning", { count: warnings.overlapping.size }) : null,
     warnings.onLogo.size ? t("logoWarning") : null,
+    warnings.onCamera.size ? t("cameraWarning") : null,
     logoCovered > 0 ? t(logoCovered >= 0.98 ? "glowHiddenWarning" : "glowBlockedWarning") : null,
     warnings.nearEdge.size ? t("edgeWarning", { count: warnings.nearEdge.size }) : null,
   ].filter(Boolean) as string[];

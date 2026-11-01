@@ -3,7 +3,7 @@
 import { Copy, LogOut, Pencil, Plus, Store, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
-import { LidSurface, LogoMark } from "@/components/LidArt";
+import { CameraMark, LidSurface, LogoMark } from "@/components/LidArt";
 import { getLaptopModel, lidGeometry } from "@/config/laptops";
 import { createLayout, deleteLayout, duplicateLayout, listLayouts, renameLayout, type SavedLayout } from "@/features/editor/collection";
 import { loadAssets } from "@/features/editor/persist";
@@ -20,6 +20,7 @@ function LayoutThumb({ entry, assets }: { entry: SavedLayout; assets: Record<str
     <svg viewBox={`0 0 ${g.widthMm} ${g.heightMm}`} className="h-auto w-full" aria-hidden="true">
       <LidSurface widthMm={g.widthMm} heightMm={g.heightMm} radiusMm={g.cornerRadiusMm} color={color} />
       <LogoMark logo={g.logo} lidColor={color} finish={model.logoFinish} />
+      {g.camera && <CameraMark camera={g.camera} />}
       {entry.layout.items.map((it) => {
         const a = assets[it.assetId];
         if (!a) return null;

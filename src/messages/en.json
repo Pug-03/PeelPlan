@@ -428,6 +428,7 @@
     "forward": "Forward",
     "backward": "Backward",
     "overlapWarning": "{count, plural, one {# sticker overlaps another} other {# stickers overlap}}",
+    "cameraWarning": "A sticker sits on the camera bump: it won't stick flat there",
     "logoWarning": "A sticker covers the logo area",
     "glowBlockedWarning": "A sticker blocks some of the logo's light",
     "glowHiddenWarning": "The logo's light is fully covered",

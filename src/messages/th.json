@@ -428,6 +428,7 @@
     "forward": "เลื่อนขึ้น",
     "backward": "เลื่อนลง",
     "overlapWarning": "{count, plural, other {มีสติกเกอร์ซ้อนกัน # ชิ้น}}",
+    "cameraWarning": "มีสติกเกอร์ทับเลนส์กล้อง ติดตรงนั้นไม่เรียบ",
     "logoWarning": "มีสติกเกอร์ทับพื้นที่โลโก้",
     "glowBlockedWarning": "สติกเกอร์บังแสงโลโก้บางส่วน",
     "glowHiddenWarning": "สติกเกอร์บังแสงโลโก้ทั้งหมด",
