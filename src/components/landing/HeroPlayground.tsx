@@ -3,18 +3,27 @@
 import { Shuffle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { LidSurface, LogoMark, type ArtSticker } from "@/components/LidArt";
-import { LAPTOP_MODELS, getLaptopModel, lidGeometry } from "@/config/laptops";
+import { CameraMark, LidSurface, LogoMark, type ArtSticker } from "@/components/LidArt";
+import { LAPTOP_MODELS, TABLET_MODELS, getLaptopModel, lidGeometry } from "@/config/laptops";
 import { VISIBLE_LIBRARY, stickerSrc, type LibrarySticker } from "@/stickers/library";
 
 /**
  * Hero lid you can play with: drag stickers, double-click to peel one off, shuffle a new set,
  * and switch MacBook models to watch the lid change size while the stickers stay true to scale.
  * Some stickers are holographic and shimmer with the pointer.
+ *
+ * The 11-inch iPads join the row too. Their backs stand upright, so sticker positions are kept as shares of
+ * the lid (u across, v down) and the layout turns with the device: a landscape 3×2 arrangement becomes a
+ * portrait 2×3 one, blended smoothly while the outline morphs. (The 13-inch iPads are taller than the
+ * hero's frame; they're in the editor and the size table.)
  */
 
-type Placed = { key: string; id: string; dx: number; dy: number; w: number; r: number; holo: boolean; delay: number };
+/** u, v: centre as a share of the lid width/height, from the middle (-0.5..0.5), in landscape terms. */
+type Placed = { key: string; id: string; u: number; v: number; w: number; r: number; holo: boolean; delay: number };
 type Geo = { w: number; h: number; radius: number; logo: { x: number; y: number; width: number; height: number } };
+
+/** Hero models: every MacBook plus the 11-inch iPads (the 13-inch ones are taller than the frame). */
+const HERO_MODELS = [...LAPTOP_MODELS, ...TABLET_MODELS.filter((m) => m.id.includes("-11-"))];
 
 const byId = new Map(VISIBLE_LIBRARY.map((s) => [s.id, s]));
 const MAX_W = Math.max(...LAPTOP_MODELS.map((m) => m.lid.widthMm.value));
@@ -52,6 +61,22 @@ const POOL = (() => {
   return coding.length >= 6 ? coding : VISIBLE_LIBRARY;
 })();
 
+/** The smallest laptop lid (MacBook Neo), which the shuffle grid is laid out for. */
+const SMALL_W = 297.5;
+const SMALL_H = 206.4;
+
+/**
+ * How upright the outline is: 0 for a laptop lid, 1 for a tablet back, in between while it morphs.
+ * Sticker positions blend between their landscape and their turned (portrait) placement by this.
+ */
+const uprightness = (g: { w: number; h: number }) => Math.min(1, Math.max(0, (g.h - g.w) / (0.3 * Math.max(g.w, g.h)) + 0.5));
+
+/** A sticker's centre on the current outline, in mm from its middle. */
+const placeOf = (s: { u: number; v: number }, g: { w: number; h: number }) => {
+  const p = uprightness(g);
+  return { x: lerp(s.u * g.w, s.v * g.w, p), y: lerp(s.v * g.h, s.u * g.h, p) };
+};
+
 /** A fresh, roughly gridded set that fits the smallest lid. */
 function shuffled(seed: number): Placed[] {
   let h = seed * 2654435761;
@@ -71,8 +96,8 @@ function shuffled(seed: number): Placed[] {
     return {
       key: `${seed}-${i}`,
       id: def.id,
-      dx: cells[i][0] + (rnd() - 0.5) * 16,
-      dy: cells[i][1] + (rnd() - 0.5) * 12,
+      u: (cells[i][0] + (rnd() - 0.5) * 16) / SMALL_W,
+      v: (cells[i][1] + (rnd() - 0.5) * 12) / SMALL_H,
       w,
       r: (rnd() - 0.5) * 20,
       holo: holo.has(i),
@@ -118,7 +143,7 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
     return initial.flatMap((s, i) => {
       const def = byId.get(s.id);
       if (!def) return [];
-      return [{ key: `i-${i}`, id: s.id, dx: s.x - base.w / 2, dy: s.y - base.h / 2, w: s.w ?? def.widthMm, r: s.r ?? 0, holo: i === 4 || i === 1, delay: 0 }];
+      return [{ key: `i-${i}`, id: s.id, u: (s.x - base.w / 2) / base.w, v: (s.y - base.h / 2) / base.h, w: s.w ?? def.widthMm, r: s.r ?? 0, holo: i === 4 || i === 1, delay: 0 }];
     });
   });
   const [peeling, setPeeling] = useState<string | null>(null);
@@ -180,7 +205,7 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
   }, []);
 
   /* ---------- Dragging ---------- */
-  const drag = useRef<{ key: string; sx: number; sy: number; dx: number; dy: number; moved: boolean } | null>(null);
+  const drag = useRef<{ key: string; sx: number; sy: number; x: number; y: number; moved: boolean } | null>(null);
   const toSvg = (e: React.PointerEvent) => {
     const svg = svgRef.current!;
     const pt = svg.createSVGPoint();
@@ -192,7 +217,8 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
   const onDown = (e: React.PointerEvent, s: Placed) => {
     if (e.button !== 0) return;
     const p = toSvg(e);
-    drag.current = { key: s.key, sx: p.x, sy: p.y, dx: s.dx, dy: s.dy, moved: false };
+    const at = placeOf(s, geoNow.current);
+    drag.current = { key: s.key, sx: p.x, sy: p.y, x: at.x, y: at.y, moved: false };
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
     setDragging(s.key);
     // Bring the picked sticker to the top.
@@ -203,10 +229,14 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
     if (!d) return;
     const p = toSvg(e);
     const g = geoNow.current;
-    const nx = Math.max(-g.w / 2, Math.min(g.w / 2, d.dx + p.x - d.sx));
-    const ny = Math.max(-g.h / 2, Math.min(g.h / 2, d.dy + p.y - d.sy));
+    const nx = Math.max(-g.w / 2, Math.min(g.w / 2, d.x + p.x - d.sx));
+    const ny = Math.max(-g.h / 2, Math.min(g.h / 2, d.y + p.y - d.sy));
     if (Math.abs(p.x - d.sx) + Math.abs(p.y - d.sy) > 1) d.moved = true;
-    setStickers((list) => list.map((x) => (x.key === d.key ? { ...x, dx: nx, dy: ny } : x)));
+    // Back to shares of the lid, in landscape terms (on an upright back the axes are turned).
+    const upright = uprightness(g) >= 0.5;
+    const u = upright ? ny / g.h : nx / g.w;
+    const v = upright ? nx / g.w : ny / g.h;
+    setStickers((list) => list.map((x) => (x.key === d.key ? { ...x, u, v } : x)));
   };
   const onUp = () => {
     drag.current = null;
@@ -225,8 +255,9 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
   const lidX = CX - geo.w / 2;
   const lidY = CY - geo.h / 2;
   const target = geoOf(modelId);
-  // "MacBook Pro 14\" PROLED XDR" → "PROLED 14\"" so all seven pills fit one row on a desktop hero.
+  // "MacBook Pro 14\" PROLED XDR" → "PROLED 14\"" so the MacBook pills stay short; iPads keep their name.
   const shortName = (name: string) => name.replace(/^MacBook\s+/, "").replace(/^Pro (\S+) PROLED XDR$/, "PROLED $1");
+  const camera = lidGeometry(model).camera;
 
   const holoStops = useMemo(
     () => ["#ff6bd6", "#ffd36b", "#7cff9b", "#6bd8ff", "#a77bff", "#ff6bd6"].map((c, i, a) => <stop key={i} offset={i / (a.length - 1)} stopColor={c} />),
@@ -270,6 +301,12 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
           <g transform={`translate(${lidX} ${lidY})`}>
             <LidSurface widthMm={geo.w} heightMm={geo.h} radiusMm={geo.radius} color={color} />
             <LogoMark logo={geo.logo} lidColor={color} finish={model.logoFinish} />
+            {/* The camera fades in as the outline stands up into an iPad. */}
+            {camera && (
+              <g opacity={uprightness(geo)}>
+                <CameraMark camera={camera} color={color} />
+              </g>
+            )}
           </g>
 
           <g clipPath={`url(#lid${uid})`}>
@@ -282,7 +319,7 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
                 .filter(Boolean)
                 .join(" ");
               return (
-                <g key={s.key} transform={`translate(${CX + s.dx} ${CY + s.dy}) rotate(${s.r})`}>
+                <g key={s.key} transform={`translate(${CX + placeOf(s, geo).x} ${CY + placeOf(s, geo).y}) rotate(${s.r})`}>
                   <g
                     className={cls}
                     style={{ "--d": `${s.delay}ms` } as React.CSSProperties}
@@ -315,7 +352,7 @@ export function HeroPlayground({ initial, initialModelId, initialColor }: { init
           role="group"
           aria-label={t("playModels")}
         >
-          {LAPTOP_MODELS.map((m) => (
+          {HERO_MODELS.map((m) => (
             <button
               key={m.id}
               type="button"
