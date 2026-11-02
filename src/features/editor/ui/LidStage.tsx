@@ -8,7 +8,7 @@ import useImage from "use-image";
 import { useShallow } from "zustand/react/shallow";
 import { DEMO_ASSETS, LOGO_PATH, logoTransform } from "@/config/demo";
 import { getLaptopModel, lidGeometry } from "@/config/laptops";
-import { cameraArt } from "@/lib/camera";
+import { cameraArt, type CameraPaint } from "@/lib/camera";
 import { boundingBox, corners } from "@/lib/geometry";
 import { MAX_SIZE_MM, MIN_SIZE_MM, type LayoutItem } from "@/lib/layout";
 import { DEFAULT_LIGHT, GLOW_NEAR, GLOW_WIDE, flatStops, lidLighting, type Light, type Radial } from "@/lib/lighting";
@@ -16,6 +16,26 @@ import { fitPxPerMm, roundMm } from "@/lib/scale";
 import { computeSnap, type Box, type Guide } from "@/lib/snap";
 import { LOGO_CLEARANCE_MM, type LayoutWarnings } from "@/lib/warnings";
 import { useEditor, useLiveReadout } from "../store";
+
+/** Konva fill props for a camera paint; gradient points are relative to the shape's own origin. */
+function konvaPaint(p: CameraPaint, ox: number, oy: number) {
+  if (typeof p === "string") return { fill: p };
+  const stops = p.stops.flatMap(([o, c]) => [o, c]);
+  if (p.kind === "linear")
+    return {
+      fillLinearGradientStartPoint: { x: p.x1 - ox, y: p.y1 - oy },
+      fillLinearGradientEndPoint: { x: p.x2 - ox, y: p.y2 - oy },
+      fillLinearGradientColorStops: stops,
+    };
+  const c = { x: p.cx - ox, y: p.cy - oy };
+  return {
+    fillRadialGradientStartPoint: c,
+    fillRadialGradientEndPoint: c,
+    fillRadialGradientStartRadius: 0,
+    fillRadialGradientEndRadius: p.r,
+    fillRadialGradientColorStops: stops,
+  };
+}
 
 /** Room around the lid for the mm rulers, in mm. */
 export const STAGE_PAD_MM = 16;
@@ -594,14 +614,24 @@ export function LidStage({ warnings, logoCovered = 0 }: { warnings: LayoutWarnin
                       width={p.w}
                       height={p.h}
                       cornerRadius={p.r}
-                      fill={p.fill}
+                      {...konvaPaint(p.fill, p.x, p.y)}
                       stroke={p.stroke}
                       strokeWidth={p.strokeWidth}
+                      opacity={p.opacity ?? 1}
                       // The footprint casts a soft shadow: it stands proud of the back.
-                      {...(i === 0 ? { shadowColor: "#000", shadowBlur: 1.6, shadowOffsetY: 0.5, shadowOpacity: 0.35 } : {})}
+                      {...(p.shadow ? { shadowColor: "#000", shadowBlur: 1.4, shadowOffsetX: 0.2, shadowOffsetY: 0.5, shadowOpacity: 0.4 } : {})}
                     />
                   ) : (
-                    <Circle key={i} x={p.cx} y={p.cy} radius={p.r} fill={p.fill} stroke={p.stroke} strokeWidth={p.strokeWidth} opacity={p.opacity ?? 1} />
+                    <Circle
+                      key={i}
+                      x={p.cx}
+                      y={p.cy}
+                      radius={p.r}
+                      {...konvaPaint(p.fill, p.cx, p.cy)}
+                      stroke={p.stroke}
+                      strokeWidth={p.strokeWidth}
+                      opacity={p.opacity ?? 1}
+                    />
                   ),
                 )}
               </Group>

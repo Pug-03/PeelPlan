@@ -2,7 +2,7 @@ import { useId } from "react";
 import { LazySvgLayer } from "@/components/LazySvgLayer";
 import { DEMO_ASSETS, LOGO_PATH, logoTransform } from "@/config/demo";
 import type { LogoFinish } from "@/config/laptops";
-import { cameraArt, type CameraGeometry } from "@/lib/camera";
+import { cameraArt, type CameraGeometry, type CameraPaint } from "@/lib/camera";
 import { GLOSS_DIR, GLOW_NEAR, GLOW_WIDE, lidLighting, type Linear, type Radial } from "@/lib/lighting";
 import { VISIBLE_LIBRARY, stickerSrc } from "@/stickers/library";
 
@@ -121,13 +121,47 @@ export function LogoMark({ logo, lidColor, finish = "gloss-black" }: { logo: Log
 
 /** Raised camera module on a tablet's back, in the device's own finish (see cameraArt). */
 export function CameraMark({ camera, color }: { camera: CameraGeometry; color: string }) {
+  const id = useSvgId();
+  const shapes = cameraArt(camera, color);
+  const paint = (p: CameraPaint, i: number) => (typeof p === "string" ? p : `url(#cam${id}-${i})`);
   return (
     <g>
-      {cameraArt(camera, color).map((p, i) =>
+      <defs>
+        <filter id={`camShadow${id}`} x="-20%" y="-20%" width="140%" height="150%">
+          <feDropShadow dx="0.2" dy="0.5" stdDeviation="0.6" floodOpacity="0.35" />
+        </filter>
+        {shapes.map((s, i) => {
+          const f = s.fill;
+          if (typeof f === "string") return null;
+          const stops = f.stops.map(([o, c], k) => <stop key={k} offset={o} stopColor={c} />);
+          return f.kind === "linear" ? (
+            <linearGradient key={i} id={`cam${id}-${i}`} gradientUnits="userSpaceOnUse" x1={f.x1} y1={f.y1} x2={f.x2} y2={f.y2}>
+              {stops}
+            </linearGradient>
+          ) : (
+            <radialGradient key={i} id={`cam${id}-${i}`} gradientUnits="userSpaceOnUse" cx={f.cx} cy={f.cy} r={f.r}>
+              {stops}
+            </radialGradient>
+          );
+        })}
+      </defs>
+      {shapes.map((p, i) =>
         p.type === "rect" ? (
-          <rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} rx={p.r} fill={p.fill} stroke={p.stroke} strokeWidth={p.strokeWidth} />
+          <rect
+            key={i}
+            x={p.x}
+            y={p.y}
+            width={p.w}
+            height={p.h}
+            rx={p.r}
+            fill={paint(p.fill, i)}
+            stroke={p.stroke}
+            strokeWidth={p.strokeWidth}
+            opacity={p.opacity}
+            filter={p.shadow ? `url(#camShadow${id})` : undefined}
+          />
         ) : (
-          <circle key={i} cx={p.cx} cy={p.cy} r={p.r} fill={p.fill} stroke={p.stroke} strokeWidth={p.strokeWidth} opacity={p.opacity} />
+          <circle key={i} cx={p.cx} cy={p.cy} r={p.r} fill={paint(p.fill, i)} stroke={p.stroke} strokeWidth={p.strokeWidth} opacity={p.opacity} />
         ),
       )}
     </g>
