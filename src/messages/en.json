@@ -119,9 +119,9 @@
   },
   "meta": {
     "title": "PeelPlan - See it at actual size before you stick",
-    "description": "Plan MacBook sticker layouts at true 1:1 scale, try stickers from independent shops before you buy, and print a placement guide accurate to ±1 mm.",
+    "description": "Plan MacBook and iPad sticker layouts at true 1:1 scale, try stickers from independent shops before you buy, and print a placement guide accurate to ±1 mm.",
     "ogHeadline": "See it at actual size before you stick.",
-    "ogSub": "MacBook sticker layouts at true 1:1 scale. Try shop stickers on your lid before you buy."
+    "ogSub": "MacBook and iPad sticker layouts at true 1:1 scale. Try shop stickers on your device before you buy."
   },
   "notFound": {
     "title": "This page peeled off",
@@ -145,7 +145,7 @@
     "heroB": "actual size",
     "heroC": "before you",
     "heroPeel": "stick.",
-    "heroSub": "Pick your MacBook, try stickers from independent shops on a lid that's exactly the real size, and print a 1:1 guide that lines up on the real thing.",
+    "heroSub": "Pick your MacBook or iPad, try stickers from independent shops on a back that's exactly the real size, and print a 1:1 guide that lines up on the real thing.",
     "heroCta": "Start planning, free",
     "heroNote": "Free. Sign in with Google to start. Works on your phone.",
     "marqueeLabel": "Example layouts",
@@ -155,24 +155,24 @@
     "story1": "Start with your exact lid: width, height, corner radius and logo, in millimetres.",
     "story2": "Calibrate once with any bank or ID card so the screen shows true size.",
     "story3": "Drop stickers in. Every one keeps its real size as you move, turn and layer it.",
-    "story4": "Print the 1:1 guide. Lay it on your MacBook and stick through the outlines.",
+    "story4": "Print the 1:1 guide. Lay it on your device and stick through the outlines.",
     "statAccuracy": "±1 mm",
     "statAccuracyLabel": "printed accuracy, checked with a ruler",
     "statScale": "1:1",
     "statScaleLabel": "vector PDF with a 100 mm calibration line",
-    "statModelsLabel": "MacBook models supported, more coming",
+    "statModelsLabel": "MacBook and iPad models supported, more coming",
     "howEyebrow": "Planning",
     "howTitleA": "Three steps.",
     "howTitleB": "Zero guesswork.",
-    "step1Title": "Pick your MacBook",
-    "step1Body": "Choose the model and lid colour. Dimensions come from the maker's published specs.",
+    "step1Title": "Pick your device",
+    "step1Body": "Choose your MacBook or iPad and its colour. Dimensions come from the maker's published specs and drawings.",
     "step2Title": "Place at real size",
     "step2Body": "Upload photos of your stickers or use ours. Set their size in mm, or measure them against a card or coin.",
     "step3Title": "Print and stick",
     "step3Body": "Export a 1:1 PDF, tiled across A4 or Letter if needed, plus a coordinate sheet.",
     "shopsTitle": "Try it on before you buy",
     "shopsLink": "Browse example shops",
-    "shopsBody": "Every shop sticker comes with its real size in millimetres. Put it on your lid at 1:1 and see how it looks before you order.",
+    "shopsBody": "Every shop sticker comes with its real size in millimetres. Put it on your device at 1:1 and see how it looks before you order.",
     "faqTitle": "Questions, answered",
     "faq": [
       {
@@ -184,8 +184,8 @@
         "a": "Every page has a ruler that must measure exactly 100 mm. Print at 100% / Actual size, not \"Fit to page\", and check it with a real ruler."
       },
       {
-        "q": "My MacBook lid is bigger than my paper.",
-        "a": "The PDF tiles the lid across several A4 or Letter sheets with overlap strips and crosshairs so you can tape them together precisely."
+        "q": "My MacBook lid or iPad is bigger than my paper.",
+        "a": "The PDF tiles it across several A4 or Letter sheets with overlap strips and crosshairs so you can tape them together precisely."
       },
       {
         "q": "Do I need an account?",
@@ -201,24 +201,24 @@
       }
     ],
     "ctaButton": "Open the editor",
-    "footerLegal": "MacBook is a trademark of Apple Inc. Model names are used only to identify lid dimensions. PeelPlan is not affiliated with Apple.",
+    "footerLegal": "MacBook and iPad are trademarks of Apple Inc. Model names are used only to identify device dimensions. PeelPlan is not affiliated with Apple.",
     "placeholderNote": "Example layouts and shops shown are illustrative placeholders.",
-    "tryOn": "Try on my MacBook",
+    "tryOn": "Try on my device",
     "storySvgLabel": "MacBook Pro 14\" lid, 312.6 × 221.2 mm, filling with stickers",
     "marqueePause": "Pause example layouts",
     "marqueePlay": "Play example layouts",
-    "playModels": "Choose a MacBook",
+    "playModels": "Choose a model",
     "playColors": "Lid colour",
     "playSize": "{w} × {h} mm",
     "playShuffle": "Shuffle",
-    "playHint": "Drag the stickers, double-click to peel one off, and switch models to see how much the lid really changes.",
-    "heroLidLabel": "MacBook lid at real proportions with an example sticker layout",
+    "playHint": "Drag the stickers, double-click to peel one off, and switch models to see how much the size really changes.",
+    "heroLidLabel": "Device back at real proportions with an example sticker layout",
     "introTagline": "see it at actual size"
   },
   "more": {
     "example": "Example",
     "useTitleA": "Made for",
-    "useTitleB": "every kind of lid",
+    "useTitleB": "every kind of device",
     "use": {
       "dev": {
         "title": "Developers",
@@ -239,9 +239,9 @@
     },
     "galleryTitleA": "Lids",
     "galleryTitleB": "planned with PeelPlan",
-    "galleryBody": "Layout ideas across MacBook models and colours, all drawn at real proportions. Soon you can share your own lid here.",
+    "galleryBody": "Layout ideas across MacBook and iPad models and colours, all drawn at real proportions. Soon you can share your own here.",
     "galleryCount": "{count} stickers",
-    "sizesTitleA": "Every MacBook lid,",
+    "sizesTitleA": "Every MacBook and iPad,",
     "sizesTitleB": "in millimetres",
     "sizesBody": "The numbers the editor draws with. Width and depth come from Apple's published specs; anything Apple doesn't publish is an estimate until it's measured on a real unit.",
     "sizesVerified": "From Apple's specs",
@@ -255,7 +255,7 @@
     "sellEyebrow": "For sticker shops",
     "sellTitleA": "Let customers try it on",
     "sellTitleB": "before they pay",
-    "sell1": "Customers tap \"Try on my laptop\" and see your sticker on their exact MacBook, at real size.",
+    "sell1": "Customers tap \"Try on my device\" and see your sticker on their exact MacBook or iPad, at real size.",
     "sell2": "Enter the size in millimetres once. Every shop page and print file uses the same numbers.",
     "sell3": "Buyers order with confidence, with fewer size questions and fewer wrong-size returns.",
     "sellCta": "Sign up as a shop",
@@ -306,8 +306,8 @@
     "priceFreeName": "For decorating your laptop",
     "priceFreeValue": "Free",
     "priceFreeUnit": "forever",
-    "priceFreeItems": ["Every supported MacBook at real size", "Library stickers and your own uploads", "1:1 PDF print guide", "Collection saved on this device"],
-    "priceLead": "Planning your lid is always free. Shops pick a monthly plan, and every new shop gets its first month free to try it out.",
+    "priceFreeItems": ["Every supported MacBook and iPad at real size", "Library stickers and your own uploads", "1:1 PDF print guide", "Collection saved on this device"],
+    "priceLead": "Planning your layout is always free. Shops pick a monthly plan, and every new shop gets its first month free to try it out.",
     "priceTrial": "1 month free",
     "priceMonth": "/ month",
     "priceBasicName": "Shop · Starter",
@@ -325,7 +325,7 @@
     "priceShopCta": "Start your free month",
     "buyEyebrow": "Buying from shops",
     "buyTitleA": "From cart",
-    "buyTitleB": "to your lid",
+    "buyTitleB": "to your device",
     "buyLead": "Every sticker here is sold by an independent shop. Plan it at real size, pay the shop directly, and it comes to your door.",
     "buyCta": "Browse shops",
     "buyNote": "Questions about sizes or shipping? Chat with the shop from its page.",
@@ -335,8 +335,8 @@
         "body": "Browse stickers from shops and add the ones you like to your cart."
       },
       "try": {
-        "title": "Try them on your lid",
-        "body": "Tap “Try on my MacBook” to see them at real size on your model, before you pay."
+        "title": "Try them on your device",
+        "body": "Tap “Try on my device” to see them at real size on your model, before you pay."
       },
       "pay": {
         "title": "Pay the shop directly",
@@ -344,7 +344,7 @@
       },
       "stick": {
         "title": "Stick it right",
-        "body": "Print the 1:1 guide, lay it on your MacBook and stick through the outlines."
+        "body": "Print the 1:1 guide, lay it on your MacBook or iPad and stick through the outlines."
       }
     },
     "storm": {
@@ -369,7 +369,7 @@
     },
     "useHint": "Keep scrolling",
     "bandA": ["Plan", "Peel", "Stick", "Real size"],
-    "bandB": ["1:1", "±1 mm", "MacBook", "every lid"]
+    "bandB": ["1:1", "±1 mm", "MacBook", "every device"]
   },
   "editor": {
     "title": "Editor",
@@ -396,7 +396,7 @@
       "library": "Library",
       "shop": "Shops"
     },
-    "shopHint": "Shop stickers come with their real size. Open a shop and tap “Try on my MacBook” to bring them onto this lid.",
+    "shopHint": "Shop stickers come with their real size. Open a shop and tap “Try on my device” to bring them onto this layout.",
     "shopLink": "16622",
     "upload": "Add sticker photo",
     "uploadHint": "Photo or image of a single sticker. Plain background works best.",
@@ -532,7 +532,7 @@
     "mode": "Style",
     "guide": "Placement guide",
     "template": "Cut-out template",
-    "templateHint": "Cut out the dashed shapes, lay the paper on your lid and stick through the holes.",
+    "templateHint": "Cut out the dashed shapes, lay the paper on your device and stick through the holes.",
     "images": "Include sticker images",
     "download": "Download PDF",
     "coordinates": "Coordinate sheet",
@@ -654,7 +654,7 @@
       "reviews": "Reviews",
       "about": "About"
     },
-    "tryOn": "Try on my MacBook",
+    "tryOn": "Try on my device",
     "size": "{w} × {h} mm",
     "finish": {
       "glossy": "Glossy",
@@ -671,19 +671,19 @@
     "previewTitle": "This is your shop page",
     "previewBody": "Our team reviews new shops before they go live, usually within a day. You can keep planning and buying meanwhile.",
     "emptyTitle": "No products yet",
-    "emptyBody": "Add your first sticker with its exact size in mm and a transparent PNG, and buyers can try it on their MacBook.",
+    "emptyBody": "Add your first sticker with its exact size in mm and a transparent PNG, and buyers can try it on their MacBook or iPad.",
     "addProduct": "Add first product (coming soon)",
     "noReviews": "Reviews appear here after your first orders.",
     "yourShop": "Your shop",
     "backHome": "Back to PeelPlan",
     "allShops": "All shops",
     "indexTitle": "Sticker shops",
-    "indexBody": "Browse sticker shops and try any of their stickers on your lid at real size.",
+    "indexBody": "Browse sticker shops and try any of their stickers on your device at real size.",
     "productsCount": "{count, plural, one {# sticker} other {# stickers}}",
     "realTitle": "Shops on PeelPlan",
     "examplesTitle": "Example shops",
     "exampleLabel": "Examples",
-    "examplesBody": "Made up to show how shops look. Try their stickers on your lid; they don't sell for real."
+    "examplesBody": "Made up to show how shops look. Try their stickers on your device; they don't sell for real."
   },
   "collection": {
     "title": "My collection",
@@ -850,7 +850,7 @@
         },
         {
           "h": "Trademarks",
-          "p": ["MacBook is a trademark of Apple Inc. PeelPlan is not affiliated with Apple. Shops marked as examples are placeholders and do not sell anything."]
+          "p": ["MacBook and iPad are trademarks of Apple Inc. PeelPlan is not affiliated with Apple. Shops marked as examples are placeholders and do not sell anything."]
         },
         {
           "h": "The marketplace",
@@ -994,7 +994,7 @@
     "collectionShop": "Shop: {name}",
     "create": {
       "title": "Set up your shop",
-      "body": "Sell your stickers on PeelPlan. Buyers try them on their MacBook at real size, then pay you directly by PromptPay.",
+      "body": "Sell your stickers on PeelPlan. Buyers try them on their MacBook or iPad at real size, then pay you directly by PromptPay.",
       "fromApplication": "Set up my shop",
       "submit": "Create shop",
       "review": "New shops are reviewed by our team before they appear publicly, usually within a day. You can add products meanwhile."
@@ -1053,7 +1053,7 @@
       "count": "{count, plural, one {# product} other {# products}}",
       "add": "Add product",
       "emptyTitle": "No products yet",
-      "emptyBody": "Add your first sticker with its real size in mm, so buyers can try it on their MacBook before they buy.",
+      "emptyBody": "Add your first sticker with its real size in mm, so buyers can try it on their MacBook or iPad before they buy.",
       "hidden": "Hidden",
       "size": "{w} × {h} mm",
       "madeToOrderShort": "Made to order",
@@ -1072,13 +1072,13 @@
       "sourceLibrary": "From the PeelPlan library",
       "previewAlt": "Sticker preview",
       "upload": "Image file",
-      "uploadHint": "PNG with a transparent background works best: it sits on the lid exactly like the real die-cut sticker.",
+      "uploadHint": "PNG with a transparent background works best: it sits on the device exactly like the real die-cut sticker.",
       "searchLibrary": "Search stickers",
       "libraryHint": "Picking one also fills in its size. Check it matches what you print.",
       "noResults": "No stickers match.",
       "name": "Product name",
       "sizeTitle": "Real size",
-      "sizeHint": "Measure the real sticker with a ruler, edge to edge. Buyers place it on their lid at exactly this size.",
+      "sizeHint": "Measure the real sticker with a ruler, edge to edge. Buyers place it on their device at exactly this size.",
       "width": "Width (mm)",
       "height": "Height (mm)",
       "trueScale": "Real size: {w} × {h} mm (about {wcm} × {hcm} cm)",
@@ -1244,7 +1244,7 @@
       "notFoundTitle": "Shop not found",
       "notFoundBody": "It may have closed, still be waiting for review, or the link may be wrong.",
       "browseShops": "See all shops",
-      "exampleReadOnly": "This is an example shop. You can't buy from it or message it, but you can try its stickers on your lid.",
+      "exampleReadOnly": "This is an example shop. You can't buy from it or message it, but you can try its stickers on your device.",
       "notTaking": "This shop isn't taking orders yet. Check back soon.",
       "chatFailed": "Couldn't open the chat. Please try again.",
       "chatSuspended": "Your account is suspended, so you can't start a new conversation."
@@ -1252,7 +1252,7 @@
     "cart": {
       "title": "Cart",
       "emptyTitle": "Your cart is empty",
-      "emptyBody": "Pick stickers from any shop. Try them on your lid first, then add them here.",
+      "emptyBody": "Pick stickers from any shop. Try them on your device first, then add them here.",
       "browse": "Browse sticker shops",
       "separateNote": "Each shop is paid separately, by PromptPay straight to the shop's account. Check out one shop at a time.",
       "shopGone": "This shop is no longer selling",
