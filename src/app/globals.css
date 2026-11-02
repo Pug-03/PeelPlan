@@ -658,6 +658,16 @@ html::view-transition-new(.page-in) {
     filter: blur(6px);
   }
 }
+/* The editor loads client-side after the page transition has already run on its blank placeholder, so it
+   plays the same arrival itself when it mounts. */
+html .editor-enter {
+  animation: 480ms cubic-bezier(0.16, 1, 0.3, 1) both page-in;
+}
+@media (prefers-reduced-motion: reduce) {
+  html .editor-enter {
+    animation: 160ms ease-out both page-fade-in;
+  }
+}
 html::view-transition-group(site-header) {
   animation: none;
   z-index: 100;

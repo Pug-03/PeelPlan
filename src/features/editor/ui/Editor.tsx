@@ -263,7 +263,7 @@ export default function Editor() {
   ].filter(Boolean) as string[];
 
   return (
-    <div className="flex h-dvh flex-col bg-surface" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
+    <div className="editor-enter flex h-dvh flex-col bg-surface" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
       {/* Top bar */}
       <header className="flex h-14 shrink-0 items-center gap-1.5 border-b border-hairline bg-bg px-2 sm:gap-2 sm:px-3">
         <Link href="/" className="mr-1 rounded-lg px-1" aria-label="PeelPlan">
