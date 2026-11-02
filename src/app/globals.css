@@ -631,30 +631,31 @@ html[data-lang-swap]::view-transition-old(.lang-same) {
 }
 
 /* ─────────────── Page transitions ───────────────
-   template.tsx tags the old page "page-out" and the new one "page-in". The old page leaves fast (lifting
-   slightly and softening) so it doesn't compete; the new one rises into place a beat later. The header
-   stays put as the fixed reference point. Clicks pass through to the live page during the animation. */
+   template.tsx tags the old page "page-out" and the new one "page-in". Moving on reads as moving right:
+   the old page slides a little left, shrinks and softens away fast so it doesn't compete, and the new one
+   glides in from the right a beat later. Going back (BackTransition) mirrors it, arriving from the left.
+   The header stays put as the fixed reference point. Clicks pass through to the live page meanwhile. */
 html::view-transition {
   pointer-events: none;
 }
 html::view-transition-old(.page-out) {
-  animation: 240ms cubic-bezier(0.4, 0, 1, 1) both page-out;
+  animation: 220ms cubic-bezier(0.4, 0, 1, 1) both page-out;
 }
 html::view-transition-new(.page-in) {
-  animation: 560ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both page-in;
+  animation: 480ms cubic-bezier(0.16, 1, 0.3, 1) 80ms both page-in;
 }
 @keyframes page-out {
   to {
     opacity: 0;
-    transform: translateY(-24px) scale(0.97);
-    filter: blur(6px);
+    transform: translateX(-40px) scale(0.985);
+    filter: blur(4px);
   }
 }
 @keyframes page-in {
   from {
     opacity: 0;
-    transform: translateY(48px) scale(0.98);
-    filter: blur(10px);
+    transform: translateX(56px);
+    filter: blur(6px);
   }
 }
 html::view-transition-group(site-header) {
