@@ -128,7 +128,7 @@ export function CameraMark({ camera, color }: { camera: CameraGeometry; color: s
     <g>
       <defs>
         <filter id={`camShadow${id}`} x="-20%" y="-20%" width="140%" height="150%">
-          <feDropShadow dx="0.2" dy="0.5" stdDeviation="0.6" floodOpacity="0.35" />
+          <feDropShadow dx="0.3" dy="0.6" stdDeviation="0.6" floodOpacity="0.3" />
         </filter>
         {shapes.map((s, i) => {
           const f = s.fill;
@@ -161,7 +161,17 @@ export function CameraMark({ camera, color }: { camera: CameraGeometry; color: s
             filter={p.shadow ? `url(#camShadow${id})` : undefined}
           />
         ) : (
-          <circle key={i} cx={p.cx} cy={p.cy} r={p.r} fill={paint(p.fill, i)} stroke={p.stroke} strokeWidth={p.strokeWidth} opacity={p.opacity} />
+          <circle
+            key={i}
+            cx={p.cx}
+            cy={p.cy}
+            r={p.r}
+            fill={paint(p.fill, i)}
+            stroke={p.stroke}
+            strokeWidth={p.strokeWidth}
+            opacity={p.opacity}
+            filter={p.shadow ? `url(#camShadow${id})` : undefined}
+          />
         ),
       )}
     </g>

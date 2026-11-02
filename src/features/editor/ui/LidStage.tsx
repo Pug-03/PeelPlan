@@ -619,7 +619,7 @@ export function LidStage({ warnings, logoCovered = 0 }: { warnings: LayoutWarnin
                       strokeWidth={p.strokeWidth}
                       opacity={p.opacity ?? 1}
                       // The footprint casts a soft shadow: it stands proud of the back.
-                      {...(p.shadow ? { shadowColor: "#000", shadowBlur: 1.4, shadowOffsetX: 0.2, shadowOffsetY: 0.5, shadowOpacity: 0.4 } : {})}
+                      {...(p.shadow ? { shadowColor: "#000", shadowBlur: 1.2, shadowOffsetX: 0.3, shadowOffsetY: 0.6, shadowOpacity: 0.3 } : {})}
                     />
                   ) : (
                     <Circle
@@ -631,6 +631,7 @@ export function LidStage({ warnings, logoCovered = 0 }: { warnings: LayoutWarnin
                       stroke={p.stroke}
                       strokeWidth={p.strokeWidth}
                       opacity={p.opacity ?? 1}
+                      {...(p.shadow ? { shadowColor: "#000", shadowBlur: 1.2, shadowOffsetX: 0.3, shadowOffsetY: 0.6, shadowOpacity: 0.3 } : {})}
                     />
                   ),
                 )}
