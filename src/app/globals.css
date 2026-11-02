@@ -638,23 +638,23 @@ html::view-transition {
   pointer-events: none;
 }
 html::view-transition-old(.page-out) {
-  animation: 170ms cubic-bezier(0.4, 0, 1, 1) both page-out;
+  animation: 240ms cubic-bezier(0.4, 0, 1, 1) both page-out;
 }
 html::view-transition-new(.page-in) {
-  animation: 380ms cubic-bezier(0.16, 1, 0.3, 1) 90ms both page-in;
+  animation: 560ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both page-in;
 }
 @keyframes page-out {
   to {
     opacity: 0;
-    transform: translateY(-8px) scale(0.995);
-    filter: blur(2px);
+    transform: translateY(-24px) scale(0.97);
+    filter: blur(6px);
   }
 }
 @keyframes page-in {
   from {
     opacity: 0;
-    transform: translateY(16px);
-    filter: blur(4px);
+    transform: translateY(48px) scale(0.98);
+    filter: blur(10px);
   }
 }
 html::view-transition-group(site-header) {
