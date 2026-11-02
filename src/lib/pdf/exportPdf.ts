@@ -36,6 +36,8 @@ export type PdfLid = {
   heightMm: number;
   cornerRadiusMm: number;
   logo?: { x: number; y: number; width: number; height: number };
+  /** A tablet's raised camera module (top-left corner, mm): drawn solid, since nothing can go over it. */
+  camera?: { x: number; y: number; width: number; height: number; radius: number };
   /** Some drawn geometry (corner radius, logo box) is an estimate; the cover page says so. */
   estimated?: boolean;
 };
@@ -99,7 +101,7 @@ export const DEFAULT_PDF_TEXT: PdfText = {
   colRotation: "Rotation (CW)",
   rotationCw: (deg) => `${deg} deg CW`,
   flipped: "(flipped)",
-  estimateNote: "Note: corner radius and logo position are estimates, not published specs.",
+  estimateNote: "Note: corner radius, logo and camera positions are estimates, not published specs.",
 };
 
 /** TrueType bytes for a Unicode font (regular + bold); lets the PDF print Thai. */
@@ -265,6 +267,16 @@ function drawTilePage(ctx: Ctx, plan: TilePlan, tile: Tile, pageIndex: number, p
       ...roundedRectOps(pad + l.x - l.width / 2, pad + l.y - l.height / 2, l.width, l.height, 3),
       stroke(),
       setDashPattern([], 0),
+    );
+  }
+
+  if (lid.camera) {
+    const c = lid.camera;
+    page.pushOperators(
+      setStrokingRgbColor(...color(MUTED)),
+      setLineWidth(0.3),
+      ...roundedRectOps(pad + c.x, pad + c.y, c.width, c.height, c.radius),
+      stroke(),
     );
   }
 
