@@ -20,7 +20,7 @@ function Card({ layout, index, hidden }: { layout: (typeof EXAMPLE_LAYOUTS)[numb
   const pool = [...POOL.slice((index + 1) * 6), ...POOL.slice(0, (index + 1) * 6)];
   const stickers = scatter(pickStickers(own, pool, COUNTS[index % COUNTS.length], index * 11), g, index * 104729);
   return (
-    <figure aria-hidden={hidden} className="group relative w-[19rem] shrink-0 sm:w-[22rem]">
+    <figure aria-hidden={hidden} className="group relative w-[19rem] shrink-0 sm:w-[min(22rem,max(17rem,37dvh))]">
       <div className="drop-shadow-[0_18px_22px_rgb(0_0_0/0.14)] transition-transform duration-500 ease-[var(--ease-out-soft)] group-hover:-translate-y-1">
         <LidArt
           logo={g.logo}

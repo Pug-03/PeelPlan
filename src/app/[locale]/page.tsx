@@ -88,7 +88,9 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
               <span className="text-sm text-muted">{t("heroNote")}</span>
             </div>
           </div>
-          <div className="hero-fade group relative mx-auto w-full max-w-lg min-w-0 lg:max-w-none" style={{ "--d": "300ms" } as React.CSSProperties}>
+          {/* On a wide but short screen (a 14" laptop at 100%) the lid is held to the height left over, so the
+              hero and the first row of example layouts fit without zooming out. Tall screens keep the full width. */}
+          <div className="hero-fade group relative mx-auto w-full max-w-lg min-w-0 lg:max-w-[max(20rem,min(100%,calc((100dvh-35rem)*1.4)))]" style={{ "--d": "300ms" } as React.CSSProperties}>
             <HeroPlayground initial={visibleLayout(heroLayout.stickers, lidGeometry(getLaptopModel(heroLayout.modelId)))} initialModelId={heroLayout.modelId} initialColor={heroLayout.color} />
           </div>
         </section>
