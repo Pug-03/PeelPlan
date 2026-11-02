@@ -9,6 +9,7 @@ import { VisitTracker } from "@/features/analytics/VisitTracker";
 import { routing } from "@/i18n/routing";
 import { SITE_URL } from "@/lib/site";
 import "../globals.css";
+import { BackTransition } from "@/components/BackTransition";
 import { NavProgress } from "@/components/NavProgress";
 
 // Arial (the generated fallback) has no Thai glyphs; use real Thai system faces instead.
@@ -74,6 +75,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
           <FullscreenKey />
           <VisitTracker />
           <NavProgress />
+          <BackTransition />
           {children}
         </NextIntlClientProvider>
       </body>
