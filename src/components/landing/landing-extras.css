@@ -180,6 +180,11 @@
     stroke-opacity 300ms var(--ease-out-soft),
     stroke-width 300ms var(--ease-out-soft);
 }
+/* A PROLED Pro sits a few mm inside its mini-LED twin: dashed and unfilled, so the two lines read apart. */
+.size-outline-twin {
+  fill-opacity: 0;
+  stroke-dasharray: 5 3;
+}
 .size-label {
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 8px;

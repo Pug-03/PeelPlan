@@ -242,7 +242,7 @@ function SizeOutlines() {
         const h = m.lid.heightMm.value;
         return (
           <g key={m.id} data-o={m.id} className="size-lid">
-            <rect data-fx-path className="size-outline" x={pad} y={pad + maxH - h} width={w} height={h} rx={m.lid.cornerRadiusMm.value} />
+            <rect data-fx-path className={twin(m) ? "size-outline size-outline-twin" : "size-outline"} x={pad} y={pad + maxH - h} width={w} height={h} rx={m.lid.cornerRadiusMm.value} />
           </g>
         );
       })}
@@ -263,18 +263,38 @@ function SizeOutlines() {
 const LABEL_CHAR = 5;
 const LABEL_GAP = 6;
 
-/** Each lid's label at its top-right corner, nudged left until it clears every label placed before it. */
+/**
+ * The PROLED Pros are within a few millimetres of the mini-LED Pro of the same size, so their outlines
+ * nearly coincide. They're drawn dashed and unfilled so the pair reads as two lids, not one doubled line.
+ */
+const twin = (m: (typeof LAPTOP_MODELS)[number]) => m.logoFinish === "glow";
+
+/** Short chart label: the table beside it carries the full name. */
+const shortLabel = (m: (typeof LAPTOP_MODELS)[number]) => {
+  const n = m.name.replace(/^MacBook /, "");
+  return twin(m) ? n.replace(/^Pro (\S+) PROLED XDR$/, "PROLED $1") : n;
+};
+
+/**
+ * Each lid's label at its top-right corner. A label that would overlap one already placed drops a line
+ * under it first (so a near-identical pair stacks at its shared corner), and only steps left past it
+ * when that's taken too.
+ */
 function sizeLabels(models: typeof LAPTOP_MODELS, pad: number, maxH: number) {
   const placed: { left: number; right: number; top: number; bottom: number }[] = [];
   return models.map((m) => {
-    const label = m.name.replace(/^MacBook /, "");
+    const label = shortLabel(m);
     const width = label.length * LABEL_CHAR;
-    const y = pad + maxH - m.lid.heightMm.value + 8;
+    let y = pad + maxH - m.lid.heightMm.value + 8;
     let x = pad + m.lid.widthMm.value - 13;
-    for (;;) {
-      const hit = placed.find((b) => y - 7 < b.bottom && y + 2 > b.top && x - width < b.right && x > b.left);
+    const hitAt = () => placed.find((b) => y - 7 < b.bottom && y + 2 > b.top && x - width < b.right && x > b.left);
+    for (let drops = 0; ; ) {
+      const hit = hitAt();
       if (!hit) break;
-      x = hit.left - LABEL_GAP;
+      if (drops < 2) {
+        y = hit.bottom + 7 + 1;
+        drops++;
+      } else x = hit.left - LABEL_GAP;
     }
     placed.push({ left: x - width, right: x, top: y - 7, bottom: y + 2 });
     return { m, label, x, y };
