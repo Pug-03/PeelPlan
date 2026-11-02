@@ -212,7 +212,11 @@
 .sizes-fx:has(tr[data-m="macbook-pro-14-m5"]:hover) [data-o="macbook-pro-14-m5"],
 .sizes-fx:has(tr[data-m="macbook-pro-16-m5"]:hover) [data-o="macbook-pro-16-m5"],
 .sizes-fx:has(tr[data-m="macbook-pro-14-proled"]:hover) [data-o="macbook-pro-14-proled"],
-.sizes-fx:has(tr[data-m="macbook-pro-16-proled"]:hover) [data-o="macbook-pro-16-proled"] {
+.sizes-fx:has(tr[data-m="macbook-pro-16-proled"]:hover) [data-o="macbook-pro-16-proled"],
+.sizes-fx:has(tr[data-m="ipad-air-11-m4"]:hover) [data-o="ipad-air-11-m4"],
+.sizes-fx:has(tr[data-m="ipad-air-13-m4"]:hover) [data-o="ipad-air-13-m4"],
+.sizes-fx:has(tr[data-m="ipad-pro-11-m5"]:hover) [data-o="ipad-pro-11-m5"],
+.sizes-fx:has(tr[data-m="ipad-pro-13-m5"]:hover) [data-o="ipad-pro-13-m5"] {
   opacity: 1;
   & .size-outline {
     fill-opacity: 0.1;

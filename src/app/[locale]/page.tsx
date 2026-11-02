@@ -18,7 +18,7 @@ import { PeelScene } from "@/components/landing/PeelScene";
 import { BreakFrame } from "@/components/landing/BreakFrame";
 import { KineticBand } from "@/components/landing/KineticBand";
 import { SmoothScroll } from "@/components/landing/SmoothScroll";
-import { LAPTOP_MODELS, getLaptopModel, lidGeometry } from "@/config/laptops";
+import { ALL_MODELS, getLaptopModel, lidGeometry } from "@/config/laptops";
 import { visibleLayout } from "@/components/landing/scatter";
 import { FeedbackLink } from "@/features/feedback/FeedbackLink";
 import { Link } from "@/i18n/navigation";
@@ -138,7 +138,7 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
             {[
               [t("statAccuracy"), t("statAccuracyLabel")],
               [t("statScale"), t("statScaleLabel")],
-              [String(LAPTOP_MODELS.length), t("statModelsLabel")],
+              [String(ALL_MODELS.length), t("statModelsLabel")],
             ].map(([v, l], i) => (
               <div
                 key={i}

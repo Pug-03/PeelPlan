@@ -4,7 +4,7 @@ import { LidArt, type ArtSticker } from "@/components/LidArt";
 import { DragMarquee } from "./DragMarquee";
 import { PriceRunPace } from "./PriceRunPace";
 import { PACKED_DEV_LID } from "./packedLid";
-import { LAPTOP_MODELS, getLaptopModel, lidGeometry } from "@/config/laptops";
+import { LAPTOP_MODELS, TABLET_MODELS, getLaptopModel, lidGeometry, type LaptopModel } from "@/config/laptops";
 import { Link } from "@/i18n/navigation";
 import { stickerSrcById } from "@/stickers/library";
 import { scatter } from "./scatter";
@@ -226,17 +226,38 @@ export async function Gallery() {
 
 /* ---------- Real lid sizes ---------- */
 
-/** One colour per model, shared by the outline drawing and the table swatches. */
-/** Every lid outline drawn from the same corner at true relative size. */
-function SizeOutlines() {
+/**
+ * MacBook lids and iPad backs side by side, each set drawn from one corner, both at the same true scale:
+ * each chart takes a share of the row equal to its width in millimetres, so a millimetre is as long in
+ * both. They're separate because an upright iPad drawn over the lids would hide them.
+ */
+function SizeCharts({ macLabel, ipadLabel }: { macLabel: string; ipadLabel: string }) {
   const pad = 6;
-  const maxW = Math.max(...LAPTOP_MODELS.map((m) => m.lid.widthMm.value));
-  const maxH = Math.max(...LAPTOP_MODELS.map((m) => m.lid.heightMm.value));
+  const sets = [
+    { label: macLabel, models: LAPTOP_MODELS },
+    { label: ipadLabel, models: TABLET_MODELS },
+  ].map((set) => ({ ...set, w: Math.max(...set.models.map((m) => m.lid.widthMm.value)) + pad * 2 }));
+  return (
+    <div className="mt-10 flex max-w-xl items-end gap-5">
+      {sets.map((set) => (
+        <figure key={set.label} className="min-w-0" style={{ flex: `${set.w} 1 0` }}>
+          <SizeOutlines models={set.models} pad={pad} />
+          <figcaption className="mt-2 text-xs text-muted">{set.label}</figcaption>
+        </figure>
+      ))}
+    </div>
+  );
+}
+
+/** Every outline in a set drawn from the same corner at true relative size. */
+function SizeOutlines({ models: set, pad }: { models: LaptopModel[]; pad: number }) {
+  const maxW = Math.max(...set.map((m) => m.lid.widthMm.value));
+  const maxH = Math.max(...set.map((m) => m.lid.heightMm.value));
   // Largest first so smaller lids sit on top.
-  const models = [...LAPTOP_MODELS].sort((a, b) => b.lid.widthMm.value - a.lid.widthMm.value);
+  const models = [...set].sort((a, b) => b.lid.widthMm.value - a.lid.widthMm.value);
   // Ink outlines on a faint ink wash that deepens where lids overlap; hovering a table row picks that lid out in ink.
   return (
-    <svg data-fx="draw" viewBox={`0 0 ${maxW + pad * 2} ${maxH + pad * 2}`} className="mt-10 h-auto w-full max-w-md overflow-visible" aria-hidden="true">
+    <svg data-fx="draw" viewBox={`0 0 ${maxW + pad * 2} ${maxH + pad * 2}`} className="h-auto w-full overflow-visible" aria-hidden="true">
       {models.map((m) => {
         const w = m.lid.widthMm.value;
         const h = m.lid.heightMm.value;
@@ -267,11 +288,12 @@ const LABEL_GAP = 6;
  * The PROLED Pros are within a few millimetres of the mini-LED Pro of the same size, so their outlines
  * nearly coincide. They're drawn dashed and unfilled so the pair reads as two lids, not one doubled line.
  */
-const twin = (m: (typeof LAPTOP_MODELS)[number]) => m.logoFinish === "glow";
+const twin = (m: LaptopModel) => m.logoFinish === "glow";
 
 /** Short chart label: the table beside it carries the full name. */
-const shortLabel = (m: (typeof LAPTOP_MODELS)[number]) => {
-  const n = m.name.replace(/^MacBook /, "");
+const shortLabel = (m: LaptopModel) => {
+  // The chart's caption says MacBook or iPad, so the label drops it.
+  const n = m.name.replace(/^(MacBook|iPad) /, "");
   return twin(m) ? n.replace(/^Pro (\S+) PROLED XDR$/, "PROLED $1") : n;
 };
 
@@ -280,7 +302,7 @@ const shortLabel = (m: (typeof LAPTOP_MODELS)[number]) => {
  * under it first (so a near-identical pair stacks at its shared corner), and only steps left past it
  * when that's taken too.
  */
-function sizeLabels(models: typeof LAPTOP_MODELS, pad: number, maxH: number) {
+function sizeLabels(models: LaptopModel[], pad: number, maxH: number) {
   const placed: { left: number; right: number; top: number; bottom: number }[] = [];
   return models.map((m) => {
     const label = shortLabel(m);
@@ -322,7 +344,7 @@ export async function SizeTable() {
               {t("sizesEstimate")}
             </span>
           </p>
-          <SizeOutlines />
+          <SizeCharts macLabel="MacBook" ipadLabel="iPad" />
         </div>
         <div className="reveal overflow-x-auto">
           <table className="w-full border-collapse text-left tabular-nums sm:min-w-[560px]">
@@ -346,7 +368,7 @@ export async function SizeTable() {
               </tr>
             </thead>
             <tbody>
-              {LAPTOP_MODELS.map((m) => {
+              {[...LAPTOP_MODELS, ...TABLET_MODELS].map((m, i) => {
                 const cell = (v: { value: number; verified: boolean }) => (
                   <span className="inline-flex items-center gap-2">
                     <span className={`size-1.5 rounded-full ${v.verified ? "bg-[#30a46c]" : "border border-muted"}`} aria-hidden="true" />
@@ -355,7 +377,12 @@ export async function SizeTable() {
                   </span>
                 );
                 return (
-                  <tr key={m.id} data-m={m.id} className="border-b border-hairline transition-colors hover:bg-surface">
+                  <tr
+                    key={m.id}
+                    data-m={m.id}
+                    // A heavier rule where the iPads start.
+                    className={`border-b border-hairline transition-colors hover:bg-surface ${i === LAPTOP_MODELS.length ? "border-t-2 border-t-ink" : ""}`}
+                  >
                     <th scope="row" className="py-4 pr-4 font-medium">
                       {m.name}
                       <span className="block text-xs font-normal text-muted">{m.generation}</span>
