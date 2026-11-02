@@ -88,6 +88,9 @@ const centredLogo = (w: number, h: number, logoH: number, heightNote: string) =>
   heightMm: unverified(logoH, heightNote),
 });
 
+const ARUN =
+  "Third-party estimate (±1 mm) from photo-measured corner roundness, https://arun.is/blog/apple-rounded-corners/";
+
 const GALAXUS_AIR =
   "Third-party measurement: 4.6 cm tall on the 13-inch Air (M2 redesign, carried to M5). https://www.galaxus.nl/en/page/a-hands-on-test-of-the-apple-macbook-air-m2-24279";
 
@@ -119,8 +122,16 @@ export const LAPTOP_MODELS: LaptopModel[] = [
     family: "MacBook Neo",
     name: 'MacBook Neo 13"',
     generation: "A18 Pro",
-    lid: { widthMm: official(297.5), heightMm: official(206.4), cornerRadiusMm: unverified(10) },
-    logo: centredLogo(297.5, 206.4, 44, "Estimate: no published or third-party measurement found for MacBook Neo. Measure a real unit."),
+    lid: {
+      widthMm: official(297.5),
+      heightMm: official(206.4),
+      cornerRadiusMm: unverified(13.1, "Equivalent radius fitted to Apple's dimensional drawing, https://developer.apple.com/accessories/dimensional-drawings/"),
+    },
+    logo: {
+      ...centredLogo(297.5, 206.4, 44.8, "Measured off Apple's dimensional drawing for MacBook Neo."),
+      // The leaf makes the box sit high: its centre is ~3.8 mm nearer the front edge than the lid's.
+      centerYMm: unverified(99.4, "Measured off Apple's dimensional drawing for MacBook Neo."),
+    },
     colors: NEO_COLORS,
     logoFinish: "mirror-light",
     source: {
@@ -135,7 +146,7 @@ export const LAPTOP_MODELS: LaptopModel[] = [
     family: "MacBook Air",
     name: 'MacBook Air 13"',
     generation: "M5",
-    lid: { widthMm: official(304.1), heightMm: official(215.0), cornerRadiusMm: unverified(10) },
+    lid: { widthMm: official(304.1), heightMm: official(215.0), cornerRadiusMm: unverified(10.8, ARUN) },
     logo: centredLogo(304.1, 215.0, 46, GALAXUS_AIR),
     colors: AIR_COLORS,
     logoFinish: "mirror-light",
@@ -151,7 +162,7 @@ export const LAPTOP_MODELS: LaptopModel[] = [
     family: "MacBook Air",
     name: 'MacBook Air 15"',
     generation: "M5",
-    lid: { widthMm: official(340.4), heightMm: official(237.6), cornerRadiusMm: unverified(11) },
+    lid: { widthMm: official(340.4), heightMm: official(237.6), cornerRadiusMm: unverified(8.3, ARUN) },
     logo: centredLogo(340.4, 237.6, 46, `Assumed equal to the 13-inch Air; no 15-inch measurement found. ${GALAXUS_AIR}`),
     colors: AIR_COLORS,
     logoFinish: "mirror-light",
@@ -167,7 +178,7 @@ export const LAPTOP_MODELS: LaptopModel[] = [
     family: "MacBook Pro",
     name: 'MacBook Pro 14"',
     generation: "M5 / M5 Pro / M5 Max",
-    lid: { widthMm: official(312.6), heightMm: official(221.2), cornerRadiusMm: unverified(11) },
+    lid: { widthMm: official(312.6), heightMm: official(221.2), cornerRadiusMm: unverified(8.8, ARUN) },
     logo: centredLogo(312.6, 221.2, 40, "Estimate: no published or third-party measurement found for the 2021+ 14-inch design. Measure a real unit."),
     colors: PRO_COLORS,
     logoFinish: "gloss-black",
@@ -183,7 +194,7 @@ export const LAPTOP_MODELS: LaptopModel[] = [
     family: "MacBook Pro",
     name: 'MacBook Pro 16"',
     generation: "M5 Pro / M5 Max",
-    lid: { widthMm: official(355.7), heightMm: official(248.1), cornerRadiusMm: unverified(12) },
+    lid: { widthMm: official(355.7), heightMm: official(248.1), cornerRadiusMm: unverified(8.7, ARUN) },
     logo: centredLogo(
       355.7,
       248.1,
@@ -206,7 +217,7 @@ export const LAPTOP_MODELS: LaptopModel[] = [
     family: "MacBook Pro",
     name: 'MacBook Pro 14" PROLED XDR',
     generation: "M5 Pro / M5 Max",
-    lid: { widthMm: official(310.8), heightMm: official(216.3), cornerRadiusMm: unverified(11) },
+    lid: { widthMm: official(310.8), heightMm: official(216.3), cornerRadiusMm: unverified(8.8, `Assumed equal to the mini-LED 14-inch. ${ARUN}`) },
     logo: centredLogo(310.8, 216.3, 40, "Estimate: assumed equal to the mini-LED 14-inch; no measurement published yet. Measure a real unit."),
     colors: PRO_COLORS,
     logoFinish: "glow",
@@ -222,7 +233,7 @@ export const LAPTOP_MODELS: LaptopModel[] = [
     family: "MacBook Pro",
     name: 'MacBook Pro 16" PROLED XDR',
     generation: "M5 Pro / M5 Max",
-    lid: { widthMm: official(355.5), heightMm: official(244.2), cornerRadiusMm: unverified(12) },
+    lid: { widthMm: official(355.5), heightMm: official(244.2), cornerRadiusMm: unverified(8.7, `Assumed equal to the mini-LED 16-inch. ${ARUN}`) },
     logo: centredLogo(355.5, 244.2, 44, "Estimate: assumed equal to the mini-LED 16-inch; no measurement published yet. Measure a real unit."),
     colors: PRO_COLORS,
     logoFinish: "glow",
