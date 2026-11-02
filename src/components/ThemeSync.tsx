@@ -31,9 +31,24 @@ const themeScript = `(function(){var d=document.documentElement;d.classList.add(
  */
 const domGuardScript = `(function(){var P=Node.prototype;if(P.__peelGuard)return;P.__peelGuard=1;var r=P.removeChild,i=P.insertBefore;P.removeChild=function(c){return c&&c.parentNode!==this?c:r.apply(this,arguments)};P.insertBefore=function(n,b){return b&&b.parentNode!==this?this.appendChild(n):i.apply(this,arguments)}})()`;
 
+/**
+ * Page transitions run through document.startViewTransition. When the tab is in the background the browser
+ * refuses one with an InvalidStateError. React expects that and ignores it, but only under the exact wording
+ * it knows, and newer Chrome appends a reason ("... invalid state. Document hidden"), so React reports it as
+ * an error (the dev overlay pops up). This rewraps that one refusal in the wording React ignores; every other
+ * error passes through untouched.
+ */
+const viewTransitionGuardScript = `(function(){var d=document,o=d.startViewTransition;if(!o||o.__peelGuard)return;var M="Transition was aborted because of invalid state";function f(e){if(e&&e.name==="InvalidStateError"&&typeof e.message==="string"&&e.message.indexOf(M)===0&&e.message!==M)throw new DOMException(M,"InvalidStateError");throw e}var g=function(){var t=o.apply(this,arguments),r=t.ready.catch(f),u=t.updateCallbackDone.catch(f),n=t.finished.catch(f);[r,u,n].forEach(function(p){p.catch(function(){})});return new Proxy(t,{get:function(x,k){if(k==="ready")return r;if(k==="updateCallbackDone")return u;if(k==="finished")return n;var v=Reflect.get(x,k,x);return typeof v==="function"?v.bind(x):v}})};g.__peelGuard=1;d.startViewTransition=g})()`;
+
 /** Runs before React hydrates; same server-only trick as ThemeScript. */
 export function DomGuardScript() {
-  return <script suppressHydrationWarning type={typeof window === "undefined" ? undefined : "text/plain"} dangerouslySetInnerHTML={{ __html: domGuardScript }} />;
+  return (
+    <script
+      suppressHydrationWarning
+      type={typeof window === "undefined" ? undefined : "text/plain"}
+      dangerouslySetInnerHTML={{ __html: `${domGuardScript};${viewTransitionGuardScript}` }}
+    />
+  );
 }
 
 /**
