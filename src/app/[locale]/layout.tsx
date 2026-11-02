@@ -9,6 +9,7 @@ import { VisitTracker } from "@/features/analytics/VisitTracker";
 import { routing } from "@/i18n/routing";
 import { SITE_URL } from "@/lib/site";
 import "../globals.css";
+import { NavProgress } from "@/components/NavProgress";
 
 // Arial (the generated fallback) has no Thai glyphs; use real Thai system faces instead.
 const anuphan = Anuphan({
@@ -72,6 +73,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
           <ThemeSync />
           <FullscreenKey />
           <VisitTracker />
+          <NavProgress />
           {children}
         </NextIntlClientProvider>
       </body>

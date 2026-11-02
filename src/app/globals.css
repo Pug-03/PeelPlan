@@ -686,3 +686,54 @@ html::view-transition-new(site-header) {
     opacity: 0;
   }
 }
+
+/* Navigation progress (NavProgress): creeps toward 85% while the next page loads, then shoots to the end
+   and fades once it lands. Brand lime with a soft glow; a deeper lime on the light theme so it reads on white. */
+.nav-progress {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 200;
+  height: 3px;
+  pointer-events: none;
+  transform-origin: left;
+  transform: scaleX(0);
+  opacity: 0;
+  background: #d7ff3a;
+  box-shadow: 0 0 10px rgb(215 255 58 / 0.7);
+  view-transition-name: nav-progress;
+}
+html:not([data-theme="dark"]) .nav-progress {
+  background: #8fd400;
+  box-shadow: 0 0 8px rgb(143 212 0 / 0.55);
+}
+.nav-progress[data-state="loading"] {
+  opacity: 1;
+  transform: scaleX(0.85);
+  transition:
+    opacity 120ms linear,
+    transform 6s cubic-bezier(0.08, 0.6, 0.1, 1);
+}
+.nav-progress[data-state="done"] {
+  opacity: 0;
+  transform: scaleX(1);
+  transition:
+    transform 220ms ease-out,
+    opacity 250ms ease-out 200ms;
+}
+/* Kept live above the page while a page transition runs, not crossfaded with it. */
+html::view-transition-group(nav-progress) {
+  animation: none;
+  z-index: 200;
+}
+html::view-transition-old(nav-progress) {
+  display: none;
+}
+html::view-transition-new(nav-progress) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-progress[data-state="loading"] {
+    transition: opacity 120ms linear;
+  }
+}
