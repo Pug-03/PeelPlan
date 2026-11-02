@@ -374,7 +374,10 @@ export function SiteHeader() {
         <div ref={foldMark} className="pointer-events-none absolute top-0 left-0 w-px" style={{ height: FOLD_AT }} />
         <div ref={unfoldMark} className="pointer-events-none absolute top-0 left-0 w-px" style={{ height: UNFOLD_AT }} />
       </div>
-      <div ref={panel} data-folded={folded} className="site-header fixed z-50" style={{ top: "calc(env(safe-area-inset-top, 0px) + 10px)" }}>
+      <div ref={panel} data-folded={folded} className="site-header fixed z-50"
+        // Named so a page transition leaves the bar in place while the content under it changes.
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 10px)", viewTransitionName: "site-header" }}
+      >
         <header className="site-header-shell">
           {/* Full bar */}
           <div className="site-header-bar" aria-hidden={folded} inert={folded}>
