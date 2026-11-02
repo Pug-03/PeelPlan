@@ -3,11 +3,11 @@
 import Konva from "konva";
 import { useTranslations } from "next-intl";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Group, Image as KImage, Layer, Line, Path, Rect, Stage, Text, Transformer } from "react-konva";
+import { Circle, Group, Image as KImage, Layer, Line, Path, Rect, Stage, Text, Transformer } from "react-konva";
 import useImage from "use-image";
 import { useShallow } from "zustand/react/shallow";
 import { DEMO_ASSETS, LOGO_PATH, logoTransform } from "@/config/demo";
-import { getLaptopModel, lidGeometry } from "@/config/laptops";
+import { cameraLenses, getLaptopModel, lidGeometry } from "@/config/laptops";
 import { boundingBox, corners } from "@/lib/geometry";
 import { MAX_SIZE_MM, MIN_SIZE_MM, type LayoutItem } from "@/lib/layout";
 import { DEFAULT_LIGHT, GLOW_NEAR, GLOW_WIDE, flatStops, lidLighting, type Light, type Radial } from "@/lib/lighting";
@@ -472,7 +472,7 @@ export function LidStage({ warnings, logoCovered = 0 }: { warnings: LayoutWarnin
     if (marquee) setMarquee({ ...marquee, x1: pos.x, y1: pos.y });
   };
 
-  const warned = (id: string) => warnings.overlapping.has(id) || warnings.onLogo.has(id);
+  const warned = (id: string) => warnings.overlapping.has(id) || warnings.onLogo.has(id) || warnings.onCamera.has(id);
   const logoT = logoTransform(lid.logo);
   const glow = model.logoFinish === "glow";
   // Stickers block the light: the halo fades with the share of the logo they cover.
@@ -580,6 +580,34 @@ export function LidStage({ warnings, logoCovered = 0 }: { warnings: LayoutWarnin
                 strokeWidth={strokePx}
                 dash={[4 / k, 4 / k]}
               />
+            )}
+            {/* Tablet camera module: raised, so it's always a no-go zone (drawn under the stickers). */}
+            {lid.camera && (
+              <Group listening={false} x={lid.camera.x} y={lid.camera.y}>
+                <Rect
+                  width={lid.camera.width}
+                  height={lid.camera.height}
+                  cornerRadius={lid.camera.radius}
+                  fill="#1d1e21"
+                  stroke="#000"
+                  strokeWidth={0.4}
+                  shadowColor="#000"
+                  shadowBlur={1.6}
+                  shadowOffsetY={0.5}
+                  shadowOpacity={0.35}
+                />
+                {cameraLenses(lid.camera).map((l, i) =>
+                  l.kind === "flash" ? (
+                    <Circle key={i} x={l.x} y={l.y} radius={l.r} fill="#e9e1c8" opacity={0.85} />
+                  ) : (
+                    <Group key={i} x={l.x} y={l.y}>
+                      <Circle radius={l.r} fill="#0b0c0e" stroke="#4a4c52" strokeWidth={0.35} />
+                      <Circle radius={l.r * 0.55} fill={l.kind === "lens" ? "#1b2333" : "#16171a"} />
+                      <Circle x={-l.r * 0.25} y={-l.r * 0.25} radius={l.r * 0.16} fill="#fff" opacity={0.35} />
+                    </Group>
+                  ),
+                )}
+              </Group>
             )}
             {items.map((it) => (
               <Sticker key={it.id} item={it} src={assets[it.assetId]?.src} h={handlers} />

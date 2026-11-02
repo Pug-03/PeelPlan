@@ -4,7 +4,7 @@ import { Download, ImageDown, LayoutGrid, Link2, Maximize2, Minus, Plus, Redo2, 
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useEffectEvent, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { LAPTOP_MODELS, getLaptopModel, hasEstimatedGeometry, lidGeometry } from "@/config/laptops";
+import { LAPTOP_MODELS, TABLET_MODELS, getLaptopModel, hasEstimatedGeometry, lidGeometry } from "@/config/laptops";
 import { Link } from "@/i18n/navigation";
 import { MAX_ITEMS, type LayoutItem } from "@/lib/layout";
 import { layoutWarnings, logoCoverage } from "@/lib/warnings";
@@ -257,6 +257,7 @@ export default function Editor() {
   const warningLines = [
     warnings.overlapping.size ? t("overlapWarning", { count: warnings.overlapping.size }) : null,
     warnings.onLogo.size ? t("logoWarning") : null,
+    warnings.onCamera.size ? t("cameraWarning") : null,
     logoCovered > 0 ? t(logoCovered >= 0.98 ? "glowHiddenWarning" : "glowBlockedWarning") : null,
     warnings.nearEdge.size ? t("edgeWarning", { count: warnings.nearEdge.size }) : null,
   ].filter(Boolean) as string[];
@@ -285,11 +286,20 @@ export default function Editor() {
           onChange={(e) => s.setModel(e.target.value)}
           className="h-9 max-w-[9.5rem] min-w-0 rounded-lg border border-hairline bg-bg px-2 text-sm sm:max-w-none"
         >
-          {LAPTOP_MODELS.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name} ({m.generation})
-            </option>
-          ))}
+          <optgroup label="MacBook">
+            {LAPTOP_MODELS.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} ({m.generation})
+              </option>
+            ))}
+          </optgroup>
+          <optgroup label="iPad">
+            {TABLET_MODELS.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} ({m.generation})
+              </option>
+            ))}
+          </optgroup>
         </select>
         <div role="radiogroup" aria-label={t("lidColor")} className="hidden items-center gap-1 md:flex">
           {model.colors.map((c) => (
