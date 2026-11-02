@@ -15,13 +15,21 @@ export type Measured<T> = { value: T; verified: boolean; note?: string };
 
 export type LidColor = { id: string; name: { en: string; th: string }; hex: string };
 
-/** Rough rectangle of a raised camera module, top-left corner measured from the back's top-left. */
+/** One opening in a camera module. Centre measured from the back's top-left, as seen from behind. */
+export type CameraPart = { kind: "lens" | "lidar" | "flash" | "sensor" | "mic"; cxMm: number; cyMm: number; diameterMm: number };
+
+/**
+ * A raised camera module. The box is its outer footprint (the no-go zone), top-left corner measured
+ * from the back's top-left; `plateau` is the flat top face, when it differs from the footprint.
+ */
 export type CameraBump = {
   xMm: Measured<number>;
   yMm: Measured<number>;
   widthMm: Measured<number>;
   heightMm: Measured<number>;
   radiusMm: Measured<number>;
+  plateau?: { xMm: number; yMm: number; sizeMm: number; radiusMm: number };
+  parts: CameraPart[];
 };
 
 export type DeviceKind = "laptop" | "tablet";
@@ -226,9 +234,13 @@ export const LAPTOP_MODELS: LaptopModel[] = [
   },
 ];
 
-/* ---------- iPad (preview) ----------
+/* ---------- iPad ----------
    Back of the tablet held upright, camera at the top left as seen from behind. Width/height come from
-   Apple's spec pages; the corner radius, logo size and camera module are estimates until measured. */
+   Apple's spec pages; camera positions and sizes from Apple's dimensional drawings
+   (developer.apple.com/accessories/dimensional-drawings/). Apple's corners are blended curves, not arcs,
+   so the radius is the circle fitted to the points the drawing dimensions. */
+
+const IPAD_DRAWINGS = "https://developer.apple.com/accessories/dimensional-drawings/";
 
 const IPAD_PRO_COLORS: LidColor[] = [
   { id: "space-black", name: { en: "Space Black", th: "สีดำสเปซแบล็ก" }, hex: "#2B2B2D" },
@@ -243,20 +255,46 @@ const IPAD_AIR_COLORS: LidColor[] = [
   { id: "space-gray", name: { en: "Space Gray", th: "สีเทาสเปซเกรย์" }, hex: "#6B6D72" },
 ];
 
-const cameraEstimate = (x: number, y: number, w: number, h: number, r: number): CameraBump => ({
-  xMm: unverified(x),
-  yMm: unverified(y),
-  widthMm: unverified(w),
-  heightMm: unverified(h),
-  radiusMm: unverified(r),
+const fromDrawing = (value: number, how: string): Measured<number> => ({ value, verified: false, note: `${how} Apple dimensional drawing, ${IPAD_DRAWINGS}` });
+
+/** iPad Pro (M4/M5): a squircle module, flat on top, with the wide lens, LiDAR, flash, light sensor and mic. */
+const PRO_CAMERA: CameraBump = {
+  xMm: official(4.33),
+  yMm: official(4.33),
+  widthMm: official(31.4),
+  heightMm: official(31.4),
+  radiusMm: fromDrawing(10.5, "Equivalent radius fitted to the"),
+  plateau: { xMm: 6.63, yMm: 6.63, sizeMm: 26.81, radiusMm: 8 },
+  parts: [
+    { kind: "lens", cxMm: 14.03, cyMm: 14.03, diameterMm: 10.83 },
+    { kind: "lidar", cxMm: 14.03, cyMm: 26.05, diameterMm: 8.41 },
+    { kind: "flash", cxMm: 26.82, cyMm: 20.04, diameterMm: 6.7 },
+    { kind: "sensor", cxMm: 26.82, cyMm: 11.93, diameterMm: 3.6 },
+    { kind: "mic", cxMm: 26.82, cyMm: 27.98, diameterMm: 1.72 },
+  ],
+};
+
+/** iPad Air (M2-M4): one lens in a raised ring; the mic hole sits below it. */
+const AIR_CAMERA: CameraBump = {
+  xMm: official(12.68 - 16.92 / 2),
+  yMm: official(12.69 - 16.92 / 2),
+  widthMm: official(16.92),
+  heightMm: official(16.92),
+  radiusMm: official(16.92 / 2),
+  plateau: { xMm: 12.68 - 11.89 / 2, yMm: 12.69 - 11.89 / 2, sizeMm: 11.89, radiusMm: 11.89 / 2 },
+  parts: [
+    { kind: "lens", cxMm: 12.68, cyMm: 12.69, diameterMm: 9.85 },
+    { kind: "mic", cxMm: 12.68, cyMm: 27.62, diameterMm: 1.4 },
+  ],
+};
+
+/** iPad logo: ~35 mm tall on every current iPad, centred left to right, its box ~3 mm above the middle. */
+const ipadLogo = (w: number, h: number, logoH: number) => ({
+  centerXMm: { value: w / 2, verified: false, note: "Centred left to right on Apple's dimensional drawing." },
+  centerYMm: fromDrawing(Math.round((h / 2 - 3) * 10) / 10, "Measured off the"),
+  widthMm: fromDrawing(Math.round(logoH * LOGO_ASPECT * 10) / 10, "Height × silhouette aspect, from the"),
+  heightMm: fromDrawing(logoH, "Measured off the"),
 });
-
-/** iPad Pro (M4 and later): one squircle module with the lens, LiDAR and flash. */
-const PRO_CAMERA = cameraEstimate(7, 7, 24, 24, 7);
-/** iPad Air: a single round lens; the flash beside it sits flush. */
-const AIR_CAMERA = cameraEstimate(8, 8, 11, 11, 5.5);
-
-const IPAD_LOGO = "Estimate: iPad logo size not published. Measure a real unit.";
 
 export const TABLET_MODELS: LaptopModel[] = [
   {
@@ -266,8 +304,8 @@ export const TABLET_MODELS: LaptopModel[] = [
     family: "iPad Air",
     name: 'iPad Air 11"',
     generation: "M4",
-    lid: { widthMm: official(178.5), heightMm: official(247.6), cornerRadiusMm: unverified(17) },
-    logo: centredLogo(178.5, 247.6, 28, IPAD_LOGO),
+    lid: { widthMm: official(178.5), heightMm: official(247.6), cornerRadiusMm: fromDrawing(12.9, "Equivalent radius fitted to the") },
+    logo: ipadLogo(178.5, 247.6, 34.9),
     camera: AIR_CAMERA,
     colors: IPAD_AIR_COLORS,
     logoFinish: "mirror-light",
@@ -280,8 +318,8 @@ export const TABLET_MODELS: LaptopModel[] = [
     family: "iPad Air",
     name: 'iPad Air 13"',
     generation: "M4",
-    lid: { widthMm: official(214.9), heightMm: official(280.6), cornerRadiusMm: unverified(18) },
-    logo: centredLogo(214.9, 280.6, 32, IPAD_LOGO),
+    lid: { widthMm: official(214.9), heightMm: official(280.6), cornerRadiusMm: fromDrawing(12.9, "Equivalent radius fitted to the") },
+    logo: ipadLogo(214.9, 280.6, 35.2),
     camera: AIR_CAMERA,
     colors: IPAD_AIR_COLORS,
     logoFinish: "mirror-light",
@@ -294,8 +332,8 @@ export const TABLET_MODELS: LaptopModel[] = [
     family: "iPad Pro",
     name: 'iPad Pro 11"',
     generation: "M5",
-    lid: { widthMm: official(177.5), heightMm: official(249.7), cornerRadiusMm: unverified(17) },
-    logo: centredLogo(177.5, 249.7, 28, IPAD_LOGO),
+    lid: { widthMm: official(177.5), heightMm: official(249.7), cornerRadiusMm: fromDrawing(14.4, "Equivalent radius fitted to the") },
+    logo: ipadLogo(177.5, 249.7, 34.9),
     camera: PRO_CAMERA,
     colors: IPAD_PRO_COLORS,
     logoFinish: "mirror-light",
@@ -308,28 +346,14 @@ export const TABLET_MODELS: LaptopModel[] = [
     family: "iPad Pro",
     name: 'iPad Pro 13"',
     generation: "M5",
-    lid: { widthMm: official(215.5), heightMm: official(281.6), cornerRadiusMm: unverified(18) },
-    logo: centredLogo(215.5, 281.6, 32, IPAD_LOGO),
+    lid: { widthMm: official(215.5), heightMm: official(281.6), cornerRadiusMm: fromDrawing(14.4, "Equivalent radius fitted to the") },
+    logo: ipadLogo(215.5, 281.6, 35.1),
     camera: PRO_CAMERA,
     colors: IPAD_PRO_COLORS,
     logoFinish: "mirror-light",
     source: { url: "https://www.apple.com/ipad-pro/specs/", retrieved: "2026-10-31", quote: "Height: 11.09 inches (281.6 mm); Width: 8.48 inches (215.5 mm)" },
   },
 ];
-
-/**
- * Lenses inside a camera module, centres relative to its top-left (mm): a big squircle gets the
- * wide lens, a LiDAR dot and a flash; a small round module is one lens filling it.
- */
-export function cameraLenses(c: { width: number; height: number }): { x: number; y: number; r: number; kind: "lens" | "lidar" | "flash" }[] {
-  if (c.width < 15) return [{ x: c.width / 2, y: c.height / 2, r: Math.min(c.width, c.height) * 0.36, kind: "lens" }];
-  const u = c.width / 24;
-  return [
-    { x: 7.5 * u, y: 7.5 * u, r: 4.6 * u, kind: "lens" },
-    { x: 16.5 * u, y: 16.5 * u, r: 3 * u, kind: "lidar" },
-    { x: 16.5 * u, y: 7 * u, r: 1.6 * u, kind: "flash" },
-  ];
-}
 
 /** Every model the editor can plan on. The landing page's lineup stays LAPTOP_MODELS. */
 export const ALL_MODELS: LaptopModel[] = [...LAPTOP_MODELS, ...TABLET_MODELS];
@@ -346,7 +370,7 @@ export function getLaptopModel(id: string): LaptopModel {
  * from. The width and height are published, so a `true` here never means the lid size is a guess.
  */
 export function hasEstimatedGeometry(model: LaptopModel) {
-  return !model.lid.cornerRadiusMm.verified || Object.values(model.logo).some((f) => !f.verified) || Object.values(model.camera ?? {}).some((f) => !f.verified);
+  return !model.lid.cornerRadiusMm.verified || Object.values(model.logo).some((f) => !f.verified) || (model.camera ? [model.camera.xMm, model.camera.yMm, model.camera.widthMm, model.camera.heightMm, model.camera.radiusMm].some((f) => !f.verified) : false);
 }
 
 /** Flattened numeric view for rendering. */
@@ -368,6 +392,8 @@ export function lidGeometry(model: LaptopModel) {
           width: model.camera.widthMm.value,
           height: model.camera.heightMm.value,
           radius: model.camera.radiusMm.value,
+          plateau: model.camera.plateau,
+          parts: model.camera.parts,
         }
       : undefined,
   };

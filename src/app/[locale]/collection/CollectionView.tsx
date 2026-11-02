@@ -20,7 +20,7 @@ function LayoutThumb({ entry, assets }: { entry: SavedLayout; assets: Record<str
     <svg viewBox={`0 0 ${g.widthMm} ${g.heightMm}`} className="h-auto w-full" aria-hidden="true">
       <LidSurface widthMm={g.widthMm} heightMm={g.heightMm} radiusMm={g.cornerRadiusMm} color={color} />
       <LogoMark logo={g.logo} lidColor={color} finish={model.logoFinish} />
-      {g.camera && <CameraMark camera={g.camera} />}
+      {g.camera && <CameraMark camera={g.camera} color={color} />}
       {entry.layout.items.map((it) => {
         const a = assets[it.assetId];
         if (!a) return null;
