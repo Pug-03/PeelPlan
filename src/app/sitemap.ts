@@ -10,7 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return paths.flatMap((path) => {
     const languages = {
       ...Object.fromEntries(routing.locales.map((l) => [l, `${SITE_URL}/${l}${path}`])),
-      // The unprefixed URL picks a language from the browser, so it's the right x-default.
+      // The unprefixed URL redirects to the default language (English), so it is the x-default.
       "x-default": `${SITE_URL}${path || "/"}`,
     };
     return routing.locales.map((locale) => ({ url: `${SITE_URL}/${locale}${path}`, alternates: { languages } }));

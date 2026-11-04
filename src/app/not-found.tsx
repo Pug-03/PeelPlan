@@ -19,11 +19,11 @@ export default function NotFound() {
         body="The link may be old or mistyped."
         actions={
           <>
-            <Link href="/th" lang="th" className={notFoundPrimary}>
-              กลับหน้าแรก
+            <Link href="/en" className={notFoundPrimary}>
+              Back home
             </Link>
-            <Link href="/en" className={notFoundSecondary}>
-              Home (English)
+            <Link href="/th" lang="th" className={notFoundSecondary}>
+              กลับหน้าแรก (ไทย)
             </Link>
           </>
         }

@@ -26,7 +26,7 @@ import { Link } from "@/i18n/navigation";
 export async function generateMetadata({ params }: PageProps<"/[locale]">): Promise<Metadata> {
   const { locale } = await params;
   return {
-    // The unprefixed URL redirects to the visitor's language, so it is the x-default (same as sitemap.ts).
+    // The unprefixed URL redirects to the default language, so it is the x-default (same as sitemap.ts).
     alternates: { canonical: `/${locale}`, languages: { th: "/th", en: "/en", "x-default": "/" } },
   };
 }
