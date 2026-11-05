@@ -18,7 +18,9 @@ const glossDir = (() => {
   const dx = GLOSS_AXIS.end.x - GLOSS_AXIS.start.x;
   const dy = GLOSS_AXIS.end.y - GLOSS_AXIS.start.y;
   const len = Math.hypot(dx, dy);
-  return { x: dx / len, y: dy / len };
+  // Rounded: Math.hypot differs in the last bits between V8 (server) and JavaScriptCore (Safari),
+  // and every SVG coordinate derived from this would otherwise break hydration.
+  return { x: +(dx / len).toFixed(6), y: +(dy / len).toFixed(6) };
 })();
 export const GLOSS_DIR = glossDir;
 
@@ -90,7 +92,7 @@ export function lidLighting(
   // A faint hotspot only; the vertical falloff does the heavy lifting.
   const specular: Radial = {
     center: lp,
-    radius: Math.hypot(w, h) * 0.5,
+    radius: +(Math.hypot(w, h) * 0.5).toFixed(3), // rounded for hydration, see glossDir
     stops: [
       [0, `rgba(255,255,255,${dark ? 0.07 : 0.16})`],
       [0.4, `rgba(255,255,255,${dark ? 0.02 : 0.05})`],
