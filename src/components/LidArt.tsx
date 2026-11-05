@@ -39,11 +39,14 @@ export function LidSurface({ widthMm, heightMm, radiusMm, color }: { widthMm: nu
   const c = { x: widthMm / 2, y: heightMm / 2 };
   const band = Math.min(widthMm, heightMm) * 0.22;
   const travel = (widthMm * Math.abs(GLOSS_DIR.x) + heightMm * Math.abs(GLOSS_DIR.y)) / 2 + band;
+  // Rounded: Math.hypot differs in the last bits between V8 (server) and JavaScriptCore (Safari),
+  // so unrounded strings break hydration.
+  const px = (n: number) => `${n.toFixed(3)}px`;
   const sweepVars = {
-    "--sweep-from-x": `${-GLOSS_DIR.x * travel}px`,
-    "--sweep-from-y": `${-GLOSS_DIR.y * travel}px`,
-    "--sweep-to-x": `${GLOSS_DIR.x * travel}px`,
-    "--sweep-to-y": `${GLOSS_DIR.y * travel}px`,
+    "--sweep-from-x": px(-GLOSS_DIR.x * travel),
+    "--sweep-from-y": px(-GLOSS_DIR.y * travel),
+    "--sweep-to-x": px(GLOSS_DIR.x * travel),
+    "--sweep-to-y": px(GLOSS_DIR.y * travel),
   } as React.CSSProperties;
   return (
     <>
