@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { RulerMark } from "@/components/Wordmark";
 import { VISIBLE_LIBRARY, stickerSrc } from "@/stickers/library";
 
@@ -11,6 +11,8 @@ declare global {
 }
 
 const NAME = "PeelPlan";
+
+const noSubscribe = () => () => {};
 
 /** Stickers slapped onto the sheet around the name: centre position (% of the screen), width and tilt. */
 const SLAPS = [
@@ -44,7 +46,11 @@ function loadedHere() {
  */
 export function Intro({ tagline }: { tagline: string }) {
   // On a client-side navigation (the flag is set, or the page was loaded on another path) nothing renders.
-  const [show] = useState(() => typeof window === "undefined" || (!window.__peelplanIntroDone && loadedHere()));
+  // The hydration pass must match the server (which always renders the intro), so the real answer only
+  // applies once hydrated. Client-side navigation doesn't hydrate, so `hydrated` is true at once there.
+  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const [playsHere] = useState(() => typeof window === "undefined" || (!window.__peelplanIntroDone && loadedHere()));
+  const show = !hydrated || playsHere;
   const [skipped, setSkipped] = useState(false);
   // Unmount when the peel ends so nothing invisible is left covering the page.
   const [gone, setGone] = useState(false);
