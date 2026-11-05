@@ -117,8 +117,8 @@ export default async function Landing({ params }: PageProps<"/[locale]">) {
             {t("howTitleA")} <span className="editorial-italic text-muted">{t("howTitleB")}</span>
           </h2>
           <ol data-fx="steps" className="relative mt-14 grid gap-x-10 gap-y-12 md:grid-cols-3">
-            {/* Accent line that runs across the steps as you scroll. */}
-            <span data-fx-line aria-hidden="true" className="absolute top-0 left-0 hidden h-0.5 w-full origin-left bg-accent md:block" />
+            {/* Accent line that runs across the steps as you scroll (an <li>: an <ol> may only hold list items). */}
+            <li data-fx-line aria-hidden="true" className="absolute top-0 left-0 hidden h-0.5 w-full origin-left bg-accent md:block" />
             {steps.map(({ icon: Icon, title, body }, i) => (
               <li key={i} data-fx-item className="border-t border-ink pt-6">
                 <div className="flex items-center justify-between">
