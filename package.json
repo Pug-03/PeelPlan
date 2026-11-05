@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
-    "smoke:webkit": "node scripts/webkit-smoke.mjs"
+    "smoke:webkit": "node scripts/webkit-smoke.mjs",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "@pdf-lib/fontkit": "1.1.1",
