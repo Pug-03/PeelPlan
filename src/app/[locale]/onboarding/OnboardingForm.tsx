@@ -34,7 +34,18 @@ function Field({ id, label, hint, error, children }: { id: string; label: string
   );
 }
 
-export function OnboardingForm({ defaultName, next, preview = false }: { defaultName: string; next: string; preview?: boolean }) {
+export function OnboardingForm({
+  defaultName,
+  next,
+  today,
+  preview = false,
+}: {
+  defaultName: string;
+  next: string;
+  /** YYYY-MM-DD in Bangkok, from the server so SSR and hydration agree. */
+  today: string;
+  preview?: boolean;
+}) {
   const t = useTranslations("auth");
   const router = useRouter();
   const [isShop, setIsShop] = useState(false);
@@ -64,7 +75,6 @@ export function OnboardingForm({ defaultName, next, preview = false }: { default
     "aria-invalid": state.errors[k] ? true : undefined,
     "aria-describedby": state.errors[k] ? `${id}-error` : `${id}-hint`,
   });
-  const today = new Date().toISOString().slice(0, 10);
   // Test mode needs the simulated sign-in first; once the profile is saved here, carry on to `next`.
   const session = useSession();
   const hasProfile = session.status === "signed-in" && !!session.session.profile;

@@ -6,6 +6,7 @@ import { redirect } from "@/i18n/navigation";
 import { afterAuthPath, safePath } from "@/lib/safe-path";
 import { AUTH_ENABLED } from "@/lib/supabase/config";
 import { getSession } from "@/lib/supabase/server";
+import { TIME_ZONE } from "@/features/analytics/stats";
 import { OnboardingForm } from "./OnboardingForm";
 
 export const metadata: Metadata = { robots: { index: false } };
@@ -22,6 +23,9 @@ export default async function OnboardingPage({ params, searchParams }: PageProps
   if (!session && !preview) return redirect({ href: next ? `/login?next=${encodeURIComponent(next)}` : "/login", locale });
   if (session?.profile?.onboarded_at) return redirect({ href: afterAuthPath(next), locale });
 
+  // Bangkok's date, not UTC's: between 00:00 and 07:00 local time UTC is still on yesterday.
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(new Date());
+
   return (
     <main className="min-h-dvh bg-surface px-5 py-10 sm:py-16">
       <div className="mx-auto max-w-xl">
@@ -33,7 +37,7 @@ export default async function OnboardingPage({ params, searchParams }: PageProps
         <h1 className="mt-10 text-3xl font-semibold tracking-tight">{t("onboardTitle")}</h1>
         <p className="mt-2 text-muted">{t("onboardBody")}</p>
         {preview && <p className="mt-4 rounded-xl bg-accent-soft px-4 py-3 text-sm">{t("previewBanner")}</p>}
-        <OnboardingForm defaultName={session?.profile?.display_name ?? ""} next={next} preview={preview} />
+        <OnboardingForm defaultName={session?.profile?.display_name ?? ""} next={next} today={today} preview={preview} />
       </div>
     </main>
   );
